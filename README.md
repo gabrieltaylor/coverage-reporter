@@ -1,35 +1,11 @@
-# gem template
+# Coverage Reporter
 
-This is a GitHub template for creating Ruby gems. Press [**Use this template**](https://github.com/mattbrictson/gem/generate) to generate a project from this template. In the generated project, run this script to rename the gem to meet your needs:
+[![Gem Version](https://img.shields.io/gem/v/coverage-reporter)](https://rubygems.org/gems/coverage-reporter)
+[![Gem Downloads](https://img.shields.io/gem/dt/coverage-reporter)](https://www.ruby-toolbox.com/projects/coverage-reporter)
+[![GitHub Workflow Status](https://img.shields.io/github/actions/workflow/status/gabrieltaylor/coverage-reporter/ci.yml)](https://github.com/gabrieltaylor/coverage-reporter/actions/workflows/ci.yml)
+[![Code Climate maintainability](https://img.shields.io/codeclimate/maintainability/gabrieltaylor/coverage-reporter)](https://codeclimate.com/github/gabrieltaylor/coverage-reporter)
 
-```
-ruby rename_template.rb
-```
-
-Note that to get the full benefits of the script, you will need the [gh](https://github.com/cli/cli) command installed.
-
-This template is based on `bundle gem` with some notable improvements:
-
-- GitHub Actions configuration
-- Minitest, with minitest-rg for nicely formatted test output
-- Rubocop with a good set of configuration
-- CLI scaffolding, built on top of Thor (optional; for more background, read [Fixing Thor’s CLI Quirks](https://mattbrictson.com/blog/fixing-thor-cli-behavior))
-- [release-drafter](https://github.com/apps/release-drafter) GitHub Action for automating release notes
-- A `rake bump` task to keep your Ruby and Bundler dependencies up to date
-- A nice README with badges ready to go (see below)
-
----
-
-<!-- END FRONT MATTER -->
-
-# example
-
-[![Gem Version](https://img.shields.io/gem/v/replace_with_gem_name)](https://rubygems.org/gems/replace_with_gem_name)
-[![Gem Downloads](https://img.shields.io/gem/dt/replace_with_gem_name)](https://www.ruby-toolbox.com/projects/replace_with_gem_name)
-[![GitHub Workflow Status](https://img.shields.io/github/actions/workflow/status/mattbrictson/gem/ci.yml)](https://github.com/mattbrictson/gem/actions/workflows/ci.yml)
-[![Code Climate maintainability](https://img.shields.io/codeclimate/maintainability/mattbrictson/gem)](https://codeclimate.com/github/mattbrictson/gem)
-
-TODO: Description of this gem goes here.
+Report code coverage from SimpleCov coverage reports to a Github pull request.
 
 ---
 
@@ -42,16 +18,12 @@ TODO: Description of this gem goes here.
 ## Quick start
 
 ```
-gem install example
+gem install coverage-reporter
 ```
 
 ```ruby
-require "example"
+require "coverage-reporter"
 ```
-
-## Support
-
-If you want to report a bug, or have ideas, feedback or questions about the gem, [let me know via GitHub issues](https://github.com/mattbrictson/gem/issues/new) and I will do my best to provide a helpful answer. Happy hacking!
 
 ## License
 
