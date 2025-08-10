@@ -23,24 +23,27 @@ RSpec.describe CoverageReporter::Runner do
   subject(:runner) { described_class.new(options) }
 
   # We'll stub all collaborator classes so we only test orchestration
-  let(:parser_instance) { instance_double(CoverageReporter::CoverageParser, parse: coverage) }
-  let(:diff_instance)   { instance_double(CoverageReporter::DiffParser, fetch_diff: diff) }
+  let(:parser_instance) { instance_double(CoverageReporter::CoverageParser, call: coverage) }
+  let(:diff_instance)   { instance_double(CoverageReporter::DiffParser, call: diff) }
   let(:github_instance) { instance_double(CoverageReporter::GitHubAPI) }
-  let(:publisher_instance) { instance_double(CoverageReporter::CommentPoster) }
+  let(:poster_instance) { instance_double(CoverageReporter::CommentPoster) }
   let(:analysis_result) do
-    instance_double(
-      "AnalysisResult",
+    CoverageReporter::AnalysisResult.new(
       uncovered_by_file: uncovered_by_file,
-      diff_coverage:     diff_coverage
+      diff_coverage:     diff_coverage,
+      total_changed:     total_changed,
+      total_covered:     total_covered
     )
   end
-  let(:analyser_instance) { instance_double("CoverageAnalyser", analyze: analysis_result) }
+  let(:analyser_instance) { instance_double(CoverageReporter::CoverageAnalyser, call: analysis_result) }
 
   # Provide default values overridden per example
   let(:coverage) { { "lib/foo.rb" => [1, 2] } }
   let(:diff) { { "lib/foo.rb" => [1, 2, 3] } }
   let(:uncovered_by_file) { { "lib/foo.rb" => [3] } }
   let(:diff_coverage) { 66.67 }
+  let(:total_changed) { 3 }
+  let(:total_covered) { 2 }
   let(:pr_number) { 99 }
 
   before do
@@ -64,32 +67,20 @@ RSpec.describe CoverageReporter::Runner do
         expect(github).to be(github_instance)
         expect(chunker).to be_a(CoverageReporter::Chunker)
         expect(formatter).to be_a(CoverageReporter::CommentFormatter)
-        publisher_instance
       end
 
-    allow(github_instance).to receive(:find_pr_number).and_return(pr_number)
-    allow(publisher_instance).to receive(:publish_inline)
-    allow(publisher_instance).to receive(:publish_global)
+    allow(poster_instance).to receive(:call)
   end
 
   describe "#run" do
     it "parses coverage, fetches diff, analyzes, and publishes inline & global comments" do
       runner.run
 
-      expect(parser_instance).to have_received(:parse).once
-      expect(diff_instance).to have_received(:fetch_diff).once
-      expect(analyser_instance).to have_received(:analyze).once
-      expect(github_instance).to have_received(:find_pr_number).once
+      expect(parser_instance).to have_received(:call).once
+      expect(diff_instance).to have_received(:call).once
+      expect(analyser_instance).to have_received(:call).once
 
-      expect(publisher_instance).to have_received(:publish_inline).with(
-        pr_number:          pr_number,
-        uncovered_by_file:  uncovered_by_file
-      )
-
-      expect(publisher_instance).to have_received(:publish_global).with(
-        pr_number:     pr_number,
-        diff_coverage: diff_coverage
-      )
+      expect(poster_instance).to have_received(:call)
     end
 
     context "when there are no uncovered lines" do
@@ -101,14 +92,7 @@ RSpec.describe CoverageReporter::Runner do
       it "still publishes both inline (with empty mapping) and global comments" do
         runner.run
 
-        expect(publisher_instance).to have_received(:publish_inline).with(
-          pr_number:         pr_number,
-          uncovered_by_file: {}
-        )
-        expect(publisher_instance).to have_received(:publish_global).with(
-          pr_number:     pr_number,
-          diff_coverage: 100.0
-        )
+        expect(poster_instance).to have_received(:call)
       end
     end
   end

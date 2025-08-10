@@ -3,6 +3,7 @@
 module CoverageReporter
   class Runner
     def initialize(options)
+      @commit_sha    = options[:commit_sha]
       @coverage_path = options[:coverage_path]
       @html_root     = options[:html_root]
       @access_token  = options[:access_token]
@@ -17,7 +18,7 @@ module CoverageReporter
       analysis = CoverageAnalyser.new(coverage:, diff:).call
       pull_request = PullRequest.new(access_token:, repo:, pr_number:)
 
-      CommentPoster.new(pull_request:, analysis:).call
+      CommentPoster.new(pull_request:, analysis:, commit_sha:).call
     end
 
     private

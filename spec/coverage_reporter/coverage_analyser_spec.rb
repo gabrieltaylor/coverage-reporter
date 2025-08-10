@@ -4,11 +4,11 @@ require "spec_helper"
 require "coverage_reporter/coverage_analyser"
 
 RSpec.describe CoverageReporter::CoverageAnalyser do
-  describe "#analyze" do
+  describe "#call" do
     context "when diff is empty" do
       it "returns 100% coverage with zero totals" do
         analyser = described_class.new(coverage: {}, diff: {})
-        result = analyser.analyze
+        result = analyser.call
 
         expect(result.total_changed).to eq(0)
         expect(result.total_covered).to eq(0)
@@ -22,7 +22,7 @@ RSpec.describe CoverageReporter::CoverageAnalyser do
         coverage = { "lib/a.rb" => [1] }
         diff = { "lib/a.rb" => nil }
 
-        result = described_class.new(coverage: coverage, diff: diff).analyze
+        result = described_class.new(coverage: coverage, diff: diff).call
 
         expect(result.total_changed).to eq(0)
         expect(result.total_covered).to eq(0)
@@ -36,7 +36,7 @@ RSpec.describe CoverageReporter::CoverageAnalyser do
         coverage = { "lib/foo.rb" => [10, 12, 13] }
         diff = { "lib/foo.rb" => [10, 11, 12] }
 
-        result = described_class.new(coverage: coverage, diff: diff).analyze
+        result = described_class.new(coverage: coverage, diff: diff).call
 
         expect(result.total_changed).to eq(3)
         expect(result.total_covered).to eq(2)
@@ -51,7 +51,7 @@ RSpec.describe CoverageReporter::CoverageAnalyser do
         coverage = { "lib/bar.rb" => [1, 2, 3, 4] }
         diff = { "lib/bar.rb" => [2, 3] }
 
-        result = described_class.new(coverage: coverage, diff: diff).analyze
+        result = described_class.new(coverage: coverage, diff: diff).call
 
         expect(result.total_changed).to eq(2)
         expect(result.total_covered).to eq(2)
@@ -65,7 +65,7 @@ RSpec.describe CoverageReporter::CoverageAnalyser do
         coverage = {}
         diff = { "lib/missing.rb" => [5, 6, 7] }
 
-        result = described_class.new(coverage: coverage, diff: diff).analyze
+        result = described_class.new(coverage: coverage, diff: diff).call
 
         expect(result.total_changed).to eq(3)
         expect(result.total_covered).to eq(0)

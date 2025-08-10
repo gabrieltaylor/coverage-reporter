@@ -5,9 +5,10 @@ module CoverageReporter
     INLINE_MARKER = "<!-- coverage-inline-marker -->"
     GLOBAL_MARKER = "<!-- coverage-comment-marker -->"
 
-    def initialize(pull_request:, stats:)
+    def initialize(pull_request:, analysis:, commit_sha:)
       @pull_request = pull_request
-      @stats = stats
+      @analysis = analysis
+      @commit_sha = commit_sha
     end
 
     def call
@@ -17,10 +18,12 @@ module CoverageReporter
 
     private
 
+    attr_reader :pull_request, :analysis, :commit_sha
+
     def post_inline_comments
       delete_old_inline_comments
 
-      @stats.uncovered.each do |file, lines|
+      analysis.uncovered_by_file.each do |file, lines|
         lines.sort.chunk_while { |i, j| j == i + 1 }.each do |chunk|
           start = chunk.first
             stop = chunk.last
@@ -30,10 +33,9 @@ module CoverageReporter
             else
               "❌ Lines #{start}–#{stop} are not covered by tests."
             end
-          msg += "\n\n📊 [View coverage](#{@github.coverage_link_for(file, start)})"
 
           body = "#{INLINE_MARKER}\n#{msg}\n\n_File: #{file}, line #{start}_"
-          @pull_request.add_comment_on_lines(commit_id: @stats.commit_sha, file_path: file, start_line: start, end_line: stop, body: body)
+          pull_request.add_comment_on_lines(commit_id: commit_sha, file_path: file, start_line: start, end_line: stop, body: body)
         end
       end
     end
