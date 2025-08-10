@@ -54,8 +54,9 @@ steps:
         fi
         echo "Running specs (partition $BUILDKITE_PARALLEL_JOB/$BUILDKITE_PARALLEL_JOB_COUNT): $FILES"
         bundle exec rspec $FILES
+      - mv coverage/.resultset.json coverage/resultset-$BUILDKITE_PARALLEL_JOB.json
     artifact_paths:
-      - "coverage/.resultset.json"
+      - "coverage/resultset-$BUILDKITE_PARALLEL_JOB.json"
       - "coverage/index.html"
 
   # ----------------------------------------

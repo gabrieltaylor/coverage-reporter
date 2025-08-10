@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 module CoverageReporter
-  AnalysisResult = Data.new(:total_changed, :total_covered, :diff_coverage, :uncovered_by_file, keyword_init: true)
+  AnalysisResult = Data.define(:total_changed, :total_covered, :diff_coverage, :uncovered_by_file)
 
   class CoverageAnalyser
     def initialize(coverage:, diff:)
