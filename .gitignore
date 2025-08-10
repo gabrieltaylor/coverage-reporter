@@ -6,5 +6,6 @@
 /pkg/
 /site/
 /spec/reports/
+/spec/examples.txt
 /tmp/
 /Gemfile.lock
