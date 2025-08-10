@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-require_relative "lib/coverage/reporter/version"
+require_relative "lib/coverage_reporter/version"
 
 Gem::Specification.new do |spec|
   spec.name = "coverage-reporter"
@@ -28,5 +28,5 @@ Gem::Specification.new do |spec|
   spec.require_paths = ["lib"]
 
   # Runtime dependencies
-  # spec.add_dependency "thor", "~> 1.2"
+  spec.add_dependency "octokit"
 end

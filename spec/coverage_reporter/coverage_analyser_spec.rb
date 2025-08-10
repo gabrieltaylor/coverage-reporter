@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 require "spec_helper"
-require "coverage/reporter/coverage_analyser"
+require "coverage_reporter/coverage_analyser"
 
 RSpec.describe CoverageReporter::CoverageAnalyser do
   describe "#analyze" do
@@ -42,7 +42,7 @@ RSpec.describe CoverageReporter::CoverageAnalyser do
         expect(result.total_covered).to eq(2)
         expect(result.diff_coverage).to eq(66.67)
         expect(result.uncovered_by_file.keys).to contain_exactly("lib/foo.rb")
-        expect(result.uncovered_by_file["lib/foo.rb"]).to match_array([11])
+        expect(result.uncovered_by_file["lib/foo.rb"]).to contain_exactly(11)
       end
     end
 
@@ -70,22 +70,22 @@ RSpec.describe CoverageReporter::CoverageAnalyser do
         expect(result.total_changed).to eq(3)
         expect(result.total_covered).to eq(0)
         expect(result.diff_coverage).to eq(0.0)
-        expect(result.uncovered_by_file["lib/missing.rb"]).to match_array([5, 6, 7])
+        expect(result.uncovered_by_file["lib/missing.rb"]).to contain_exactly(5, 6, 7)
       end
     end
 
     context "with multiple files and mixed coverage" do
       it "aggregates correctly and only lists files with misses" do
         coverage = {
-          "app/models/user.rb" => [10, 11, 12, 15],
+          "app/models/user.rb"                  => [10, 11, 12, 15],
           "app/controllers/users_controller.rb" => [2, 3],
-          "lib/util.rb" => [100]
+          "lib/util.rb"                         => [100]
         }
         diff = {
-          "app/models/user.rb" => [10, 11, 13, 15],
+          "app/models/user.rb"                  => [10, 11, 13, 15],
           "app/controllers/users_controller.rb" => [1, 2, 3, 4],
-          "lib/util.rb" => [],
-          "lib/ignored.rb" => nil
+          "lib/util.rb"                         => [],
+          "lib/ignored.rb"                      => nil
         }
 
         # totals: user.rb 4 lines, controller 4 lines => 8 total
@@ -97,15 +97,16 @@ RSpec.describe CoverageReporter::CoverageAnalyser do
         expect(result.total_changed).to eq(8)
         expect(result.total_covered).to eq(5)
         expect(result.diff_coverage).to eq(62.5)
-        expect(result.uncovered_by_file.keys).to match_array(
-          ["app/models/user.rb", "app/controllers/users_controller.rb"]
+        expect(result.uncovered_by_file.keys).to contain_exactly(
+          "app/models/user.rb",
+          "app/controllers/users_controller.rb"
         )
-        expect(result.uncovered_by_file["app/models/user.rb"]).to match_array([13])
-        expect(result.uncovered_by_file["app/controllers/users_controller.rb"]).to match_array([1, 4])
+        expect(result.uncovered_by_file["app/models/user.rb"]).to contain_exactly(13)
+        expect(result.uncovered_by_file["app/controllers/users_controller.rb"]).to contain_exactly(1, 4)
       end
     end
 
-    context "rounding behavior" do
+    context "when rounding coverage percentage" do
       it "rounds to two decimal places" do
         coverage = { "lib/round.rb" => [1] }
         diff = { "lib/round.rb" => [1, 2, 3] } # 1 / 3 = 33.3333 -> 33.33

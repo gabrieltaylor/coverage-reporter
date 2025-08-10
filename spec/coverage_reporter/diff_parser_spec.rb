@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 require "spec_helper"
-require "coverage/reporter/diff_parser"
+require "coverage_reporter/diff_parser"
 
 RSpec.describe CoverageReporter::DiffParser do
   subject(:parser) { described_class.new("origin/main") }
@@ -67,7 +67,7 @@ RSpec.describe CoverageReporter::DiffParser do
         result = parser.fetch_diff
 
         expect(result).to eq(
-          "lib/sample.rb" => [5, 11, 12, 13, 14],
+          "lib/sample.rb"      => [5, 11, 12, 13, 14],
           "app/models/user.rb" => [1, 2]
         )
 

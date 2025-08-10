@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 require "spec_helper"
-require "coverage/reporter/chunker"
+require "coverage_reporter/chunker"
 
 RSpec.describe CoverageReporter::Chunker do
   subject(:chunker) { described_class.new }
@@ -60,7 +60,7 @@ RSpec.describe CoverageReporter::Chunker do
       end
     end
 
-    context "immutability" do
+    context "when preserving input immutability" do
       it "does not modify the original array" do
         original = [3, 1, 2]
         dup = original.dup
@@ -69,7 +69,7 @@ RSpec.describe CoverageReporter::Chunker do
       end
     end
 
-    context "type coercion" do
+    context "when coercing non-array input" do
       it "Array() wraps non-array input (e.g., a single integer) into a single chunk" do
         expect(chunker.chunks(42)).to eq([[42]])
       end

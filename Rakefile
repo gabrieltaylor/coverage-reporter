@@ -107,3 +107,6 @@ module RubyVersions
     end
   end
 end
+
+# Load custom rake tasks (e.g., coverage:merge)
+Dir[File.join(__dir__, "lib", "**", "tasks", "*.rake")].each { |f| import f }

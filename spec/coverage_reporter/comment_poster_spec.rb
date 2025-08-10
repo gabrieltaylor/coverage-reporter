@@ -1,20 +1,21 @@
 # frozen_string_literal: true
 
 require "spec_helper"
-require "coverage/reporter/comment_poster"
+require "coverage_reporter/comment_poster"
 
 RSpec.describe CoverageReporter::CommentPoster do
+  subject(:poster) { described_class.new(github, pr_number, stats) }
+
   let(:pr_number) { 123 }
   let(:diff_coverage) { 87.5 }
   let(:uncovered) do
     {
       "app/models/user.rb" => [10, 11, 12, 20, 22, 21, 30],
-      "lib/foo.rb" => [5]
+      "lib/foo.rb"         => [5]
     }
   end
   let(:stats) { double("Stats", uncovered: uncovered, diff_coverage: diff_coverage) }
   let(:github) { double("Github") }
-  subject(:poster) { described_class.new(github, pr_number, stats) }
 
   describe "#post_all" do
     it "deletes old inline comments, posts grouped inline comments and a global summary" do
@@ -70,8 +71,7 @@ RSpec.describe CoverageReporter::CommentPoster do
     let(:uncovered) { { "lib/edge.rb" => [3, 3, 4] } }
 
     it "groups duplicates into separate chunks according to contiguous rule" do
-      allow(github).to receive(:coverage_link_for).and_return("https://example.com/coverage/link")
-      allow(github).to receive(:coverage_index_link).and_return("https://example.com/coverage/index.html")
+      allow(github).to receive_messages(coverage_link_for: "https://example.com/coverage/link", coverage_index_link: "https://example.com/coverage/index.html")
 
       expect(github).to receive(:delete_old_inline_comments).with(pr_number)
 

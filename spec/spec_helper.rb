@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 # Require the library under test
-require "coverage/reporter"
+require "coverage_reporter"
 
 # If you later add support files (custom matchers, shared contexts, etc.)
 # you can keep them in spec/support and uncomment the Dir[] line below.

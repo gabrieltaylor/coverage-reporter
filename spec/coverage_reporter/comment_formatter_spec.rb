@@ -1,12 +1,13 @@
 # frozen_string_literal: true
 
 require "spec_helper"
-require "coverage/reporter/comment_formatter"
+require "coverage_reporter/comment_formatter"
 
 RSpec.describe CoverageReporter::CommentFormatter do
+  subject(:formatter) { described_class.new(github: github) }
+
   let(:index_link) { "https://example.com/coverage/index.html" }
   let(:github) { double("Github", coverage_index_link: index_link) }
-  subject(:formatter) { described_class.new(github: github) }
 
   describe "#inline_chunk_message" do
     context "when chunk has a single line" do
@@ -35,7 +36,7 @@ RSpec.describe CoverageReporter::CommentFormatter do
 
         message = formatter.inline_chunk_message(file: file, chunk: chunk)
 
-        # Note: The formatter uses an en dash (–) between start and finish.
+        # NOTE: The formatter uses an en dash (–) between start and finish.
         expect(message).to include("❌ Lines 3–7 are not covered by tests.")
         expect(message).to include("📊 [View coverage](#{coverage_link})")
       end

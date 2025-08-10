@@ -57,13 +57,23 @@ steps:
       - mv coverage/.resultset.json coverage/resultset-$BUILDKITE_PARALLEL_JOB.json
     artifact_paths:
       - "coverage/resultset-$BUILDKITE_PARALLEL_JOB.json"
-      - "coverage/index.html"
 
   # ----------------------------------------
-  # (Optional) Combine coverage step placeholder
-  # Uncomment and implement if you later add merging logic
+  # Coverage aggregation
   # ----------------------------------------
-  # - wait
-  # - label: ":bar_chart: Aggregate Coverage"
-  #   command: |
-  #     echo "Implement coverage aggregation if needed (e.g., using simplecov-merge)."
+  - wait
+  - label: ":bar_chart: Aggregate Coverage"
+    key: coverage-merge
+    plugins:
+      - docker#v5.11.0:
+          image: "ruby:3.4"
+          shell: ["/bin/bash", "-e", "-c"]
+    commands:
+      - bundle config set path 'vendor/bundle'
+      - bundle install --jobs=4 --retry=3
+      - ls -1 coverage || true
+      - for f in coverage/resultset-*.json; do [ -f "$f" ] || continue; cp "$f" "${f/resultset/coverage}"; done
+      - bundle exec rake coverage:merge
+    artifact_paths:
+      - "coverage/index.html"
+      - "coverage/coverage.json"
