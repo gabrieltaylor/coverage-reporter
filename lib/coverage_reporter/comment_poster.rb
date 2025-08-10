@@ -10,7 +10,7 @@ module CoverageReporter
       @stats = stats
     end
 
-    def post_all
+    def call
       post_inline_comments
       post_global_comment
     end

@@ -11,13 +11,13 @@ module CoverageReporter
     end
 
     def run
-      coverage = CoverageParser.new(coverage_path).parse
-      diff     = DiffParser.new(base_ref).fetch_diff
+      coverage = CoverageParser.new(coverage_path).call
+      diff     = DiffParser.new(base_ref).call
 
-      analysis = CoverageAnalyser.new(coverage:, diff:).analyze
+      analysis = CoverageAnalyser.new(coverage:, diff:).call
       pull_request = PullRequest.new(access_token:, repo:, pr_number:)
 
-      CommentPoster.new(pull_request:, status:).post_all
+      CommentPoster.new(pull_request:, analysis:).call
     end
 
     private

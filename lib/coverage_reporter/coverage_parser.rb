@@ -8,7 +8,7 @@ module CoverageReporter
       @resultset_path = resultset_path
     end
 
-    def parse
+    def call
       raw = read_json
       return {} unless raw.is_a?(Hash)
 

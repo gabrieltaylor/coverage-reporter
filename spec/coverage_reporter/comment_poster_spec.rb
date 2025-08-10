@@ -66,7 +66,7 @@ RSpec.describe CoverageReporter::CommentPoster do
         expect(body).to include("✅ **#{diff_coverage}%** of changed lines are covered.")
       end.ordered
 
-      poster.post_all
+      poster.call
     end
   end
 
@@ -91,7 +91,7 @@ RSpec.describe CoverageReporter::CommentPoster do
 
       expect(github).to receive(:post_or_update_global_comment)
 
-      poster.post_all
+      poster.call
     end
   end
 end

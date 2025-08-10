@@ -10,7 +10,7 @@ module CoverageReporter
     end
 
     # rubocop:disable Metrics/AbcSize
-    def analyze
+    def call
       total = 0
       covered = 0
       uncovered_map = {}

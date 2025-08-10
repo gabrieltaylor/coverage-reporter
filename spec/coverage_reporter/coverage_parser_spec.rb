@@ -15,7 +15,7 @@ RSpec.describe CoverageReporter::CoverageParser do
   context "when the resultset file does not exist" do
     it "returns an empty hash" do
       parser = described_class.new("nonexistent/file/path.json")
-      expect(parser.parse).to eq({})
+      expect(parser.call).to eq({})
     end
   end
 
@@ -26,7 +26,7 @@ RSpec.describe CoverageReporter::CoverageParser do
       file.flush
 
       parser = described_class.new(file.path)
-      expect(parser.parse).to eq({})
+      expect(parser.call).to eq({})
     end
   end
 
@@ -34,7 +34,7 @@ RSpec.describe CoverageReporter::CoverageParser do
     it "returns an empty hash" do
       file = write_resultset(["array", "not", "hash"])
       parser = described_class.new(file.path)
-      expect(parser.parse).to eq({})
+      expect(parser.call).to eq({})
     end
   end
 
@@ -71,7 +71,7 @@ RSpec.describe CoverageReporter::CoverageParser do
       file = write_resultset(json)
       parser = described_class.new(file.path)
 
-      result = parser.parse
+      result = parser.call
 
       expect(result.keys).to match_array(
         %w[
@@ -116,7 +116,7 @@ RSpec.describe CoverageReporter::CoverageParser do
     it "unions line numbers without duplicates" do
       file = write_resultset(json)
       parser = described_class.new(file.path)
-      result = parser.parse
+      result = parser.call
 
       expect(result["lib/dup.rb"]).to match_array([2, 3, 4, 6])
     end
@@ -135,7 +135,7 @@ RSpec.describe CoverageReporter::CoverageParser do
     it "returns an empty hash" do
       file = write_resultset(json)
       parser = described_class.new(file.path)
-      expect(parser.parse).to eq({})
+      expect(parser.call).to eq({})
     end
   end
 
@@ -154,7 +154,7 @@ RSpec.describe CoverageReporter::CoverageParser do
     it "only includes lines with positive counts" do
       file = write_resultset(json)
       parser = described_class.new(file.path)
-      result = parser.parse
+      result = parser.call
 
       expect(result["lib/array_style.rb"]).to match_array([3, 4])
       expect(result["lib/hash_style.rb"]).to match_array([5])
@@ -176,7 +176,7 @@ RSpec.describe CoverageReporter::CoverageParser do
     it "ignores unsupported coverage value types" do
       file = write_resultset(json)
       parser = described_class.new(file.path)
-      expect(parser.parse).to eq({})
+      expect(parser.call).to eq({})
     end
   end
 end

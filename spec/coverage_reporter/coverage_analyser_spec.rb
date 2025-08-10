@@ -92,7 +92,7 @@ RSpec.describe CoverageReporter::CoverageAnalyser do
         # covered: user.rb intersect diff => [10,11,15] = 3
         # controller intersect => [2,3] = 2  => total covered 5
         # percent = 5/8 * 100 = 62.5
-        result = described_class.new(coverage: coverage, diff: diff).analyze
+        result = described_class.new(coverage: coverage, diff: diff).call
 
         expect(result.total_changed).to eq(8)
         expect(result.total_covered).to eq(5)
@@ -111,7 +111,7 @@ RSpec.describe CoverageReporter::CoverageAnalyser do
         coverage = { "lib/round.rb" => [1] }
         diff = { "lib/round.rb" => [1, 2, 3] } # 1 / 3 = 33.3333 -> 33.33
 
-        result = described_class.new(coverage: coverage, diff: diff).analyze
+        result = described_class.new(coverage: coverage, diff: diff).call
 
         expect(result.diff_coverage).to eq(33.33)
       end

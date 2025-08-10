@@ -11,7 +11,7 @@ module CoverageReporter
       @base_ref = base_ref
     end
 
-    def fetch_diff
+    def call
       output = run_git_diff
       return {} unless output
 
