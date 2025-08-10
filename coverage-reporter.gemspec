@@ -4,7 +4,7 @@ require_relative "lib/coverage_reporter/version"
 
 Gem::Specification.new do |spec|
   spec.name = "coverage-reporter"
-  spec.version = Coverage::Reporter::VERSION
+  spec.version = CoverageReporter::VERSION
   spec.authors = ["Gabriel Taylor Russ"]
   spec.email = ["gabriel.taylor.russ@gmail.com"]
 

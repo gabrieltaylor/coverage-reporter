@@ -3,12 +3,9 @@
 require "spec_helper"
 
 RSpec.describe CoverageReporter::Options do
-  # We need to re-load the file under varying ENV conditions because the
-  # DEFAULTS constant captures ENV at definition time.
   OPTIONS_FILE = File.expand_path("../../../lib/coverage_reporter/options.rb", __FILE__)
 
   def reload_options
-    # Remove the constant so that `load` redefines it with current ENV
     if CoverageReporter.const_defined?(:Options, false)
       CoverageReporter.send(:remove_const, :Options)
     end
@@ -189,7 +186,6 @@ RSpec.describe CoverageReporter::Options do
     it "accepts tokens with surrounding whitespace after stripping" do
       with_env("GITHUB_TOKEN" => "   padded   ") do
         reload_options
-        # Because DEFAULTS captured the padded value, parse should still accept it
         expect { CoverageReporter::Options.parse([]) }.not_to raise_error
       end
     end

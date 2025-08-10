@@ -2,11 +2,10 @@
 
 require_relative "coverage_parser"
 require_relative "diff_parser"
-require_relative "github_api"
 require_relative "coverage_analyser"
 require_relative "chunker"
 require_relative "comment_formatter"
-require_relative "comment_publisher"
+require_relative "comment_poster"
 
 module CoverageReporter
   class Runner
@@ -22,10 +21,10 @@ module CoverageReporter
       coverage = CoverageParser.new(@coverage_path).parse
       diff     = DiffParser.new(@base_ref).fetch_diff
 
-      analysis = CoverageAnalyzer.new(coverage: coverage, diff: diff).analyze
+      analysis = CoverageAnalyser.new(coverage: coverage, diff: diff).analyze
       github   = GitHubAPI.new(@github_token, @build_url, @html_root)
 
-      publisher = CommentPublisher.new(
+      publisher = CommentPoster.new(
         github:    github,
         chunker:   Chunker.new,
         formatter: CommentFormatter.new(github: github)

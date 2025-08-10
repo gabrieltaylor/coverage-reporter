@@ -26,7 +26,7 @@ RSpec.describe CoverageReporter::Runner do
   let(:parser_instance) { instance_double(CoverageReporter::CoverageParser, parse: coverage) }
   let(:diff_instance)   { instance_double(CoverageReporter::DiffParser, fetch_diff: diff) }
   let(:github_instance) { instance_double(CoverageReporter::GitHubAPI) }
-  let(:publisher_instance) { instance_double(CoverageReporter::CommentPublisher) }
+  let(:publisher_instance) { instance_double(CoverageReporter::CommentPoster) }
   let(:analysis_result) do
     instance_double(
       "AnalysisResult",
@@ -34,7 +34,7 @@ RSpec.describe CoverageReporter::Runner do
       diff_coverage:     diff_coverage
     )
   end
-  let(:analyser_instance) { instance_double("CoverageAnalyzer", analyze: analysis_result) }
+  let(:analyser_instance) { instance_double("CoverageAnalyser", analyze: analysis_result) }
 
   # Provide default values overridden per example
   let(:coverage) { { "lib/foo.rb" => [1, 2] } }
@@ -47,7 +47,7 @@ RSpec.describe CoverageReporter::Runner do
     # Runner references CoverageAnalyzer (american spelling) but the implementation file
     # provides CoverageAnalyser (british). To avoid coupling the test to that mismatch
     # we stub the constant it tries to instantiate.
-    stub_const("CoverageReporter::CoverageAnalyzer", Class.new)
+    stub_const("CoverageReporter::CoverageAnalyser", Class.new)
 
     allow(CoverageReporter::CoverageParser)
       .to receive(:new).with(coverage_path).and_return(parser_instance)
@@ -55,18 +55,12 @@ RSpec.describe CoverageReporter::Runner do
     allow(CoverageReporter::DiffParser)
       .to receive(:new).with(base_ref).and_return(diff_instance)
 
-    allow(CoverageReporter::CoverageAnalyzer)
+    allow(CoverageReporter::CoverageAnalyser)
       .to receive(:new).with(coverage: coverage, diff: diff)
       .and_return(analyser_instance)
 
-    allow(CoverageReporter::GitHubAPI)
-      .to receive(:new).with(github_token, build_url, html_root)
-      .and_return(github_instance)
-
-    allow(CoverageReporter::CommentPublisher)
+    allow(CoverageReporter::CommentPoster)
       .to receive(:new) do |github:, chunker:, formatter:|
-        # Basic sanity: the publisher is given the same github object and
-        # concrete helper instances.
         expect(github).to be(github_instance)
         expect(chunker).to be_a(CoverageReporter::Chunker)
         expect(formatter).to be_a(CoverageReporter::CommentFormatter)

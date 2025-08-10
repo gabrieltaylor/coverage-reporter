@@ -2,7 +2,7 @@
 
 require "spec_helper"
 
-RSpec.describe Coverage::Reporter do
+RSpec.describe CoverageReporter do
   describe "VERSION" do
     it "is defined" do
       expect(defined?(described_class::VERSION)).to eq("constant")

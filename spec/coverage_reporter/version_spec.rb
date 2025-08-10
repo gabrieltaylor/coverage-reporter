@@ -2,12 +2,12 @@
 
 require "spec_helper"
 
-RSpec.describe "Coverage::Reporter::VERSION" do
+RSpec.describe "CoverageReporter::VERSION" do
   it "is defined" do
-    expect(defined?(Coverage::Reporter::VERSION)).to eq("constant")
+    expect(defined?(CoverageReporter::VERSION)).to eq("constant")
   end
 
   it "matches semantic versioning (x.y.z)" do
-    expect(Coverage::Reporter::VERSION).to match(/\A\d+\.\d+\.\d+\z/)
+    expect(CoverageReporter::VERSION).to match(/\A\d+\.\d+\.\d+\z/)
   end
 end
