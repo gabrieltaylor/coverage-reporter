@@ -3,16 +3,6 @@
 require "spec_helper"
 
 RSpec.describe Coverage::Reporter do
-  it "defines the Coverage module" do
-    expect(defined?(Coverage)).to eq("constant")
-    expect(Coverage).to be_a(Module)
-  end
-
-  it "defines the Reporter submodule" do
-    expect(defined?(Coverage::Reporter)).to eq("constant")
-    expect(Coverage::Reporter).to be_a(Module)
-  end
-
   describe "VERSION" do
     it "is defined" do
       expect(defined?(described_class::VERSION)).to eq("constant")

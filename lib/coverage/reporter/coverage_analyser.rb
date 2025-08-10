@@ -3,10 +3,10 @@
 module CoverageReporter
   AnalysisResult = Data.new(:total_changed, :total_covered, :diff_coverage, :uncovered_by_file, keyword_init: true)
 
-  class CoverageAnalyzer
+  class CoverageAnalyser
     def initialize(coverage:, diff:)
-      @coverage = coverage # { "path/file.rb" => [covered_line_numbers] }
-      @diff     = diff     # { "path/file.rb" => [changed_line_numbers] }
+      @coverage = coverage
+      @diff     = diff
     end
 
     # rubocop:disable Metrics/AbcSize

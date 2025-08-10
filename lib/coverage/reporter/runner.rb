@@ -3,7 +3,7 @@
 require_relative "coverage_parser"
 require_relative "diff_parser"
 require_relative "github_api"
-require_relative "coverage_analyzer"
+require_relative "coverage_analyser"
 require_relative "chunker"
 require_relative "comment_formatter"
 require_relative "comment_publisher"
