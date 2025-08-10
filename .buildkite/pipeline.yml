@@ -1,0 +1,159 @@
+# Buildkite pipeline for coverage-reporter
+# This pipeline runs RuboCop and the RSpec test suite across multiple Ruby versions.
+# It uses Docker images for consistent Ruby environments.
+#
+# Parallelization:
+# Each RSpec step now uses Buildkite parallelism to split the spec files across
+# multiple parallel jobs (default 4). The splitting logic deterministically
+# partitions the sorted list of *_spec.rb files. Jobs with no assigned files
+# exit successfully (useful when specs < parallelism).
+#
+# If you add or remove supported Rubies, update the list below to match
+# the GitHub Actions matrix (.github/workflows/ci.yml).
+
+env:
+  # Fail fast if any command in a pipeline fails
+  SHELLOPTS: errexit:pipefail
+
+steps:
+  # ----------------------------------------
+  # Lint
+  # ----------------------------------------
+  - label: ":rubocop: RuboCop"
+    key: rubocop
+    plugins:
+      - docker#v5.11.0:
+          image: "ruby:3.3" # Use a recent stable Ruby for linting
+          shell: ["/bin/bash", "-e", "-c"]
+    commands:
+      - bundle config set path 'vendor/bundle'
+      - bundle install --jobs=4 --retry=3
+      - bundle exec rubocop
+
+  - wait
+
+  # ----------------------------------------
+  # RSpec test matrix (parallelized)
+  # ----------------------------------------
+  - label: ":rspec: Ruby 3.1"
+    key: rspec-31
+    parallelism: 4
+    plugins:
+      - docker#v5.11.0:
+          image: "ruby:3.1"
+          shell: ["/bin/bash", "-e", "-c"]
+    commands:
+      - bundle config set path 'vendor/bundle'
+      - bundle install --jobs=4 --retry=3
+      - |
+        # Partition spec files for this parallel job
+        FILES=$(ruby -e 'require "shellwords"; files = Dir["spec/**/*_spec.rb"].sort; if files.empty?; puts ""; exit 0; end; pcount = ENV.fetch("BUILDKITE_PARALLEL_JOB_COUNT","1").to_i; idx = ENV.fetch("BUILDKITE_PARALLEL_JOB","0").to_i; slice = (files.size.to_f / pcount).ceil; start = idx * slice; selected = files[start, slice] || []; puts selected.shelljoin')
+        if [ -z "$FILES" ]; then
+          echo "No specs for this partition (index $BUILDKITE_PARALLEL_JOB), skipping."
+          exit 0
+        fi
+        echo "Running specs (partition $BUILDKITE_PARALLEL_JOB/$BUILDKITE_PARALLEL_JOB_COUNT): $FILES"
+        bundle exec rspec $FILES
+    artifact_paths:
+      - "coverage/.resultset.json"
+      - "coverage/index.html"
+
+  - label: ":rspec: Ruby 3.2"
+    key: rspec-32
+    parallelism: 4
+    plugins:
+      - docker#v5.11.0:
+          image: "ruby:3.2"
+          shell: ["/bin/bash", "-e", "-c"]
+    commands:
+      - bundle config set path 'vendor/bundle'
+      - bundle install --jobs=4 --retry=3
+      - |
+        FILES=$(ruby -e 'require "shellwords"; files = Dir["spec/**/*_spec.rb"].sort; if files.empty?; puts ""; exit 0; end; pcount = ENV.fetch("BUILDKITE_PARALLEL_JOB_COUNT","1").to_i; idx = ENV.fetch("BUILDKITE_PARALLEL_JOB","0").to_i; slice = (files.size.to_f / pcount).ceil; start = idx * slice; selected = files[start, slice] || []; puts selected.shelljoin')
+        if [ -z "$FILES" ]; then
+          echo "No specs for this partition (index $BUILDKITE_PARALLEL_JOB), skipping."
+          exit 0
+        fi
+        echo "Running specs (partition $BUILDKITE_PARALLEL_JOB/$BUILDKITE_PARALLEL_JOB_COUNT): $FILES"
+        bundle exec rspec $FILES
+    artifact_paths:
+      - "coverage/.resultset.json"
+      - "coverage/index.html"
+
+  - label: ":rspec: Ruby 3.3"
+    key: rspec-33
+    parallelism: 4
+    plugins:
+      - docker#v5.11.0:
+          image: "ruby:3.3"
+          shell: ["/bin/bash", "-e", "-c"]
+    commands:
+      - bundle config set path 'vendor/bundle'
+      - bundle install --jobs=4 --retry=3
+      - |
+        FILES=$(ruby -e 'require "shellwords"; files = Dir["spec/**/*_spec.rb"].sort; if files.empty?; puts ""; exit 0; end; pcount = ENV.fetch("BUILDKITE_PARALLEL_JOB_COUNT","1").to_i; idx = ENV.fetch("BUILDKITE_PARALLEL_JOB","0").to_i; slice = (files.size.to_f / pcount).ceil; start = idx * slice; selected = files[start, slice] || []; puts selected.shelljoin')
+        if [ -z "$FILES" ]; then
+          echo "No specs for this partition (index $BUILDKITE_PARALLEL_JOB), skipping."
+          exit 0
+        fi
+        echo "Running specs (partition $BUILDKITE_PARALLEL_JOB/$BUILDKITE_PARALLEL_JOB_COUNT): $FILES"
+        bundle exec rspec $FILES
+    artifact_paths:
+      - "coverage/.resultset.json"
+      - "coverage/index.html"
+
+  - label: ":rspec: Ruby 3.4"
+    key: rspec-34
+    parallelism: 4
+    plugins:
+      - docker#v5.11.0:
+          image: "ruby:3.4"
+          shell: ["/bin/bash", "-e", "-c"]
+    commands:
+      - bundle config set path 'vendor/bundle'
+      - bundle install --jobs=4 --retry=3
+      - |
+        FILES=$(ruby -e 'require "shellwords"; files = Dir["spec/**/*_spec.rb"].sort; if files.empty?; puts ""; exit 0; end; pcount = ENV.fetch("BUILDKITE_PARALLEL_JOB_COUNT","1").to_i; idx = ENV.fetch("BUILDKITE_PARALLEL_JOB","0").to_i; slice = (files.size.to_f / pcount).ceil; start = idx * slice; selected = files[start, slice] || []; puts selected.shelljoin')
+        if [ -z "$FILES" ]; then
+          echo "No specs for this partition (index $BUILDKITE_PARALLEL_JOB), skipping."
+          exit 0
+        fi
+        echo "Running specs (partition $BUILDKITE_PARALLEL_JOB/$BUILDKITE_PARALLEL_JOB_COUNT): $FILES"
+        bundle exec rspec $FILES
+    artifact_paths:
+      - "coverage/.resultset.json"
+      - "coverage/index.html"
+
+  - label: ":rspec: Ruby head"
+    key: rspec-head
+    parallelism: 4
+    allow_dependency_failure: true  # Allow experimental Ruby to fail without failing the pipeline
+    plugins:
+      - docker#v5.11.0:
+          image: "ruby:head"
+          shell: ["/bin/bash", "-e", "-c"]
+    commands:
+      - ruby -v
+      - bundle config set path 'vendor/bundle'
+      - bundle install --jobs=4 --retry=3 || true  # head can occasionally break gems; allow best-effort install
+      - |
+        FILES=$(ruby -e 'require "shellwords"; files = Dir["spec/**/*_spec.rb"].sort; if files.empty?; puts ""; exit 0; end; pcount = ENV.fetch("BUILDKITE_PARALLEL_JOB_COUNT","1").to_i; idx = ENV.fetch("BUILDKITE_PARALLEL_JOB","0").to_i; slice = (files.size.to_f / pcount).ceil; start = idx * slice; selected = files[start, slice] || []; puts selected.shelljoin')
+        if [ -z "$FILES" ]; then
+          echo "No specs for this partition (index $BUILDKITE_PARALLEL_JOB), skipping."
+          exit 0
+        fi
+        echo "Running specs (partition $BUILDKITE_PARALLEL_JOB/$BUILDKITE_PARALLEL_JOB_COUNT): $FILES"
+        # Allow head failures (both install and spec run)
+        bundle exec rspec $FILES || true
+    artifact_paths:
+      - "coverage/.resultset.json"
+      - "coverage/index.html"
+
+  # ----------------------------------------
+  # (Optional) Combine coverage step placeholder
+  # Uncomment and implement if you later add merging logic
+  # ----------------------------------------
+  # - wait
+  # - label: ":bar_chart: Aggregate Coverage"
+  #   command: |
+  #     echo "Implement coverage aggregation if needed (e.g., using simplecov-merge)."
