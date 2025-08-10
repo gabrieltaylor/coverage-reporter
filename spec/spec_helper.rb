@@ -1,7 +1,5 @@
 # frozen_string_literal: true
 
-require "bundler/setup"
-
 # Require the library under test
 require "coverage/reporter"
 
@@ -20,9 +18,7 @@ RSpec.configure do |config|
   config.disable_monkey_patching!
 
   # Use the documentation formatter for detailed output when running a single file
-  if config.files_to_run.one?
-    config.default_formatter = "doc"
-  end
+  config.default_formatter = "doc" if config.files_to_run.one?
 
   # Run specs in random order to surface order dependencies
   config.order = :random

@@ -14,10 +14,10 @@ Gem::Specification.new do |spec|
   spec.required_ruby_version = ">= 3.1"
 
   spec.metadata = {
-    "bug_tracker_uri" => "https://github.com/gabrieltaylor/coverage-reporter/issues",
-    "changelog_uri" => "https://github.com/gabrieltaylor/coverage-reporter/releases",
-    "source_code_uri" => "https://github.com/gabrieltaylor/coverage-reporter",
-    "homepage_uri" => spec.homepage,
+    "bug_tracker_uri"       => "https://github.com/gabrieltaylor/coverage-reporter/issues",
+    "changelog_uri"         => "https://github.com/gabrieltaylor/coverage-reporter/releases",
+    "source_code_uri"       => "https://github.com/gabrieltaylor/coverage-reporter",
+    "homepage_uri"          => spec.homepage,
     "rubygems_mfa_required" => "true"
   }
 
