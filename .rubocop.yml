@@ -1,5 +1,4 @@
 plugins:
-  - rubocop-minitest
   - rubocop-packaging
   - rubocop-performance
   - rubocop-rake
@@ -26,12 +25,8 @@ Layout/FirstMethodArgumentLineBreak:
   Enabled: true
 
 Layout/HashAlignment:
-  EnforcedColonStyle:
-    - table
-    - key
-  EnforcedHashRocketStyle:
-    - table
-    - key
+  EnforcedColonStyle: table
+  EnforcedHashRocketStyle: table
 
 Layout/MultilineArrayLineBreaks:
   Enabled: true
@@ -70,8 +65,6 @@ Metrics/MethodLength:
 Metrics/ParameterLists:
   Max: 6
 
-Minitest/EmptyLineBeforeAssertionMethods:
-  Enabled: false
 
 Naming/MemoizedInstanceVariableName:
   Enabled: false

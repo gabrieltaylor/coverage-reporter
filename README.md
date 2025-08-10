@@ -10,7 +10,6 @@ Report code coverage from SimpleCov coverage reports to a Github pull request.
 ---
 
 - [Quick start](#quick-start)
-- [Support](#support)
 - [License](#license)
 - [Code of conduct](#code-of-conduct)
 - [Contribution guide](#contribution-guide)
