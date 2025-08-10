@@ -44,7 +44,6 @@ module CoverageReporter
       if entry["coverage"].is_a?(Hash)
         entry["coverage"]
       elsif entry["files"].is_a?(Array)
-        # Newer schema: each file entry has {"filename"=>"...", "coverage"=>[nil,1,0,...]}
         entry["files"].each_with_object({}) do |f, acc|
           next unless f.is_a?(Hash) && f["filename"] && f["coverage"].is_a?(Array)
 
