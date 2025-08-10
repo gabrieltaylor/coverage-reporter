@@ -1,38 +1,27 @@
 # frozen_string_literal: true
 
-require_relative "coverage_parser"
-require_relative "diff_parser"
-require_relative "coverage_analyser"
-require_relative "chunker"
-require_relative "comment_formatter"
-require_relative "comment_poster"
-
 module CoverageReporter
   class Runner
     def initialize(options)
       @coverage_path = options[:coverage_path]
       @html_root     = options[:html_root]
-      @github_token  = options[:github_token]
+      @access_token  = options[:access_token]
       @build_url     = options[:build_url]
       @base_ref      = options[:base_ref]
     end
 
     def run
-      coverage = CoverageParser.new(@coverage_path).parse
-      diff     = DiffParser.new(@base_ref).fetch_diff
+      coverage = CoverageParser.new(coverage_path).parse
+      diff     = DiffParser.new(base_ref).fetch_diff
 
-      analysis = CoverageAnalyser.new(coverage: coverage, diff: diff).analyze
-      github   = GitHubAPI.new(@github_token, @build_url, @html_root)
+      analysis = CoverageAnalyser.new(coverage:, diff:).analyze
+      pull_request = PullRequest.new(access_token:, repo:, pr_number:)
 
-      publisher = CommentPoster.new(
-        github:    github,
-        chunker:   Chunker.new,
-        formatter: CommentFormatter.new(github: github)
-      )
-
-      pr_number = github.find_pr_number
-      publisher.publish_inline(pr_number: pr_number, uncovered_by_file: analysis.uncovered_by_file)
-      publisher.publish_global(pr_number: pr_number, diff_coverage: analysis.diff_coverage)
+      CommentPoster.new(pull_request:, status:).post_all
     end
+
+    private
+
+    attr_reader :coverage_path, :html_root, :access_token, :build_url, :base_ref
   end
 end

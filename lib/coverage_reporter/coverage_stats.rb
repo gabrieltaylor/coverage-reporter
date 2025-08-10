@@ -2,7 +2,7 @@
 
 module CoverageReporter
   class CoverageStats
-    attr_reader :total, :covered, :uncovered
+    attr_reader :total, :covered, :uncovered, :commit_sha
 
     def initialize(coverage, diff)
       @total = 0

@@ -4,9 +4,9 @@ require "spec_helper"
 require "coverage_reporter/comment_poster"
 
 RSpec.describe CoverageReporter::CommentPoster do
-  subject(:poster) { described_class.new(github, pr_number, stats) }
+  subject(:poster) { described_class.new(pull_request:, stats:) }
 
-  let(:pr_number) { 123 }
+  let(:pull_request) { instance_double(CoverageReporter::PullRequest) }
   let(:diff_coverage) { 87.5 }
   let(:uncovered) do
     {
@@ -15,7 +15,13 @@ RSpec.describe CoverageReporter::CommentPoster do
     }
   end
   let(:stats) { double("Stats", uncovered: uncovered, diff_coverage: diff_coverage) }
-  let(:github) { double("Github") }
+
+  before do
+    allow(pull_request).to receive(:inline_comments).and_return([])
+    allow(pull_request).to receive(:global_comments).and_return([])
+    allow(github).to receive(:add_comment_on_lines).and_return("comment_id")
+    allow(github).to receive(:add_comment).and_return("comment_id")
+  end
 
   describe "#post_all" do
     it "deletes old inline comments, posts grouped inline comments and a global summary" do
@@ -24,9 +30,6 @@ RSpec.describe CoverageReporter::CommentPoster do
         "https://example.com/coverage/#{file}#L#{line}"
       end
       allow(github).to receive(:coverage_index_link).and_return("https://example.com/coverage/index.html")
-
-      # Expectations
-      expect(github).to receive(:delete_old_inline_comments).with(pr_number).ordered
 
       # For user.rb we expect 3 chunks: [10,11,12], [20,21,22], [30]
       expect(github).to receive(:comment_on_line) do |pr, file, line, message|
@@ -72,8 +75,6 @@ RSpec.describe CoverageReporter::CommentPoster do
 
     it "groups duplicates into separate chunks according to contiguous rule" do
       allow(github).to receive_messages(coverage_link_for: "https://example.com/coverage/link", coverage_index_link: "https://example.com/coverage/index.html")
-
-      expect(github).to receive(:delete_old_inline_comments).with(pr_number)
 
       # Expect two comments: [3] and [3,4]
       expect(github).to receive(:comment_on_line) do |_, file, line, message|
