@@ -46,14 +46,7 @@ steps:
     commands:
       - bundle config set path 'vendor/bundle'
       - bundle install --jobs=4 --retry=3
-      - |
-        FILES=$(ruby -e 'require "shellwords"; files = Dir["spec/**/*_spec.rb"].sort; if files.empty?; puts ""; exit 0; end; pcount = ENV.fetch("BUILDKITE_PARALLEL_JOB_COUNT","1").to_i; idx = ENV.fetch("BUILDKITE_PARALLEL_JOB","0").to_i; slice = (files.size.to_f / pcount).ceil; start = idx * slice; selected = files[start, slice] || []; puts selected.shelljoin')
-        if [ -z "$FILES" ]; then
-          echo "No specs for this partition (index $BUILDKITE_PARALLEL_JOB), skipping."
-          exit 0
-        fi
-        echo "Running specs (partition $BUILDKITE_PARALLEL_JOB/$BUILDKITE_PARALLEL_JOB_COUNT): $FILES"
-        bundle exec rspec $FILES
+      - bundle exec rspec $(ruby spec/support/test_splitter.rb)
       - mv coverage/.resultset.json coverage/resultset-${BUILDKITE_JOB_ID}.json
     artifact_paths:
       - "coverage/resultset-${BUILDKITE_JOB_ID}.json"
