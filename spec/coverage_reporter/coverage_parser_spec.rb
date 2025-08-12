@@ -32,7 +32,7 @@ RSpec.describe CoverageReporter::CoverageParser do
 
   context "when the top-level JSON is not a Hash" do
     it "returns an empty hash" do
-      file = write_resultset(["array", "not", "hash"])
+      file = write_resultset(%w[array not hash])
       parser = described_class.new(file.path)
       expect(parser.call).to eq({})
     end
@@ -42,22 +42,22 @@ RSpec.describe CoverageReporter::CoverageParser do
     let(:json) do
       {
         # Legacy style entry, using "coverage" hash directly
-        "RSpec" => {
+        "RSpec"   => {
           "coverage" => {
             # Array style (indexes -> line numbers)
             "lib/foo.rb"  => [nil, 1, 0, 2], # lines 2 & 4 covered
             # Hash style (explicit string keys mapping to counts)
             "lib/bar.rb"  => { "1" => 1, "2" => 0, "5" => 3 }, # lines 1 & 5 covered
             # Hash with "lines" array (SimpleCov sometimes nests)
-            "lib/qux.rb"  => { "lines" => [nil, 0, 5] },       # line 3 covered
+            "lib/qux.rb"  => { "lines" => [nil, 0, 5] }, # line 3 covered
             # Pure hash style (no "lines" key)
             "lib/quux.rb" => { "1" => 0, "2" => 2, "4" => "3" } # lines 2 & 4 covered
           }
         },
         # Newer style entry, using "files" array
-        "Other" => {
+        "Other"   => {
           "files" => [
-            { "filename" => "lib/baz.rb", "coverage" => [nil, 0, 1, 1] },   # lines 3 & 4 covered
+            { "filename" => "lib/baz.rb", "coverage" => [nil, 0, 1, 1] }, # lines 3 & 4 covered
             { "filename" => "lib/skip.rb", "coverage" => "not-an-array" }, # ignored
             { "filename" => "lib/foo.rb", "coverage" => [nil, 0, 1] }      # adds line 3 to lib/foo.rb
           ]
@@ -84,11 +84,11 @@ RSpec.describe CoverageReporter::CoverageParser do
       )
 
       # lib/foo.rb: first entry => lines 2 & 4; second entry adds line 3
-      expect(result["lib/foo.rb"]).to match_array([2, 3, 4])
-      expect(result["lib/bar.rb"]).to match_array([1, 5])
-      expect(result["lib/qux.rb"]).to match_array([3])
-      expect(result["lib/quux.rb"]).to match_array([2, 4])
-      expect(result["lib/baz.rb"]).to match_array([3, 4])
+      expect(result["lib/foo.rb"]).to contain_exactly(2, 3, 4)
+      expect(result["lib/bar.rb"]).to contain_exactly(1, 5)
+      expect(result["lib/qux.rb"]).to contain_exactly(3)
+      expect(result["lib/quux.rb"]).to contain_exactly(2, 4)
+      expect(result["lib/baz.rb"]).to contain_exactly(3, 4)
     end
   end
 
@@ -118,7 +118,7 @@ RSpec.describe CoverageReporter::CoverageParser do
       parser = described_class.new(file.path)
       result = parser.call
 
-      expect(result["lib/dup.rb"]).to match_array([2, 3, 4, 6])
+      expect(result["lib/dup.rb"]).to contain_exactly(2, 3, 4, 6)
     end
   end
 
@@ -156,21 +156,8 @@ RSpec.describe CoverageReporter::CoverageParser do
       parser = described_class.new(file.path)
       result = parser.call
 
-      expect(result["lib/array_style.rb"]).to match_array([3, 4])
-      expect(result["lib/hash_style.rb"]).to match_array([5])
-    end
-  end
-
-  context "when a coverage file entry mixes types incorrectly" do
-    let(:json) do
-      {
-        "Mixed" => {
-          "coverage" => {
-            # Unsupported type (String) should be ignored safely
-            "lib/weird.rb" => "not valid"
-          }
-        }
-      }
+      expect(result["lib/array_style.rb"]).to contain_exactly(3, 4)
+      expect(result["lib/hash_style.rb"]).to contain_exactly(5)
     end
   end
 end

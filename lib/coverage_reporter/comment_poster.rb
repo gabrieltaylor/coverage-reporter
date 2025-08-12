@@ -26,7 +26,7 @@ module CoverageReporter
       analysis.uncovered_by_file.each do |file, lines|
         lines.sort.chunk_while { |i, j| j == i + 1 }.each do |chunk|
           start = chunk.first
-            stop = chunk.last
+          stop = chunk.last
           msg =
             if chunk.size == 1
               "❌ Line #{start} is not covered by tests."
@@ -35,7 +35,13 @@ module CoverageReporter
             end
 
           body = "#{INLINE_MARKER}\n#{msg}\n\n_File: #{file}, line #{start}_"
-          pull_request.add_comment_on_lines(commit_id: commit_sha, file_path: file, start_line: start, end_line: stop, body: body)
+          pull_request.add_comment_on_lines(
+            commit_id:  commit_sha,
+            file_path:  file,
+            start_line: start,
+            end_line:   stop,
+            body:       body
+          )
         end
       end
     end
@@ -63,7 +69,7 @@ module CoverageReporter
       existing = comments.find { |c| c.body&.include?(GLOBAL_MARKER) }
       body_with_marker = body.include?(GLOBAL_MARKER) ? body : "#{GLOBAL_MARKER}\n#{body}"
       if existing
-        @pull_request.update_comment(id: existing.id, body:body_with_marker)
+        @pull_request.update_comment(id: existing.id, body: body_with_marker)
       else
         @pull_request.add_comment(body: body_with_marker)
       end

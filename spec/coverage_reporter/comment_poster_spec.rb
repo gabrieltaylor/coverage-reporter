@@ -26,10 +26,12 @@ RSpec.describe CoverageReporter::CommentPoster do
   let(:analysis) { CoverageReporter::AnalysisResult.new(diff_coverage:, total_changed:, total_covered:, uncovered_by_file:) }
 
   before do
-    allow(pull_request).to receive(:inline_comments).and_return([])
-    allow(pull_request).to receive(:global_comments).and_return([])
-    allow(pull_request).to receive(:add_comment_on_lines).and_return(true)
-    allow(pull_request).to receive(:add_comment).and_return(true)
+    allow(pull_request).to receive_messages(
+      inline_comments:      [],
+      global_comments:      [],
+      add_comment_on_lines: true,
+      add_comment:          true
+    )
   end
 
   describe "#post_all" do

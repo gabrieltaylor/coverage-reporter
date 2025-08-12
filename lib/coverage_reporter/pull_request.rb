@@ -35,13 +35,13 @@ module CoverageReporter
 
     def add_comment_on_lines(commit_id:, file_path:, start_line:, end_line:, body:, side: "RIGHT")
       payload = {
-        body: body,
-        commit_id: commit_id,
-        path: file_path,
+        body:       body,
+        commit_id:  commit_id,
+        path:       file_path,
         start_line: start_line,
         start_side: start_side,
-        line: line,
-        side: side
+        line:       line,
+        side:       side
       }
 
       client.post(
