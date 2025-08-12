@@ -39,8 +39,8 @@ module CoverageReporter
         commit_id:  commit_id,
         path:       file_path,
         start_line: start_line,
-        start_side: start_side,
-        line:       line,
+        start_side: side,
+        line:       end_line,
         side:       side
       }
 

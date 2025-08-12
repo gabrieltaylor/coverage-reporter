@@ -24,26 +24,41 @@ module CoverageReporter
       delete_old_inline_comments
 
       analysis.uncovered_by_file.each do |file, lines|
-        lines.sort.chunk_while { |i, j| j == i + 1 }.each do |chunk|
-          start = chunk.first
-          stop = chunk.last
-          msg =
-            if chunk.size == 1
-              "❌ Line #{start} is not covered by tests."
-            else
-              "❌ Lines #{start}–#{stop} are not covered by tests."
-            end
-
-          body = "#{INLINE_MARKER}\n#{msg}\n\n_File: #{file}, line #{start}_"
-          pull_request.add_comment_on_lines(
-            commit_id:  commit_sha,
-            file_path:  file,
-            start_line: start,
-            end_line:   stop,
-            body:       body
-          )
+        contiguous_chunks(lines).each do |start_line, end_line|
+          post_inline_comment(file: file, start_line: start_line, end_line: end_line)
         end
       end
+    end
+
+    def contiguous_chunks(lines)
+      lines
+        .sort
+        .chunk_while { |i, j| j == i + 1 }
+        .map { |chunk| [chunk.first, chunk.last] }
+    end
+
+    def inline_message(start_line, end_line)
+      if start_line == end_line
+        "❌ Line #{start_line} is not covered by tests."
+      else
+        "❌ Lines #{start_line}–#{end_line} are not covered by tests."
+      end
+    end
+
+    def build_inline_body(file:, start_line:, message:)
+      "#{INLINE_MARKER}\n#{message}\n\n_File: #{file}, line #{start_line}_"
+    end
+
+    def post_inline_comment(file:, start_line:, end_line:)
+      message = inline_message(start_line, end_line)
+      body = build_inline_body(file: file, start_line: start_line, message: message)
+      pull_request.add_comment_on_lines(
+        commit_id:  commit_sha,
+        file_path:  file,
+        start_line: start_line,
+        end_line:   end_line,
+        body:       body
+      )
     end
 
     def post_global_comment

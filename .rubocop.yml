@@ -100,3 +100,42 @@ Style/StringLiterals:
 
 Style/TrivialAccessors:
   AllowPredicates: true
+
+Layout/LineLength:
+  Max: 140
+
+RSpec/ExampleLength:
+  Exclude:
+    - "spec/**/*"
+
+RSpec/MultipleExpectations:
+  Exclude:
+    - "spec/**/*"
+
+RSpec/StubbedMock:
+  Exclude:
+    - "spec/**/*"
+
+RSpec/MessageSpies:
+  Exclude:
+    - "spec/**/*"
+
+RSpec/NoExpectationExample:
+  Exclude:
+    - "spec/**/*"
+
+RSpec/SubjectStub:
+  Exclude:
+    - "spec/**/*"
+
+RSpec/PendingWithoutReason:
+  Exclude:
+    - "spec/**/*"
+
+RSpec/MultipleMemoizedHelpers:
+  Exclude:
+    - "spec/**/*"
+
+RSpec/ContextWording:
+  Exclude:
+    - "spec/**/*"
