@@ -37,7 +37,7 @@ steps:
   # ----------------------------------------
 
   - label: ":rspec: Ruby 3.4"
-    key: rspec-34
+    key: rspec
     parallelism: 4
     plugins:
       - docker#v5.11.0:
@@ -54,26 +54,16 @@ steps:
         fi
         echo "Running specs (partition $BUILDKITE_PARALLEL_JOB/$BUILDKITE_PARALLEL_JOB_COUNT): $FILES"
         bundle exec rspec $FILES
-      - mv coverage/.resultset.json coverage/resultset-$BUILDKITE_PARALLEL_JOB.json
+      - mv coverage/.resultset.json coverage/resultset-${BUILDKITE_JOB_ID}.json
     artifact_paths:
-      - "coverage/resultset-$BUILDKITE_PARALLEL_JOB.json"
+      - "coverage/resultset-${BUILDKITE_JOB_ID}.json"
 
-  # ----------------------------------------
-  # Coverage aggregation
-  # ----------------------------------------
-  - wait
-  - label: ":bar_chart: Aggregate Coverage"
-    key: coverage-merge
-    plugins:
-      - docker#v5.11.0:
-          image: "ruby:3.4"
-          shell: ["/bin/bash", "-e", "-c"]
+  - label: ":package: Download coverage artifacts"
+    depends_on: rspec
+    key: merge-coverage
     commands:
+      - mkdir -p coverage
+      - buildkite-agent artifact download "coverage/resultset-*.json" coverage/
       - bundle config set path 'vendor/bundle'
       - bundle install --jobs=4 --retry=3
-      - ls -1 coverage || true
-      - for f in coverage/resultset-*.json; do [ -f "$f" ] || continue; cp "$f" "${f/resultset/coverage}"; done
       - bundle exec rake coverage:merge
-    artifact_paths:
-      - "coverage/index.html"
-      - "coverage/coverage.json"
