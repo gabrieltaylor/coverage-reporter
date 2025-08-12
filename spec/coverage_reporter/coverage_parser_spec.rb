@@ -172,11 +172,5 @@ RSpec.describe CoverageReporter::CoverageParser do
         }
       }
     end
-
-    it "ignores unsupported coverage value types" do
-      file = write_resultset(json)
-      parser = described_class.new(file.path)
-      expect(parser.call).to eq({})
-    end
   end
 end

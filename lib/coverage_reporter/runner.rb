@@ -5,10 +5,11 @@ module CoverageReporter
     def initialize(options)
       @commit_sha    = options[:commit_sha]
       @coverage_path = options[:coverage_path]
-      @html_root     = options[:html_root]
       @access_token  = options[:access_token]
       @build_url     = options[:build_url]
       @base_ref      = options[:base_ref]
+      @repo          = options[:repo]
+      @pr_number     = options[:pr_number]
     end
 
     def run
@@ -23,6 +24,6 @@ module CoverageReporter
 
     private
 
-    attr_reader :coverage_path, :html_root, :access_token, :build_url, :base_ref
+    attr_reader :coverage_path, :access_token, :build_url, :base_ref, :repo, :pr_number, :commit_sha
   end
 end

@@ -4,28 +4,13 @@ require "spec_helper"
 require "coverage_reporter/runner"
 
 RSpec.describe CoverageReporter::Runner do
-  let(:coverage_path) { "coverage/.resultset.json" }
-  let(:html_root)     { "coverage" }
-  let(:github_token)  { "gh-token" }
-  let(:build_url)     { "https://ci.example.com/builds/123" }
-  let(:base_ref)      { "origin/main" }
-
-  let(:options) do
-    {
-      coverage_path: coverage_path,
-      html_root:     html_root,
-      github_token:  github_token,
-      build_url:     build_url,
-      base_ref:      base_ref
-    }
-  end
-
   subject(:runner) { described_class.new(options) }
 
+  let(:coverage_path) { "coverage/.resultset.json" }
   # We'll stub all collaborator classes so we only test orchestration
   let(:parser_instance) { instance_double(CoverageReporter::CoverageParser, call: coverage) }
   let(:diff_instance)   { instance_double(CoverageReporter::DiffParser, call: diff) }
-  let(:github_instance) { instance_double(CoverageReporter::GitHubAPI) }
+  let(:pull_request_instance) { instance_double(CoverageReporter::PullRequest) }
   let(:poster_instance) { instance_double(CoverageReporter::CommentPoster) }
   let(:analysis_result) do
     CoverageReporter::AnalysisResult.new(
@@ -36,7 +21,6 @@ RSpec.describe CoverageReporter::Runner do
     )
   end
   let(:analyser_instance) { instance_double(CoverageReporter::CoverageAnalyser, call: analysis_result) }
-
   # Provide default values overridden per example
   let(:coverage) { { "lib/foo.rb" => [1, 2] } }
   let(:diff) { { "lib/foo.rb" => [1, 2, 3] } }
@@ -45,13 +29,25 @@ RSpec.describe CoverageReporter::Runner do
   let(:total_changed) { 3 }
   let(:total_covered) { 2 }
   let(:pr_number) { 99 }
+  let(:repo) { "user/repo" }
+  let(:html_root)     { "coverage" }
+  let(:access_token)  { "gh-token" }
+  let(:base_ref)      { "origin/main" }
+  let(:commit_sha)    { "abc123" }
+
+  let(:options) do
+    {
+      coverage_path: coverage_path,
+      html_root:     html_root,
+      access_token:  access_token,
+      base_ref:      base_ref,
+      pr_number:     pr_number,
+      repo:          repo,
+      commit_sha:    commit_sha
+    }
+  end
 
   before do
-    # Runner references CoverageAnalyzer (american spelling) but the implementation file
-    # provides CoverageAnalyser (british). To avoid coupling the test to that mismatch
-    # we stub the constant it tries to instantiate.
-    stub_const("CoverageReporter::CoverageAnalyser", Class.new)
-
     allow(CoverageReporter::CoverageParser)
       .to receive(:new).with(coverage_path).and_return(parser_instance)
 
@@ -62,12 +58,13 @@ RSpec.describe CoverageReporter::Runner do
       .to receive(:new).with(coverage: coverage, diff: diff)
       .and_return(analyser_instance)
 
+    allow(CoverageReporter::PullRequest)
+      .to receive(:new).with(access_token: access_token, repo: repo, pr_number: pr_number)
+      .and_return(pull_request_instance)
+
     allow(CoverageReporter::CommentPoster)
-      .to receive(:new) do |github:, chunker:, formatter:|
-        expect(github).to be(github_instance)
-        expect(chunker).to be_a(CoverageReporter::Chunker)
-        expect(formatter).to be_a(CoverageReporter::CommentFormatter)
-      end
+      .to receive(:new).with(pull_request: pull_request_instance, analysis: analysis_result, commit_sha: commit_sha)
+      .and_return(poster_instance)
 
     allow(poster_instance).to receive(:call)
   end

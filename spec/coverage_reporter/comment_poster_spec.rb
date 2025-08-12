@@ -28,6 +28,8 @@ RSpec.describe CoverageReporter::CommentPoster do
   before do
     allow(pull_request).to receive(:inline_comments).and_return([])
     allow(pull_request).to receive(:global_comments).and_return([])
+    allow(pull_request).to receive(:add_comment_on_lines).and_return(true)
+    allow(pull_request).to receive(:add_comment).and_return(true)
   end
 
   describe "#post_all" do

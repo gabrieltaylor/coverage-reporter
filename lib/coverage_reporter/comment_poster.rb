@@ -45,16 +45,16 @@ module CoverageReporter
         #{GLOBAL_MARKER}
         🧪 **Test Coverage Summary**
 
-        ✅ **#{@stats.diff_coverage}%** of changed lines are covered.
+        ✅ **#{analysis.diff_coverage}%** of changed lines are covered.
       MD
 
       ensure_global_comment(summary)
     end
 
     def delete_old_inline_comments
-      comments = @pull_request.inline_comments
+      comments = pull_request.inline_comments
       comments.select { |c| c.body&.include?(INLINE_MARKER) }.each do |comment|
-        @pull_request.delete_comment(comment.id)
+        pull_request.delete_comment(comment.id)
       end
     end
 
@@ -63,9 +63,9 @@ module CoverageReporter
       existing = comments.find { |c| c.body&.include?(GLOBAL_MARKER) }
       body_with_marker = body.include?(GLOBAL_MARKER) ? body : "#{GLOBAL_MARKER}\n#{body}"
       if existing
-        @pull_request.update_comment(existing.id, body_with_marker)
+        @pull_request.update_comment(id: existing.id, body:body_with_marker)
       else
-        @pull_request.add_comment(body_with_marker)
+        @pull_request.add_comment(body: body_with_marker)
       end
     end
   end
