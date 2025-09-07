@@ -12,11 +12,12 @@ module CoverageReporter
       github_token:  ENV.fetch("GITHUB_TOKEN", nil),
       html_root:     ENV.fetch("HTML_ROOT", "coverage"),
       pr_number:     ENV.fetch("PR_NUMBER", nil),
-      repo:          ENV.fetch("REPO", nil),
+      repo:          ENV.fetch("REPO", nil)
     }.freeze
 
     # rubocop:disable Metrics/AbcSize
     # rubocop:disable Metrics/MethodLength
+    # rubocop:disable Metrics/BlockLength
     def self.parse(argv)
       opts = DEFAULTS.dup
 
@@ -52,6 +53,7 @@ module CoverageReporter
       end
       # rubocop:enable Metrics/AbcSize
       # rubocop:enable Metrics/MethodLength
+      # rubocop:enable Metrics/BlockLength
 
       parser.parse!(argv)
 

@@ -34,7 +34,7 @@ module CoverageReporter
     end
 
     def this_is_an_example_method
-      # This is dummy code that is never called. 
+      # This is dummy code that is never called.
       # It has been added to ensure that there is code without coverage.
 
       ENV.each do |key, value|
