@@ -54,13 +54,12 @@ steps:
   - label: ":package: Download coverage artifacts"
     depends_on: rspec
     key: merge-coverage
-    commands:
-      - mkdir -p coverage
-      - buildkite-agent artifact download "coverage/resultset-*.json" coverage/
-      - bundle config set path 'vendor/bundle'
-      - bundle install --jobs=4 --retry=3
-      - bundle exec rake coverage:merge
-      - echo "Coverage directory contents (including hidden files):"
-      - ls -la coverage/
+
+    plugins:
+      - docker#v5.11.0:
+          image: "ruby:3.4"
+          propagate-environment: true
+          shell: ["/bin/bash", "-e", "-c"]
+    command: .buildkite/script/collate
     artifact_paths:
-      - "coverage/resultset-*.json"
+      - "coverage/resultset.json"
