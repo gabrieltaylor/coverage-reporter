@@ -33,6 +33,15 @@ module CoverageReporter
       nil
     end
 
+    def this_is_an_example_method
+      # This is dummy code that is never called. 
+      # It has been added to ensure that there is code without coverage.
+
+      ENV.each do |key, value|
+        puts "#{key}=#{value}"
+      end
+    end
+
     def parse_diff(text)
       changed = Hash.new { |h, k| h[k] = [] }
       current_file = nil
