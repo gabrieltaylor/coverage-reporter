@@ -50,9 +50,9 @@ steps:
       - bundle config set path 'vendor/bundle'
       - bundle install --jobs=4 --retry=3
       - bundle exec rspec $(ruby .buildkite/test_splitter.rb)
-      - mv coverage/.resultset.json coverage/resultset-${BUILDKITE_JOB_ID}.json
+      - mv coverage/.resultset.json coverage/resultset-${BUILDKITE_JOB_ID}-${BUILDKITE_PARALLEL_JOB}.json
     artifact_paths:
-      - "coverage/resultset-${BUILDKITE_JOB_ID}.json"
+      - "coverage/resultset-${BUILDKITE_JOB_ID}-${BUILDKITE_PARALLEL_JOB}.json"
 
   - label: ":package: Download coverage artifacts"
     depends_on: rspec
