@@ -65,5 +65,5 @@ steps:
     command: .buildkite/script/collate
     artifact_paths:
       - "coverage/index.html"
-      - "coverage/assets"
+      - "coverage/assets.tar.gz"
       - "coverage/coverage.json"
