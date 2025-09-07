@@ -1,5 +1,7 @@
 # frozen_string_literal: true
 
+require "optparse"
+
 module CoverageReporter
   class Options
     DEFAULTS = {
@@ -7,7 +9,7 @@ module CoverageReporter
       build_url:     ENV.fetch("BUILD_URL", nil),
       commit_sha:    ENV.fetch("COMMIT_SHA", nil),
       coverage_path: ENV.fetch("COVERAGE_PATH", "coverage/coverage.json"),
-      github_token:  ENV.fetch("GITHUB_TOKEN", nil)
+      github_token:  ENV.fetch("GITHUB_TOKEN", nil),
       html_root:     ENV.fetch("HTML_ROOT", "coverage"),
       pr_number:     ENV.fetch("PR_NUMBER", nil),
       repo:          ENV.fetch("REPO", nil),
