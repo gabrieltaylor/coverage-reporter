@@ -55,6 +55,8 @@ steps:
     depends_on: rspec
     key: merge-coverage
     plugins:
+      - artifacts#v1.9.4:
+          download: "coverage/resultset-*.json"
       - docker#v5.11.0:
           image: "ruby:3.4"
           mount-buildkite-agent: true
