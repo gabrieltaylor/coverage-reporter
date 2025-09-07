@@ -1,8 +1,6 @@
 
 #!/bin/sh
 
-# mkdir -p coverage
-# buildkite-agent artifact download "coverage/resultset-*.json" coverage/
 bundle config set path 'vendor/bundle'
 bundle install --jobs=4 --retry=3
 bundle exec rake coverage:merge

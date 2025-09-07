@@ -64,4 +64,6 @@ steps:
           shell: ["/bin/bash", "-e", "-c"]
     command: .buildkite/script/collate
     artifact_paths:
-      - "coverage/resultset.json"
+      - "coverage/index.html"
+      - "coverage/assets"
+      - "coverage/coverage.json"
