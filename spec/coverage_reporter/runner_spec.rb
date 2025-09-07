@@ -31,7 +31,7 @@ RSpec.describe CoverageReporter::Runner do
   let(:pr_number) { 99 }
   let(:repo) { "user/repo" }
   let(:html_root)     { "coverage" }
-  let(:access_token)  { "gh-token" }
+  let(:github_token)  { "gh-token" }
   let(:base_ref)      { "origin/main" }
   let(:commit_sha)    { "abc123" }
 
@@ -39,7 +39,7 @@ RSpec.describe CoverageReporter::Runner do
     {
       coverage_path: coverage_path,
       html_root:     html_root,
-      access_token:  access_token,
+      github_token:  github_token,
       base_ref:      base_ref,
       pr_number:     pr_number,
       repo:          repo,
@@ -59,7 +59,7 @@ RSpec.describe CoverageReporter::Runner do
       .and_return(analyser_instance)
 
     allow(CoverageReporter::PullRequest)
-      .to receive(:new).with(access_token: access_token, repo: repo, pr_number: pr_number)
+      .to receive(:new).with(github_token: github_token, repo: repo, pr_number: pr_number)
       .and_return(pull_request_instance)
 
     allow(CoverageReporter::CommentPoster)

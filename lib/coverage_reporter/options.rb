@@ -3,10 +3,10 @@
 module CoverageReporter
   class Options
     DEFAULTS = {
-      coverage_path: "coverage/.resultset.json",
-      html_root:     "coverage",
-      base_ref:      "origin/main",
-      build_url:     ENV.fetch("BUILDKITE_BUILD_URL", nil),
+      coverage_path: ENV.fetch("COVERAGE_PATH", "coverage/coverage.json"),
+      html_root:     ENV.fetch("HTML_ROOT", "coverage"),
+      base_ref:      ENV.fetch("BASE_REF", "origin/main"),
+      build_url:     ENV.fetch("BUILD_URL", nil),
       github_token:  ENV.fetch("GITHUB_TOKEN", nil)
     }.freeze
 
@@ -27,7 +27,7 @@ module CoverageReporter
           opts[:html_root] = v
         end
         o.on("--github-token TOKEN", "GitHub token (default: $GITHUB_TOKEN)") { |v| opts[:github_token] = v }
-        o.on("--build-url URL", "CI build URL used for links (default: $BUILDKITE_BUILD_URL)") do |v|
+        o.on("--build-url URL", "CI build URL used for links (default: $BUILD_URL)") do |v|
           opts[:build_url] = v
         end
         o.on("--base-ref REF", "Base git ref for diff (default: #{DEFAULTS[:base_ref]})") { |v| opts[:base_ref] = v }

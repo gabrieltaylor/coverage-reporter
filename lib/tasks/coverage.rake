@@ -28,7 +28,7 @@ namespace :coverage do
     options = {
       coverage_path: "coverage/coverage.json",
       html_root:     "coverage",
-      access_token:  ENV.fetch("GITHUB_TOKEN", nil),
+      github_token:  ENV.fetch("GITHUB_TOKEN", nil),
       build_url:     ENV.fetch("BUILDKITE_BUILD_URL", nil),
       base_ref:      ENV.fetch("BUILDKITE_BASE_REF", nil),
       commit_sha:    ENV.fetch("BUILDKITE_COMMIT_SHA", nil),

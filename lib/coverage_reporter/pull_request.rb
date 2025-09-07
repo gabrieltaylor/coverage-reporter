@@ -2,8 +2,8 @@
 
 module CoverageReporter
   class PullRequest
-    def initialize(access_token:, repo:, pr_number:)
-      opts = { access_token: access_token }
+    def initialize(github_token:, repo:, pr_number:)
+      opts = { github_token: github_token }
 
       @client = Octokit::Client.new(**opts)
       @client.auto_paginate = true
