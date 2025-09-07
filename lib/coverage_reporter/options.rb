@@ -22,7 +22,7 @@ module CoverageReporter
       opts = DEFAULTS.dup
 
       parser = OptionParser.new do |o|
-        o.banner = "Usage: coverage_reporter [options]"
+        o.banner = "Usage: coverage-reporter [options]"
         o.on("--base-ref REF", "Base git ref for diff (default: origin/main)") { |v| opts[:base_ref] = v }
         o.on("--build-url URL", "CI build URL used for links (default: $BUILD_URL)") do |v|
           opts[:build_url] = v
