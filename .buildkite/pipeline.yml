@@ -46,7 +46,7 @@ steps:
     commands:
       - bundle config set path 'vendor/bundle'
       - bundle install --jobs=4 --retry=3
-      - bundle exec rspec $(ruby spec/support/test_splitter.rb)
+      - bundle exec rspec $(ruby .buildkite/test_splitter.rb)
       - mv coverage/.resultset.json coverage/resultset-${BUILDKITE_JOB_ID}.json
     artifact_paths:
       - "coverage/resultset-${BUILDKITE_JOB_ID}.json"
