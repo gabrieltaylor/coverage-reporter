@@ -1,11 +1,11 @@
 # frozen_string_literal: true
 
-require 'simplecov'
+require "simplecov"
+
 SimpleCov.start
 
 # Require the library under test
 require "coverage_reporter"
-
 
 # If you later add support files (custom matchers, shared contexts, etc.)
 # you can keep them in spec/support and uncomment the Dir[] line below.
