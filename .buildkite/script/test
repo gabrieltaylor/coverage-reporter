@@ -1,0 +1,13 @@
+
+#!/bin/sh
+
+set -e
+
+echo "Debug: BUILDKITE_PARALLEL_JOB=${BUILDKITE_PARALLEL_JOB:-NOT_SET}"
+echo "Debug: BUILDKITE_PARALLEL_JOB_COUNT=${BUILDKITE_PARALLEL_JOB_COUNT:-NOT_SET}"
+echo "Debug: BUILDKITE_JOB_ID=${BUILDKITE_JOB_ID:-NOT_SET}"
+
+bundle config set path 'vendor/bundle'
+bundle install --jobs=4 --retry=3
+bundle exec rspec $(ruby .buildkite/test_splitter.rb)
+mv coverage/.resultset.json coverage/resultset-${BUILDKITE_JOB_ID}-${BUILDKITE_PARALLEL_JOB}.json
