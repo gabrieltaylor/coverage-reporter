@@ -27,10 +27,10 @@ namespace :coverage do
     require "coverage_reporter"
     options = {
       coverage_path: "coverage/coverage.json",
-      html_root: "coverage",
-      github_token: ENV["GITHUB_TOKEN"],
-      build_url: ENV["BUILDKITE_BUILD_URL"],
-      base_ref: ENV["BUILDKITE_BASE_REF"]
+      html_root:     "coverage",
+      github_token:  ENV.fetch("GITHUB_TOKEN", nil),
+      build_url:     ENV.fetch("BUILDKITE_BUILD_URL", nil),
+      base_ref:      ENV.fetch("BUILDKITE_BASE_REF", nil)
     }
     CoverageReporter::Runner.new(options).run
   end

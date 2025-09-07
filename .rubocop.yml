@@ -54,6 +54,7 @@ Metrics/BlockLength:
     - "*.gemspec"
     - "Rakefile"
     - "spec/**/*"
+    - "lib/tasks/**/*"
 
 Metrics/ClassLength:
   Exclude:
