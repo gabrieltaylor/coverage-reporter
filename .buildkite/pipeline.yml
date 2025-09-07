@@ -43,6 +43,9 @@ steps:
       - docker#v5.11.0:
           image: "ruby:3.4"
           shell: ["/bin/bash", "-e", "-c"]
+          environment:
+            - BUILDKITE_PARALLEL_JOB
+            - BUILDKITE_PARALLEL_JOB_COUNT
     commands:
       - bundle config set path 'vendor/bundle'
       - bundle install --jobs=4 --retry=3
