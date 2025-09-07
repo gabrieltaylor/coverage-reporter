@@ -1,16 +1,3 @@
-# Buildkite pipeline for coverage-reporter
-# This pipeline runs RuboCop and the RSpec test suite across multiple Ruby versions.
-# It uses Docker images for consistent Ruby environments.
-#
-# Parallelization:
-# Each RSpec step now uses Buildkite parallelism to split the spec files across
-# multiple parallel jobs (default 4). The splitting logic deterministically
-# partitions the sorted list of *_spec.rb files. Jobs with no assigned files
-# exit successfully (useful when specs < parallelism).
-#
-# If you add or remove supported Rubies, update the list below to match
-# the GitHub Actions matrix (.github/workflows/ci.yml).
-
 env:
   # Fail fast if any command in a pipeline fails
   SHELLOPTS: errexit:pipefail
@@ -23,7 +10,7 @@ steps:
     key: rubocop
     plugins:
       - docker#v5.11.0:
-          image: "ruby:3.3" # Use a recent stable Ruby for linting
+          image: "ruby:3.4" # Use a recent stable Ruby for linting
           shell: ["/bin/bash", "-e", "-c"]
     commands:
       - bundle config set path 'vendor/bundle'
@@ -51,7 +38,7 @@ steps:
     artifact_paths:
       - "coverage/resultset-*.json"
 
-  - label: ":package: Download coverage artifacts"
+  - label: ":package: Collate coverage reports"
     depends_on: rspec
     key: merge-coverage
     plugins:
@@ -67,3 +54,16 @@ steps:
       - "coverage/index.html"
       - "coverage/assets.tar.gz"
       - "coverage/coverage.json"
+
+  - label: "Report coverage to GitHub"
+    depends_on: merge-coverage
+    key: report-coverage
+    plugins:
+      - artifacts#v1.9.4:
+          download: "coverage/coverage.json"
+      - docker#v5.11.0:
+          image: "ruby:3.4"
+          mount-buildkite-agent: true
+          propagate-environment: true
+          shell: ["/bin/bash", "-e", "-c"]
+    command: .buildkite/script/report

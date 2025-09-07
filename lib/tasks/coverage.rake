@@ -21,4 +21,17 @@ namespace :coverage do
 
     puts "✅ Coverage merged and report generated."
   end
+
+  desc "Report coverage to GitHub"
+  task :report do
+    require "coverage_reporter"
+    options = {
+      coverage_path: "coverage/coverage.json",
+      html_root: "coverage",
+      github_token: ENV["GITHUB_TOKEN"],
+      build_url: ENV["BUILDKITE_BUILD_URL"],
+      base_ref: ENV["BUILDKITE_BASE_REF"]
+    }
+    CoverageReporter::Runner.new(options).run
+  end
 end
