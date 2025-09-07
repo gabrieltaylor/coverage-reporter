@@ -54,10 +54,10 @@ steps:
   - label: ":package: Download coverage artifacts"
     depends_on: rspec
     key: merge-coverage
-
     plugins:
       - docker#v5.11.0:
           image: "ruby:3.4"
+          mount-buildkite-agent: true
           propagate-environment: true
           shell: ["/bin/bash", "-e", "-c"]
     command: .buildkite/script/collate
