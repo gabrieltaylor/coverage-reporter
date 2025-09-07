@@ -46,7 +46,6 @@ steps:
           environment:
             - BUILDKITE_PARALLEL_JOB
             - BUILDKITE_PARALLEL_JOB_COUNT
-            - BUILDKITE_JOB_ID
           shell: ["/bin/bash", "-e", "-c"]
     command: .buildkite/script/test
     artifact_paths:

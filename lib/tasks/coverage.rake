@@ -7,7 +7,7 @@ namespace :coverage do
     require "simplecov_json_formatter"
 
     # Collate JSON coverage reports and generate both HTML and JSON outputs
-    files = Dir["coverage/coverage-*.json", "coverage/resultset-*.json"].uniq
+    files = Dir["coverage/resultset-*.json"]
     abort "No coverage JSON files found to collate" if files.empty?
     puts "Collating coverage files: #{files.join(', ')}"
     SimpleCov.collate(files) do
