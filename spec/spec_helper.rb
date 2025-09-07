@@ -1,6 +1,7 @@
 # frozen_string_literal: true
 
 require "simplecov"
+require "simplecov_json_formatter"
 
 # Configure SimpleCov for parallel test execution
 if ENV["BUILDKITE_PARALLEL_JOB"]
@@ -12,6 +13,7 @@ else
 end
 
 SimpleCov.start
+SimpleCov.formatter = SimpleCov::Formatter::JSONFormatter
 
 # Require the library under test
 require "coverage_reporter"

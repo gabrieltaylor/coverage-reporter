@@ -3,11 +3,14 @@
 module CoverageReporter
   class Options
     DEFAULTS = {
-      coverage_path: ENV.fetch("COVERAGE_PATH", "coverage/coverage.json"),
-      html_root:     ENV.fetch("HTML_ROOT", "coverage"),
       base_ref:      ENV.fetch("BASE_REF", "origin/main"),
       build_url:     ENV.fetch("BUILD_URL", nil),
+      commit_sha:    ENV.fetch("COMMIT_SHA", nil),
+      coverage_path: ENV.fetch("COVERAGE_PATH", "coverage/coverage.json"),
       github_token:  ENV.fetch("GITHUB_TOKEN", nil)
+      html_root:     ENV.fetch("HTML_ROOT", "coverage"),
+      pr_number:     ENV.fetch("PR_NUMBER", nil),
+      repo:          ENV.fetch("REPO", nil),
     }.freeze
 
     # rubocop:disable Metrics/AbcSize
@@ -17,20 +20,29 @@ module CoverageReporter
 
       parser = OptionParser.new do |o|
         o.banner = "Usage: coverage_reporter [options]"
+        o.on("--base-ref REF", "Base git ref for diff (default: origin/main)") { |v| opts[:base_ref] = v }
+        o.on("--build-url URL", "CI build URL used for links (default: $BUILD_URL)") do |v|
+          opts[:build_url] = v
+        end
+        o.on("--commit-sha SHA", "GitHub commit SHA (default: $COMMIT_SHA)") do |v|
+          opts[:commit_sha] = v
+        end
         o.on(
           "--coverage-path PATH",
           "Path to merged SimpleCov coverage.json (default: coverage/coverage.json)"
         ) do |v|
           opts[:coverage_path] = v
         end
+        o.on("--github-token TOKEN", "GitHub token (default: $GITHUB_TOKEN)") { |v| opts[:github_token] = v }
         o.on("--html-root PATH", "Root of HTML coverage report (default: coverage)") do |v|
           opts[:html_root] = v
         end
-        o.on("--github-token TOKEN", "GitHub token (default: $GITHUB_TOKEN)") { |v| opts[:github_token] = v }
-        o.on("--build-url URL", "CI build URL used for links (default: $BUILD_URL)") do |v|
-          opts[:build_url] = v
+        o.on("--pr-number NUMBER", "GitHub pull request number (default: $PR_NUMBER)") do |v|
+          opts[:pr_number] = v
         end
-        o.on("--base-ref REF", "Base git ref for diff (default: origin/main)") { |v| opts[:base_ref] = v }
+        o.on("--repo REPO", "GitHub repository (default: $REPO)") do |v|
+          opts[:repo] = v
+        end
         o.on_tail("-h", "--help", "Show help") do
           puts o
           exit 0
