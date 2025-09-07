@@ -50,7 +50,7 @@ steps:
           shell: ["/bin/bash", "-e", "-c"]
     command: .buildkite/script/test
     artifact_paths:
-      - "coverage/resultset-${BUILDKITE_JOB_ID}-*.json"
+      - "coverage/resultset-*.json"
 
   - label: ":package: Download coverage artifacts"
     depends_on: rspec
