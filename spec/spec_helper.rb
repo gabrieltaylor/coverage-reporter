@@ -2,6 +2,15 @@
 
 require "simplecov"
 
+# Configure SimpleCov for parallel test execution
+if ENV["BUILDKITE_JOB_ID"] && ENV["BUILDKITE_PARALLEL_JOB"]
+  # Buildkite parallel execution
+  SimpleCov.command_name "RSpec-#{ENV['BUILDKITE_JOB_ID']}-#{ENV['BUILDKITE_PARALLEL_JOB']}"
+else
+  # Single job execution
+  SimpleCov.command_name "RSpec"
+end
+
 SimpleCov.start
 
 # Require the library under test
