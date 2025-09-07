@@ -39,8 +39,8 @@ all_specs.each_with_index do |path, i|
   selected << path if (i % job_count) == job_index
 end
 
-# Output relative paths so RSpec can resolve them from project root
-pn_root = Pathname.new(project_root)
+# Output relative paths so RSpec can resolve them from current working directory
+pn_cwd = Pathname.new(Dir.pwd)
 selected.each do |abs_path|
-  puts Pathname.new(abs_path).relative_path_from(pn_root)
+  puts Pathname.new(abs_path).relative_path_from(pn_cwd)
 end
