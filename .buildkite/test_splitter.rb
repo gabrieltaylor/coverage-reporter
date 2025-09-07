@@ -23,9 +23,10 @@ spec_root     = File.expand_path("..", __dir__)   # .../coverage-reporter/spec
 project_root  = File.expand_path("..", spec_root) # .../coverage-reporter
 
 # Discover all spec files, excluding support files and spec_helper
-pattern   = File.join(spec_root, "**", "*_spec.rb")
+# Use relative pattern from project root to avoid vendor directory
+pattern   = "spec/**/*_spec.rb"
 
-all_specs = Dir.glob(pattern)
+all_specs = Dir.glob(pattern).map { |path| File.expand_path(path) }
 
 # Determine parallel shard info
 job_index = ENV.fetch("BUILDKITE_PARALLEL_JOB", ENV.fetch("CI_NODE_INDEX", "0")).to_i
