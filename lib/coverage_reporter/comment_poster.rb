@@ -12,6 +12,8 @@ module CoverageReporter
     end
 
     def call
+      return unless latest_commit?
+
       post_inline_comments
       post_global_comment
     end
@@ -19,6 +21,10 @@ module CoverageReporter
     private
 
     attr_reader :pull_request, :analysis, :commit_sha
+
+    def latest_commit?
+      commit_sha == pull_request.latest_commit_sha
+    end
 
     def post_inline_comments
       delete_old_inline_comments

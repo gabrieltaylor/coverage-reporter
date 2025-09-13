@@ -1,5 +1,7 @@
 # frozen_string_literal: true
 
+require "octokit"
+
 module CoverageReporter
   autoload :CLI, "coverage_reporter/cli"
   autoload :VERSION, "coverage_reporter/version"
