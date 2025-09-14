@@ -712,7 +712,7 @@ RSpec.describe CoverageReporter::PullRequest do
           line:       8,
           side:       "RIGHT",
           start_line: nil,
-          start_side: nil
+          start_side: "RIGHT"
         )
       end
 

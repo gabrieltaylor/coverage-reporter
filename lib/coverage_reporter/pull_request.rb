@@ -123,7 +123,7 @@ module CoverageReporter
 
       if end_line > start_line && diff_line_info[:start_line]
         payload[:start_line] = diff_line_info[:start_line]
-        payload[:start_side] = diff_line_info[:start_side]
+        payload[:start_side] = diff_line_info[:start_side] || "RIGHT"
       elsif end_line == start_line
         payload[:line] = diff_line_info[:line]
         # Don't include start_line when it's the same as line
@@ -244,7 +244,7 @@ module CoverageReporter
         line:       @end_line,
         side:       @end_side || @start_side || "RIGHT",
         start_line: @start_line,
-        start_side: @start_side
+        start_side: @start_side || "RIGHT"
       }
     end
 
@@ -253,7 +253,7 @@ module CoverageReporter
         line:       @start_line,
         side:       @start_side || "RIGHT",
         start_line: nil,
-        start_side: nil
+        start_side: @start_side || "RIGHT"
       }
     end
   end
