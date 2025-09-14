@@ -101,31 +101,31 @@ RSpec.describe CoverageReporter::CoverageAnalyser do
   describe "#intersect_ranges" do
     it "finds overlapping ranges correctly" do
       analyser = described_class.new(coverage: {}, diff: {})
-      
+
       changed = [[12, 14], [29, 30], [100, 120]]
       uncovered = [[1, 10], [14, 14], [30, 32], [110, 200]]
-      
+
       result = analyser.send(:intersect_ranges, changed, uncovered)
-      
+
       expect(result).to eq([[14, 14], [30, 30], [110, 120]])
     end
 
     it "handles empty ranges" do
       analyser = described_class.new(coverage: {}, diff: {})
-      
+
       result = analyser.send(:intersect_ranges, [], [])
-      
+
       expect(result).to eq([])
     end
 
     it "handles no overlapping ranges" do
       analyser = described_class.new(coverage: {}, diff: {})
-      
+
       changed = [[1, 5]]
       uncovered = [[10, 15]]
-      
+
       result = analyser.send(:intersect_ranges, changed, uncovered)
-      
+
       expect(result).to eq([])
     end
   end

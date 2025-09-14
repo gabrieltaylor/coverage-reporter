@@ -35,6 +35,7 @@ module CoverageReporter
 
     private
 
+    # rubocop:disable Metrics/AbcSize
     def intersect_ranges(changed, uncovered)
       i = j = 0
       result = []
@@ -50,5 +51,6 @@ module CoverageReporter
       end
       result
     end
+    # rubocop:enable Metrics/AbcSize
   end
 end

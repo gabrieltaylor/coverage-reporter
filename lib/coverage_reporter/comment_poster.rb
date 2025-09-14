@@ -50,7 +50,6 @@ module CoverageReporter
       end
     end
 
-
     def inline_message(start_line, end_line)
       if start_line == end_line
         "❌ Line #{start_line} is not covered by tests."
