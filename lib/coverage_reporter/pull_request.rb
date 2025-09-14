@@ -126,8 +126,7 @@ module CoverageReporter
         payload[:start_side] = diff_line_info[:start_side]
       elsif end_line == start_line
         payload[:line] = diff_line_info[:line]
-        payload[:start_line] = diff_line_info[:line]
-        payload[:start_side] = diff_line_info[:side]
+        # Don't include start_line when it's the same as line
       end
 
       payload

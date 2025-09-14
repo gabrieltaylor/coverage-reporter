@@ -302,6 +302,21 @@ RSpec.describe CoverageReporter::PullRequest do
           )
         )
       end
+
+      it "does not include start_line in payload when same as line" do
+        pull_request.add_comment_on_lines(
+          commit_id:  commit_id,
+          file_path:  file_path,
+          start_line: start_line,
+          end_line:   end_line,
+          body:       body
+        )
+
+        expect(client).to have_received(:post).with(
+          "/repos/#{repo}/pulls/#{pr_number}/comments",
+          hash_not_including(:start_line, :start_side)
+        )
+      end
     end
 
     context "with multi-line comment" do
