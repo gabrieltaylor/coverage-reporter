@@ -248,6 +248,7 @@ RSpec.describe CoverageReporter::PullRequest do
     before do
       allow(client).to receive(:pull_request).with(repo, pr_number, accept: 'application/vnd.github.v3.diff').and_return(diff)
       allow(client).to receive(:post).and_return({ id: 1 })
+      allow(client).to receive(:issue_comments).with(repo, pr_number).and_return([])
     end
 
     context "with single line comment" do
@@ -316,6 +317,60 @@ RSpec.describe CoverageReporter::PullRequest do
         expect(client).to have_received(:post).with(
           "/repos/#{repo}/pulls/#{pr_number}/comments",
           hash_including(side: "RIGHT") # Calculated from diff, not the passed side parameter
+        )
+      end
+    end
+
+    context "when existing comment exists for same file and line range" do
+      let(:existing_comment) do
+        double(
+          id: 456,
+          body: "<!-- coverage-inline-marker -->\n❌ Lines 8–10 are not covered by tests.",
+          path: file_path,
+          line: end_line,
+          start_line: start_line
+        )
+      end
+
+      before do
+        allow(pull_request).to receive(:inline_comments).and_return([existing_comment])
+        allow(pull_request).to receive(:update_comment)
+      end
+
+      it "updates the existing comment instead of creating a new one" do
+        pull_request.add_comment_on_lines(
+          commit_id: commit_id,
+          file_path: file_path,
+          start_line: start_line,
+          end_line: end_line,
+          body: body
+        )
+
+        expect(pull_request).to have_received(:update_comment).with(
+          id: existing_comment.id,
+          body: body
+        )
+        expect(client).not_to have_received(:post)
+      end
+    end
+
+    context "when no existing comment exists" do
+      before do
+        allow(pull_request).to receive(:inline_comments).and_return([])
+      end
+
+      it "creates a new comment" do
+        pull_request.add_comment_on_lines(
+          commit_id: commit_id,
+          file_path: file_path,
+          start_line: start_line,
+          end_line: end_line,
+          body: body
+        )
+
+        expect(client).to have_received(:post).with(
+          "/repos/#{repo}/pulls/#{pr_number}/comments",
+          hash_including(body: body)
         )
       end
     end
@@ -494,7 +549,7 @@ RSpec.describe CoverageReporter::PullRequest do
            end
           -def old_method
           +def new_method
-           puts "world"
+             puts "world"
            end
           +def added_method
           +  puts "new code"
@@ -521,6 +576,155 @@ RSpec.describe CoverageReporter::PullRequest do
           start_line: 8,
           start_side: "RIGHT"
         )
+      end
+    end
+
+    describe "#find_existing_inline_comment" do
+      let(:file_path) { "lib/test.rb" }
+      let(:start_line) { 8 }
+      let(:end_line) { 10 }
+      
+      context "when no comments exist" do
+        before do
+          allow(pull_request).to receive(:inline_comments).and_return([])
+        end
+
+        it "returns nil" do
+          result = pull_request.send(:find_existing_inline_comment, file_path, start_line, end_line)
+          expect(result).to be_nil
+        end
+      end
+
+      context "when coverage comment exists for same file and line range" do
+        let(:existing_comment) do
+          double(
+            id: 123,
+            body: "<!-- coverage-inline-marker -->\n❌ Lines 8–10 are not covered by tests.",
+            path: file_path,
+            line: end_line,
+            start_line: start_line
+          )
+        end
+
+        before do
+          allow(pull_request).to receive(:inline_comments).and_return([existing_comment])
+        end
+
+        it "returns the existing comment" do
+          result = pull_request.send(:find_existing_inline_comment, file_path, start_line, end_line)
+          expect(result).to eq(existing_comment)
+        end
+      end
+
+      context "when coverage comment exists for different file" do
+        let(:existing_comment) do
+          double(
+            id: 123,
+            body: "<!-- coverage-inline-marker -->\n❌ Lines 8–10 are not covered by tests.",
+            path: "different/file.rb",
+            line: end_line,
+            start_line: start_line
+          )
+        end
+
+        before do
+          allow(pull_request).to receive(:inline_comments).and_return([existing_comment])
+        end
+
+        it "returns nil" do
+          result = pull_request.send(:find_existing_inline_comment, file_path, start_line, end_line)
+          expect(result).to be_nil
+        end
+      end
+
+      context "when coverage comment exists for different line range" do
+        let(:existing_comment) do
+          double(
+            id: 123,
+            body: "<!-- coverage-inline-marker -->\n❌ Lines 5–7 are not covered by tests.",
+            path: file_path,
+            line: 7,
+            start_line: 5
+          )
+        end
+
+        before do
+          allow(pull_request).to receive(:inline_comments).and_return([existing_comment])
+        end
+
+        it "returns nil" do
+          result = pull_request.send(:find_existing_inline_comment, file_path, start_line, end_line)
+          expect(result).to be_nil
+        end
+      end
+
+      context "when non-coverage comment exists" do
+        let(:existing_comment) do
+          double(
+            id: 123,
+            body: "This is a regular comment",
+            path: file_path,
+            line: end_line,
+            start_line: start_line
+          )
+        end
+
+        before do
+          allow(pull_request).to receive(:inline_comments).and_return([existing_comment])
+        end
+
+        it "returns nil" do
+          result = pull_request.send(:find_existing_inline_comment, file_path, start_line, end_line)
+          expect(result).to be_nil
+        end
+      end
+    end
+
+    describe "#delete_coverage_comments_for_file" do
+      let(:file_path) { "lib/test.rb" }
+      let(:coverage_comment) do
+        double(
+          id: 123,
+          body: "<!-- coverage-inline-marker -->\n❌ Line 8 is not covered by tests.",
+          path: file_path
+        )
+      end
+      let(:non_coverage_comment) do
+        double(
+          id: 789,
+          body: "This is a regular comment",
+          path: file_path
+        )
+      end
+      let(:coverage_comment_different_file) do
+        double(
+          id: 456,
+          body: "<!-- coverage-inline-marker -->\n❌ Line 5 is not covered by tests.",
+          path: "different/file.rb"
+        )
+      end
+
+      before do
+        allow(pull_request).to receive(:inline_comments).and_return([coverage_comment, non_coverage_comment, coverage_comment_different_file])
+        allow(pull_request).to receive(:delete_comment)
+      end
+
+      it "deletes coverage comments for the specified file" do
+        expect(pull_request).to receive(:delete_comment).with(coverage_comment.id)
+
+        pull_request.send(:delete_coverage_comments_for_file, file_path)
+      end
+
+      it "does not delete non-coverage comments" do
+        expect(pull_request).not_to receive(:delete_comment).with(non_coverage_comment.id)
+
+        pull_request.send(:delete_coverage_comments_for_file, file_path)
+      end
+
+      it "does not delete coverage comments for different files" do
+        expect(pull_request).not_to receive(:delete_comment).with(coverage_comment_different_file.id)
+
+        pull_request.send(:delete_coverage_comments_for_file, file_path)
       end
     end
   end

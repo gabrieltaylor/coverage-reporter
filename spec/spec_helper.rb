@@ -7,13 +7,19 @@ require "simplecov_json_formatter"
 if ENV["BUILDKITE_PARALLEL_JOB"]
   # Buildkite parallel execution
   SimpleCov.command_name "RSpec-#{ENV['BUILDKITE_PARALLEL_JOB']}"
+  SimpleCov.formatter = SimpleCov::Formatter::JSONFormatter
 else
   # Single job execution
   SimpleCov.command_name "RSpec"
+  SimpleCov.formatter = SimpleCov::Formatter::MultiFormatter.new(
+    [
+      SimpleCov::Formatter::HTMLFormatter,
+      SimpleCov::Formatter::JSONFormatter
+    ]
+  )
 end
 
 SimpleCov.start
-SimpleCov.formatter = SimpleCov::Formatter::JSONFormatter
 
 # Require the library under test
 require "coverage_reporter"

@@ -52,39 +52,66 @@ module CoverageReporter
       # Calculate the line numbers in the diff (not file line numbers)
       diff_line_info = find_diff_line_numbers(diff, actual_file_path, start_line, end_line)
       
-      payload = {
-        body:       body,
-        commit_id:  commit_id,
-        path:       actual_file_path,
-        line:       diff_line_info[:line],
-        side:       diff_line_info[:side]
-      }
+      # Check if a comment already exists for this file and line range
+      existing_comment = find_existing_inline_comment(actual_file_path, start_line, end_line)
       
-      # Add start_line and start_side if we have a range (end_line > start_line)
-      if end_line > start_line && diff_line_info[:start_line]
-        payload[:start_line] = diff_line_info[:start_line]
-        payload[:start_side] = diff_line_info[:start_side]
-      end
+      if existing_comment
+        # Update existing comment
+        update_comment(id: existing_comment.id, body: body)
+      else
+        # Create new comment
+        payload = {
+          body:       body,
+          commit_id:  commit_id,
+          path:       actual_file_path,
+          line:       diff_line_info[:line],
+          side:       diff_line_info[:side]
+        }
+        
+        # Add start_line and start_side if we have a range (end_line > start_line)
+        if end_line > start_line && diff_line_info[:start_line]
+          payload[:start_line] = diff_line_info[:start_line]
+          payload[:start_side] = diff_line_info[:start_side]
+        elsif end_line == start_line
+          # For single line comments, ensure line and start_line are the same
+          payload[:line] = diff_line_info[:line]
+          payload[:start_line] = diff_line_info[:line]
+          payload[:start_side] = diff_line_info[:side]
+        end
 
-      begin
-        client.post(
-          "/repos/#{repo}/pulls/#{pr_number}/comments",
-          payload
-        )
-      rescue Octokit::Error => e
-        puts "GitHub API Error: #{e.message}"
-        puts "Repository: #{repo}"
-        puts "PR Number: #{pr_number}"
-        puts "Payload: #{payload.inspect}"
-        puts "Response body: #{e.response_body}" if e.respond_to?(:response_body)
-        puts "Status: #{e.status}" if e.respond_to?(:status)
-        raise
-      rescue => e
-        puts "Unexpected error: #{e.class}: #{e.message}"
-        puts "Repository: #{repo}"
-        puts "PR Number: #{pr_number}"
-        puts "Payload: #{payload.inspect}"
-        raise
+        begin
+          client.post(
+            "/repos/#{repo}/pulls/#{pr_number}/comments",
+            payload
+          )
+        rescue Octokit::Error => e
+          puts "GitHub API Error: #{e.message}"
+          puts "Repository: #{repo}"
+          puts "PR Number: #{pr_number}"
+          puts "Payload: #{payload.inspect}"
+          puts "Response body: #{e.response_body}" if e.respond_to?(:response_body)
+          puts "Status: #{e.status}" if e.respond_to?(:status)
+          raise
+        rescue => e
+          puts "Unexpected error: #{e.class}: #{e.message}"
+          puts "Repository: #{repo}"
+          puts "PR Number: #{pr_number}"
+          puts "Payload: #{payload.inspect}"
+          raise
+        end
+      end
+    end
+
+    def delete_coverage_comments_for_file(file_path)
+      comments = inline_comments
+      
+      comments.select do |comment|
+        # Check if this is a coverage comment by looking for the marker
+        comment.body&.include?("<!-- coverage-inline-marker -->") &&
+        # Check if the comment is for the target file
+        comment.path == file_path
+      end.each do |comment|
+        delete_comment(comment.id)
       end
     end
 
@@ -182,6 +209,27 @@ module CoverageReporter
       file_path
     end
 
+
+    def find_existing_inline_comment(file_path, start_line, end_line)
+      comments = inline_comments
+      
+      comments.find do |comment|
+        # Check if this is a coverage comment by looking for the marker
+        next false unless comment.body&.include?("<!-- coverage-inline-marker -->")
+        
+        # Check if the comment is for the same file
+        next false unless comment.path == file_path
+        
+        # Check if the comment is for the same line range
+        if end_line > start_line
+          # Multi-line comment: check if line ranges match
+          comment.line == end_line && comment.start_line == start_line
+        else
+          # Single-line comment: check if line matches
+          comment.line == start_line && comment.start_line == start_line
+        end
+      end
+    end
 
     def normalize_repo(repo)
       return repo if repo.include?("/") && !repo.include?("://")

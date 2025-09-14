@@ -33,8 +33,10 @@ module CoverageReporter
     end
 
     def post_inline_comments
-      delete_old_inline_comments
-
+      # First, clean up old coverage comments for files that now have coverage
+      cleanup_old_coverage_comments
+      
+      # Then post new comments for uncovered lines
       analysis.uncovered_by_file.each do |file, lines|
         contiguous_chunks(lines).each do |start_line, end_line|
           post_inline_comment(file: file, start_line: start_line, end_line: end_line)
@@ -58,7 +60,7 @@ module CoverageReporter
     end
 
     def build_inline_body(file:, start_line:, message:)
-      "#{INLINE_MARKER}\n#{message}\n\n_File: #{file}, line #{start_line}_"
+"#{INLINE_MARKER}\n#{message}\n\n_File: #{file}, line #{start_line}_\n_Commit: #{commit_sha}_"
     end
 
     def post_inline_comment(file:, start_line:, end_line:)
@@ -79,15 +81,22 @@ module CoverageReporter
         🧪 **Test Coverage Summary**
 
         ✅ **#{analysis.diff_coverage}%** of changed lines are covered.
+
+        _Commit: #{commit_sha}_
       MD
 
       ensure_global_comment(summary)
     end
 
-    def delete_old_inline_comments
-      comments = pull_request.inline_comments
-      comments.select { |c| c.body&.include?(INLINE_MARKER) }.each do |comment|
-        pull_request.delete_comment(comment.id)
+
+    def cleanup_old_coverage_comments
+      # Get all files that have coverage (either covered or uncovered)
+      all_files = analysis.uncovered_by_file.keys
+      
+      # For each file, delete any existing coverage comments
+      # since we're about to post new ones for uncovered lines only
+      all_files.each do |file|
+        pull_request.delete_coverage_comments_for_file(file)
       end
     end
 

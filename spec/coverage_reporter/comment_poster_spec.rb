@@ -32,6 +32,8 @@ RSpec.describe CoverageReporter::CommentPoster do
       global_comments:      [],
       add_comment_on_lines: true,
       add_comment:          true,
+      update_comment:       true,
+      delete_coverage_comments_for_file: true,
       latest_commit_sha:    commit_sha
     )
     allow(logger).to receive(:info)
@@ -40,7 +42,6 @@ RSpec.describe CoverageReporter::CommentPoster do
   describe "#call" do
     context "when commit is the latest commit" do
       it "proceeds with posting comments" do
-        expect(pull_request).to receive(:inline_comments).and_return([])
         expect(pull_request).to receive(:global_comments).and_return([])
         expect(pull_request).to receive(:add_comment_on_lines).at_least(:once)
         expect(pull_request).to receive(:add_comment).at_least(:once)
@@ -76,6 +77,33 @@ RSpec.describe CoverageReporter::CommentPoster do
     let(:uncovered) { { "lib/edge.rb" => [3, 3, 4] } }
 
     it "groups duplicates into separate chunks according to contiguous rule" do
+      poster.call
+    end
+  end
+
+  describe "comment content" do
+    it "includes commit SHA in inline comment body" do
+      expect(pull_request).to receive(:add_comment_on_lines) do |args|
+        expect(args[:body]).to include("_Commit: #{commit_sha}_")
+      end
+      
+      poster.call
+    end
+
+    it "includes commit SHA in global comment body" do
+      expect(pull_request).to receive(:add_comment) do |args|
+        expect(args[:body]).to include("_Commit: #{commit_sha}_")
+      end
+      
+      poster.call
+    end
+  end
+
+  describe "cleanup old coverage comments" do
+    it "calls delete_coverage_comments_for_file for each file with coverage" do
+      expect(pull_request).to receive(:delete_coverage_comments_for_file).with("app/models/user.rb")
+      expect(pull_request).to receive(:delete_coverage_comments_for_file).with("lib/foo.rb")
+      
       poster.call
     end
   end
