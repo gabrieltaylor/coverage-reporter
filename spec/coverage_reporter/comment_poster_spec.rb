@@ -34,6 +34,8 @@ RSpec.describe CoverageReporter::CommentPoster do
       add_comment:                       true,
       update_comment:                    true,
       delete_coverage_comments_for_file: true,
+      find_existing_inline_comment:      nil,
+      delete_comment:                    true,
       latest_commit_sha:                 commit_sha
     )
     allow(logger).to receive(:info)
@@ -101,10 +103,53 @@ RSpec.describe CoverageReporter::CommentPoster do
     end
   end
 
-  describe "cleanup old coverage comments" do
-    it "calls delete_coverage_comments_for_file for each file with coverage" do
-      expect(pull_request).to receive(:delete_coverage_comments_for_file).with("app/models/user.rb")
-      expect(pull_request).to receive(:delete_coverage_comments_for_file).with("lib/foo.rb")
+  describe "cleanup unused coverage comments" do
+    let(:existing_inline_comment) do
+      # rubocop:disable RSpec/VerifiedDoubles
+      double("comment", id: 123, body: "<!-- coverage-inline-marker -->", path: "app/models/user.rb")
+      # rubocop:enable RSpec/VerifiedDoubles
+    end
+    let(:existing_global_comment) do
+      # rubocop:disable RSpec/VerifiedDoubles
+      double("comment", id: 456, body: "<!-- coverage-comment-marker -->", path: nil)
+      # rubocop:enable RSpec/VerifiedDoubles
+    end
+
+    before do
+      allow(pull_request).to receive_messages(inline_comments: [existing_inline_comment], global_comments: [existing_global_comment])
+    end
+
+    it "tracks existing coverage comments at the start" do
+      expect(pull_request).to receive(:inline_comments).and_return([existing_inline_comment])
+      expect(pull_request).to receive(:global_comments).and_return([existing_global_comment])
+
+      poster.call
+    end
+
+    it "removes unused coverage comments that weren't updated" do
+      # Mock the find_existing_inline_comment to return nil (no existing comment found)
+
+      # Mock the global comment to not be found (simulating no existing global comment)
+      allow(pull_request).to receive_messages(find_existing_inline_comment: nil, global_comments: [])
+
+      # Expect only the inline comment to be deleted (global comment will be created, not deleted)
+      expect(pull_request).to receive(:delete_comment).with(123)
+      expect(logger).to receive(:info).with("Removing unused coverage comment: 123 (app/models/user.rb)")
+
+      poster.call
+    end
+
+    it "keeps comments that were updated during the run" do
+      # Mock finding an existing comment for the first uncovered line
+      allow(pull_request).to receive(:find_existing_inline_comment).and_return(existing_inline_comment)
+
+      # Expect the inline comment to be updated, not deleted
+      expect(pull_request).to receive(:update_comment).with(id: 123, body: anything)
+      expect(pull_request).not_to receive(:delete_comment).with(123)
+
+      # The global comment will be updated (not deleted) since it exists and gets updated
+      expect(pull_request).to receive(:update_comment).with(id: 456, body: anything)
+      expect(pull_request).not_to receive(:delete_comment).with(456)
 
       poster.call
     end

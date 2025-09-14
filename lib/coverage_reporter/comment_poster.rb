@@ -1,6 +1,7 @@
 # frozen_string_literal: true
 
 require "logger"
+require "set"
 
 module CoverageReporter
   class CommentPoster
@@ -20,8 +21,15 @@ module CoverageReporter
         return
       end
 
+      # Track existing coverage comments to clean up unused ones later
+      @existing_coverage_comments = track_existing_coverage_comments
+      @updated_comment_ids = Set.new
+
       post_inline_comments
       post_global_comment
+
+      # Clean up any coverage comments that weren't updated
+      cleanup_unused_coverage_comments
     end
 
     private
@@ -33,10 +41,8 @@ module CoverageReporter
     end
 
     def post_inline_comments
-      # First, clean up old coverage comments for files that now have coverage
-      cleanup_old_coverage_comments
-
-      # Then post new comments for uncovered lines
+      # Post new comments for uncovered lines
+      # The PullRequest class will handle updating existing comments instead of creating duplicates
       analysis.uncovered_by_file.each do |file, lines|
         contiguous_chunks(lines).each do |start_line, end_line|
           post_inline_comment(file: file, start_line: start_line, end_line: end_line)
@@ -66,13 +72,24 @@ module CoverageReporter
     def post_inline_comment(file:, start_line:, end_line:)
       message = inline_message(start_line, end_line)
       body = build_inline_body(file: file, start_line: start_line, message: message)
-      pull_request.add_comment_on_lines(
-        commit_id:  commit_sha,
-        file_path:  file,
-        start_line: start_line,
-        end_line:   end_line,
-        body:       body
-      )
+
+      # Check if there's an existing comment for this line range
+      existing_comment = pull_request.find_existing_inline_comment(file, start_line, end_line)
+
+      if existing_comment
+        # Update existing comment and track it
+        pull_request.update_comment(id: existing_comment.id, body: body)
+        @updated_comment_ids.add(existing_comment.id)
+      else
+        # Create new comment
+        pull_request.add_comment_on_lines(
+          commit_id:  commit_sha,
+          file_path:  file,
+          start_line: start_line,
+          end_line:   end_line,
+          body:       body
+        )
+      end
     end
 
     def post_global_comment
@@ -88,25 +105,44 @@ module CoverageReporter
       ensure_global_comment(summary)
     end
 
-    def cleanup_old_coverage_comments
-      # Get all files that have coverage (either covered or uncovered)
-      all_files = analysis.uncovered_by_file.keys
-
-      # For each file, delete any existing coverage comments
-      # since we're about to post new ones for uncovered lines only
-      all_files.each do |file|
-        pull_request.delete_coverage_comments_for_file(file)
-      end
-    end
-
     def ensure_global_comment(body)
       comments = @pull_request.global_comments
       existing = comments.find { |c| c.body&.include?(GLOBAL_MARKER) }
       body_with_marker = body.include?(GLOBAL_MARKER) ? body : "#{GLOBAL_MARKER}\n#{body}"
       if existing
         @pull_request.update_comment(id: existing.id, body: body_with_marker)
+        @updated_comment_ids.add(existing.id)
       else
         @pull_request.add_comment(body: body_with_marker)
+      end
+    end
+
+    def track_existing_coverage_comments
+      # Get all existing coverage comments (both inline and global)
+      inline_comments = pull_request.inline_comments.select do |comment|
+        comment.body&.include?(INLINE_MARKER)
+      end
+
+      global_comments = pull_request.global_comments.select do |comment|
+        comment.body&.include?(GLOBAL_MARKER)
+      end
+
+      # Return a hash with comment ID as key and comment object as value
+      all_comments = {}
+      inline_comments.each { |comment| all_comments[comment.id] = comment }
+      global_comments.each { |comment| all_comments[comment.id] = comment }
+
+      all_comments
+    end
+
+    def cleanup_unused_coverage_comments
+      # Find comments that weren't updated during this run
+      unused_comment_ids = @existing_coverage_comments.keys - @updated_comment_ids.to_a
+
+      unused_comment_ids.each do |comment_id|
+        comment = @existing_coverage_comments[comment_id]
+        logger.info("Removing unused coverage comment: #{comment_id} (#{comment.path || 'global'})")
+        pull_request.delete_comment(comment_id)
       end
     end
   end

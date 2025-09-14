@@ -9,7 +9,7 @@ module CoverageReporter
       @diff     = diff
     end
 
-    # rubocop:disable Metrics/AbcSize
+    # rubocop:disable Metrics/AbcSize, Metrics/MethodLength
     def call
       total = 0
       covered = 0
@@ -17,6 +17,8 @@ module CoverageReporter
 
       @diff.each do |file, lines|
         next unless lines && !lines.empty?
+        # Only process files that exist in the coverage report
+        next unless @coverage.key?(file)
 
         total += lines.size
         covered_lines = Array(@coverage[file])
@@ -34,6 +36,6 @@ module CoverageReporter
         uncovered_by_file: uncovered_map
       )
     end
-    # rubocop:enable Metrics/AbcSize
+    # rubocop:enable Metrics/AbcSize, Metrics/MethodLength
   end
 end

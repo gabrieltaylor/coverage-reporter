@@ -61,16 +61,16 @@ RSpec.describe CoverageReporter::CoverageAnalyser do
     end
 
     context "when the file in diff has no coverage entry" do
-      it "treats all diff lines as uncovered" do
+      it "skips the file entirely" do
         coverage = {}
         diff = { "lib/missing.rb" => [5, 6, 7] }
 
         result = described_class.new(coverage: coverage, diff: diff).call
 
-        expect(result.total_changed).to eq(3)
+        expect(result.total_changed).to eq(0)
         expect(result.total_covered).to eq(0)
-        expect(result.diff_coverage).to eq(0.0)
-        expect(result.uncovered_by_file["lib/missing.rb"]).to contain_exactly(5, 6, 7)
+        expect(result.diff_coverage).to eq(100.0)
+        expect(result.uncovered_by_file).to be_empty
       end
     end
 

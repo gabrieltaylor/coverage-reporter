@@ -68,6 +68,13 @@ module CoverageReporter
       coverage_comments.each { |comment| delete_comment(comment.id) }
     end
 
+    def find_existing_inline_comment(file_path, start_line, end_line)
+      inline_comments.find do |comment|
+        coverage_comment_for_file?(comment, file_path) &&
+          comment_matches_line_range?(comment, start_line, end_line)
+      end
+    end
+
     private
 
     attr_reader :client, :repo, :pr_number
@@ -96,13 +103,6 @@ module CoverageReporter
 
       # If no exact match found, return the original path
       file_path
-    end
-
-    def find_existing_inline_comment(file_path, start_line, end_line)
-      inline_comments.find do |comment|
-        coverage_comment_for_file?(comment, file_path) &&
-          comment_matches_line_range?(comment, start_line, end_line)
-      end
     end
 
     def normalize_repo(repo)
@@ -167,7 +167,7 @@ module CoverageReporter
       if end_line > start_line
         comment.line == end_line && comment.start_line == start_line
       else
-        comment.line == start_line && comment.start_line == start_line
+        comment.line == start_line && (comment.start_line.nil? || comment.start_line == start_line)
       end
     end
 
