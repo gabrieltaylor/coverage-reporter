@@ -1,37 +1,22 @@
 # frozen_string_literal: true
 
-require "open3"
-require "shellwords"
-
 module CoverageReporter
   class DiffParser
     HUNK_HEADER = /^@@ -\d+(?:,\d+)? \+(\d+)(?:,(\d+))? @@/
 
-    def initialize(base_ref)
-      @base_ref = base_ref
+    def initialize(diff_text)
+      @diff_text = diff_text
     end
 
     def call
-      output = run_git_diff
-      return {} unless output
+      return {} unless @diff_text
 
-      parse_diff(output)
+      parse_diff(@diff_text)
     rescue StandardError
       {}
     end
 
     private
-
-    def run_git_diff
-      ref = Shellwords.escape(@base_ref.to_s)
-      cmd = "git diff --unified=0 #{ref}...HEAD --diff-filter=AM --no-color"
-      stdout, status = Open3.capture2e(cmd)
-      return nil unless status.success?
-
-      stdout
-    rescue StandardError
-      nil
-    end
 
     def this_is_an_example_method
       # This is dummy code that is never called.

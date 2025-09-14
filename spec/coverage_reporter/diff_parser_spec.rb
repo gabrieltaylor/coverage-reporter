@@ -4,26 +4,28 @@ require "spec_helper"
 require "coverage_reporter/diff_parser"
 
 RSpec.describe CoverageReporter::DiffParser do
-  subject(:parser) { described_class.new("origin/main") }
+  describe "#call" do
+    context "when diff text is nil" do
+      subject(:parser) { described_class.new(nil) }
 
-  describe "#fetch_diff" do
-    context "when git diff command fails (returns nil)" do
       it "returns an empty hash" do
-        allow(parser).to receive(:run_git_diff).and_return(nil)
         expect(parser.call).to eq({})
       end
     end
 
-    context "when git diff command raises an exception" do
+    context "when diff text is empty" do
+      subject(:parser) { described_class.new("") }
+
       it "returns an empty hash" do
-        allow(parser).to receive(:run_git_diff).and_raise("boom")
         expect(parser.call).to eq({})
       end
     end
 
-    context "when git diff command returns an empty string" do
+    context "when parsing raises an exception" do
+      subject(:parser) { described_class.new("invalid diff") }
+
       it "returns an empty hash" do
-        allow(parser).to receive(:run_git_diff).and_return("")
+        allow(parser).to receive(:parse_diff).and_raise("boom")
         expect(parser.call).to eq({})
       end
     end
@@ -60,10 +62,9 @@ RSpec.describe CoverageReporter::DiffParser do
           -line b
         DIFF
       end
+      subject(:parser) { described_class.new(diff_text) }
 
       it "parses and returns a hash of added line numbers per file, ignoring deleted files" do
-        allow(parser).to receive(:run_git_diff).and_return(diff_text)
-
         result = parser.call
 
         expect(result).to eq(
@@ -75,7 +76,6 @@ RSpec.describe CoverageReporter::DiffParser do
       end
 
       it "does not include removed lines" do
-        allow(parser).to receive(:run_git_diff).and_return(diff_text)
         result = parser.call
         # Ensure no negative side line numbers (e.g., 10 from -10,2 etc.)
         expect(result.values.flatten).not_to include(10)

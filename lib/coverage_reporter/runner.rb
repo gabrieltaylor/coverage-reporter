@@ -14,10 +14,14 @@ module CoverageReporter
 
     def run
       coverage = CoverageParser.new(coverage_path).call
-      diff     = DiffParser.new(base_ref).call
+      pull_request = PullRequest.new(github_token:, repo:, pr_number:)
+      diff_text = pull_request.pull_request_diff
+      puts diff_text
+
+      File.write("diff.txt", diff_text)
+      diff = DiffParser.new(diff_text).call
 
       analysis = CoverageAnalyser.new(coverage:, diff:).call
-      pull_request = PullRequest.new(github_token:, repo:, pr_number:)
 
       CommentPoster.new(pull_request:, analysis:, commit_sha:).call
     end

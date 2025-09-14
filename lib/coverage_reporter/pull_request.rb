@@ -84,6 +84,10 @@ module CoverageReporter
       end
     end
 
+    def pull_request_diff
+      @pull_request_diff ||= client.pull_request(repo, pr_number, accept: "application/vnd.github.v3.diff")
+    end
+
     private
 
     attr_reader :client, :repo, :pr_number
@@ -92,10 +96,6 @@ module CoverageReporter
       state = DiffParserState.new(file_path, start_line, end_line)
       diff.split("\n").each { |line| state.process_line(line) }
       state.result
-    end
-
-    def pull_request_diff
-      @pull_request_diff ||= client.pull_request(repo, pr_number, accept: "application/vnd.github.v3.diff")
     end
 
     def find_actual_file_path_in_diff(diff, file_path)

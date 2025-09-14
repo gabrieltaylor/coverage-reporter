@@ -15,6 +15,9 @@ module CoverageReporter
       covered = 0
       uncovered_map = {}
 
+      puts "diff: #{@diff}"
+      puts "coverage: #{@coverage}"
+
       @diff.each do |file, lines|
         next unless lines && !lines.empty?
         # Only process files that exist in the coverage report

@@ -10,8 +10,9 @@ RSpec.describe CoverageReporter::Runner do
   # We'll stub all collaborator classes so we only test orchestration
   let(:parser_instance) { instance_double(CoverageReporter::CoverageParser, call: coverage) }
   let(:diff_instance)   { instance_double(CoverageReporter::DiffParser, call: diff) }
-  let(:pull_request_instance) { instance_double(CoverageReporter::PullRequest) }
+  let(:pull_request_instance) { instance_double(CoverageReporter::PullRequest, pull_request_diff: diff_text) }
   let(:poster_instance) { instance_double(CoverageReporter::CommentPoster) }
+  let(:diff_text) { "diff --git a/lib/foo.rb b/lib/foo.rb\n+++ b/lib/foo.rb\n@@ -1,0 +1,3 @@\n+line1\n+line2\n+line3" }
   let(:analysis_result) do
     CoverageReporter::AnalysisResult.new(
       uncovered_by_file: uncovered_by_file,
@@ -52,7 +53,7 @@ RSpec.describe CoverageReporter::Runner do
       .to receive(:new).with(coverage_path).and_return(parser_instance)
 
     allow(CoverageReporter::DiffParser)
-      .to receive(:new).with(base_ref).and_return(diff_instance)
+      .to receive(:new).with(diff_text).and_return(diff_instance)
 
     allow(CoverageReporter::CoverageAnalyser)
       .to receive(:new).with(coverage: coverage, diff: diff)
