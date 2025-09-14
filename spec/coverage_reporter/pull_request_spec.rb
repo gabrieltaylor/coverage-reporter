@@ -1,0 +1,527 @@
+# frozen_string_literal: true
+
+require "spec_helper"
+require "coverage_reporter/pull_request"
+
+RSpec.describe CoverageReporter::PullRequest do
+  let(:github_token) { "ghp_test_token" }
+  let(:repo) { "owner/repo" }
+  let(:pr_number) { "123" }
+  let(:client) { instance_double(Octokit::Client) }
+
+  before do
+    allow(Octokit::Client).to receive(:new).with(access_token: github_token).and_return(client)
+    allow(client).to receive(:auto_paginate=).with(true)
+  end
+
+  let(:pull_request) { described_class.new(github_token:, repo:, pr_number:) }
+
+  describe "#initialize" do
+    context "with valid parameters" do
+      it "creates a new instance" do
+        expect(pull_request).to be_a(described_class)
+      end
+
+      it "sets up the Octokit client with correct options" do
+        pull_request # Force evaluation of the let
+        expect(Octokit::Client).to have_received(:new).with(access_token: github_token)
+        expect(client).to have_received(:auto_paginate=).with(true)
+      end
+    end
+
+    context "with missing or empty github_token" do
+      it "raises ArgumentError when token is nil" do
+        expect {
+          described_class.new(github_token: nil, repo:, pr_number:)
+        }.to raise_error(ArgumentError, "GitHub token is required")
+      end
+
+      it "raises ArgumentError when token is empty string" do
+        expect {
+          described_class.new(github_token: "", repo:, pr_number:)
+        }.to raise_error(ArgumentError, "GitHub token is required")
+      end
+    end
+
+    context "with missing or empty repo" do
+      it "raises ArgumentError when repo is nil" do
+        expect {
+          described_class.new(github_token:, repo: nil, pr_number:)
+        }.to raise_error(ArgumentError, "Repository is required")
+      end
+
+      it "raises ArgumentError when repo is empty string" do
+        expect {
+          described_class.new(github_token:, repo: "", pr_number:)
+        }.to raise_error(ArgumentError, "Repository is required")
+      end
+    end
+
+    context "with missing or empty pr_number" do
+      it "raises ArgumentError when pr_number is nil" do
+        expect {
+          described_class.new(github_token:, repo:, pr_number: nil)
+        }.to raise_error(ArgumentError, "PR number is required")
+      end
+
+      it "raises ArgumentError when pr_number is empty string" do
+        expect {
+          described_class.new(github_token:, repo:, pr_number: "")
+        }.to raise_error(ArgumentError, "PR number is required")
+      end
+    end
+
+    context "with repository normalization" do
+      it "keeps owner/repo format as is" do
+        described_class.new(github_token:, repo: "owner/repo", pr_number:)
+        expect(Octokit::Client).to have_received(:new).with(access_token: github_token)
+      end
+
+      it "extracts owner/repo from full GitHub URL" do
+        described_class.new(github_token:, repo: "https://github.com/owner/repo", pr_number:)
+        expect(Octokit::Client).to have_received(:new).with(access_token: github_token)
+      end
+
+      it "extracts owner/repo from GitHub URL with .git suffix" do
+        described_class.new(github_token:, repo: "https://github.com/owner/repo.git", pr_number:)
+        expect(Octokit::Client).to have_received(:new).with(access_token: github_token)
+      end
+
+      it "raises ArgumentError for invalid repo format" do
+        expect {
+          described_class.new(github_token:, repo: "just-repo-name", pr_number:)
+        }.to raise_error(ArgumentError, "Repository must be in format 'owner/repo' or a full GitHub URL")
+      end
+    end
+  end
+
+  describe "#inline_comments" do
+    let(:comments) { [{ id: 1, body: "Comment 1" }, { id: 2, body: "Comment 2" }] }
+
+    before do
+      allow(client).to receive(:issue_comments).with(repo, pr_number).and_return(comments)
+    end
+
+    it "returns issue comments" do
+      expect(pull_request.inline_comments).to eq(comments)
+    end
+
+    it "calls the client with correct parameters" do
+      pull_request.inline_comments
+      expect(client).to have_received(:issue_comments).with(repo, pr_number)
+    end
+  end
+
+  describe "#global_comments" do
+    let(:comments) { [{ id: 1, body: "Global comment 1" }] }
+
+    before do
+      allow(client).to receive(:pull_request_comments).with(repo, pr_number).and_return(comments)
+    end
+
+    it "returns pull request comments" do
+      expect(pull_request.global_comments).to eq(comments)
+    end
+
+    it "calls the client with correct parameters" do
+      pull_request.global_comments
+      expect(client).to have_received(:pull_request_comments).with(repo, pr_number)
+    end
+  end
+
+  describe "#latest_commit_sha" do
+    let(:commit_sha) { "abc123def456" }
+    let(:pull_request_data) { double(head: double(sha: commit_sha)) }
+
+    before do
+      allow(client).to receive(:pull_request).with(repo, pr_number).and_return(pull_request_data)
+    end
+
+    it "returns the latest commit SHA" do
+      expect(pull_request.latest_commit_sha).to eq(commit_sha)
+    end
+
+    it "calls the client with correct parameters" do
+      pull_request.latest_commit_sha
+      expect(client).to have_received(:pull_request).with(repo, pr_number)
+    end
+
+    it "memoizes the result" do
+      pull_request.latest_commit_sha
+      pull_request.latest_commit_sha
+      expect(client).to have_received(:pull_request).with(repo, pr_number).once
+    end
+  end
+
+  describe "#add_comment" do
+    let(:body) { "This is a comment" }
+    let(:response) { { id: 1, body: body } }
+
+    before do
+      allow(client).to receive(:post).with(
+        "/repos/#{repo}/pulls/#{pr_number}/comments",
+        body: body
+      ).and_return(response)
+    end
+
+    it "adds a comment to the pull request" do
+      result = pull_request.add_comment(body: body)
+      expect(result).to eq(response)
+    end
+
+    it "calls the client with correct parameters" do
+      pull_request.add_comment(body: body)
+      expect(client).to have_received(:post).with(
+        "/repos/#{repo}/pulls/#{pr_number}/comments",
+        body: body
+      )
+    end
+  end
+
+  describe "#update_comment" do
+    let(:comment_id) { 456 }
+    let(:body) { "Updated comment" }
+    let(:response) { { id: comment_id, body: body } }
+
+    before do
+      allow(client).to receive(:patch).with(
+        "/repos/#{repo}/pulls/comments/#{comment_id}",
+        body: body
+      ).and_return(response)
+    end
+
+    it "updates a comment" do
+      result = pull_request.update_comment(id: comment_id, body: body)
+      expect(result).to eq(response)
+    end
+
+    it "calls the client with correct parameters" do
+      pull_request.update_comment(id: comment_id, body: body)
+      expect(client).to have_received(:patch).with(
+        "/repos/#{repo}/pulls/comments/#{comment_id}",
+        body: body
+      )
+    end
+  end
+
+  describe "#delete_comment" do
+    let(:comment_id) { 789 }
+
+    before do
+      allow(client).to receive(:delete).with("/repos/#{repo}/pulls/comments/#{comment_id}")
+    end
+
+    it "deletes a comment" do
+      pull_request.delete_comment(comment_id)
+      expect(client).to have_received(:delete).with("/repos/#{repo}/pulls/comments/#{comment_id}")
+    end
+  end
+
+  describe "#add_comment_on_lines" do
+    let(:commit_id) { "commit123" }
+    let(:file_path) { "lib/test.rb" }
+    let(:start_line) { 8 }
+    let(:end_line) { 10 }
+    let(:body) { "Coverage comment" }
+    let(:side) { "RIGHT" }
+    let(:diff) do
+      <<~DIFF
+        diff --git a/lib/test.rb b/lib/test.rb
+        index 1234567..abcdefg 100644
+        --- a/lib/test.rb
+        +++ b/lib/test.rb
+        @@ -7,7 +7,7 @@ class Test
+         def method1
+           puts "hello"
+         end
+        -def old_method
+        +def new_method
+           puts "world"
+         end
+        +def added_method
+        +  puts "new code"
+        +end
+        end
+      DIFF
+    end
+
+    before do
+      allow(client).to receive(:pull_request).with(repo, pr_number, accept: 'application/vnd.github.v3.diff').and_return(diff)
+      allow(client).to receive(:post).and_return({ id: 1 })
+    end
+
+    context "with single line comment" do
+      let(:end_line) { 8 }
+
+      it "adds a comment on a single line" do
+        pull_request.add_comment_on_lines(
+          commit_id: commit_id,
+          file_path: file_path,
+          start_line: start_line,
+          end_line: end_line,
+          body: body
+        )
+
+        expect(client).to have_received(:post).with(
+          "/repos/#{repo}/pulls/#{pr_number}/comments",
+          hash_including(
+            body: body,
+            commit_id: commit_id,
+            path: file_path,
+            line: start_line,
+            side: "RIGHT"
+          )
+        )
+      end
+    end
+
+    context "with multi-line comment" do
+      it "adds a comment on multiple lines" do
+        pull_request.add_comment_on_lines(
+          commit_id: commit_id,
+          file_path: file_path,
+          start_line: start_line,
+          end_line: end_line,
+          body: body
+        )
+
+        expect(client).to have_received(:post).with(
+          "/repos/#{repo}/pulls/#{pr_number}/comments",
+          hash_including(
+            body: body,
+            commit_id: commit_id,
+            path: file_path,
+            line: end_line,
+            side: "RIGHT",
+            start_line: start_line,
+            start_side: "RIGHT"
+          )
+        )
+      end
+    end
+
+    context "with custom side" do
+      let(:side) { "LEFT" }
+
+      it "ignores the specified side and uses calculated side from diff" do
+        pull_request.add_comment_on_lines(
+          commit_id: commit_id,
+          file_path: file_path,
+          start_line: start_line,
+          end_line: end_line,
+          body: body,
+          side: side
+        )
+
+        expect(client).to have_received(:post).with(
+          "/repos/#{repo}/pulls/#{pr_number}/comments",
+          hash_including(side: "RIGHT") # Calculated from diff, not the passed side parameter
+        )
+      end
+    end
+
+    context "when GitHub API returns an error" do
+      let(:error) do
+        Class.new(StandardError) do
+          def response_body
+            '{"message": "Validation failed"}'
+          end
+          
+          def status
+            422
+          end
+          
+          def is_a?(klass)
+            klass == Octokit::Error
+          end
+        end.new("API Error")
+      end
+
+      before do
+        allow(client).to receive(:post).and_raise(error)
+      end
+
+      it "raises the error with debugging information" do
+        expect {
+          pull_request.add_comment_on_lines(
+            commit_id: commit_id,
+            file_path: file_path,
+            start_line: start_line,
+            end_line: end_line,
+            body: body
+          )
+        }.to raise_error(StandardError, "API Error")
+      end
+    end
+
+    context "when an unexpected error occurs" do
+      let(:error) { StandardError.new("Unexpected error") }
+
+      before do
+        allow(client).to receive(:post).and_raise(error)
+      end
+
+      it "raises the error with debugging information" do
+        expect {
+          pull_request.add_comment_on_lines(
+            commit_id: commit_id,
+            file_path: file_path,
+            start_line: start_line,
+            end_line: end_line,
+            body: body
+          )
+        }.to raise_error(StandardError, "Unexpected error")
+      end
+    end
+
+    context "with file path matching" do
+      let(:file_path) { "test.rb" }
+      let(:diff) do
+        <<~DIFF
+          diff --git a/lib/test.rb b/lib/test.rb
+          index 1234567..abcdefg 100644
+          --- a/lib/test.rb
+          +++ b/lib/test.rb
+          @@ -7,7 +7,7 @@ class Test
+           def method1
+             puts "hello"
+           end
+          -def old_method
+          +def new_method
+             puts "world"
+           end
+          end
+        DIFF
+      end
+
+      it "finds the actual file path in the diff" do
+        pull_request.add_comment_on_lines(
+          commit_id: commit_id,
+          file_path: file_path,
+          start_line: start_line,
+          end_line: end_line,
+          body: body
+        )
+
+        expect(client).to have_received(:post).with(
+          "/repos/#{repo}/pulls/#{pr_number}/comments",
+          hash_including(path: "lib/test.rb")
+        )
+      end
+    end
+  end
+
+  describe "private methods" do
+    describe "#normalize_repo" do
+      it "returns owner/repo format as is" do
+        pr = described_class.new(github_token:, repo: "owner/repo", pr_number:)
+        expect(pr.send(:normalize_repo, "owner/repo")).to eq("owner/repo")
+      end
+
+      it "extracts owner/repo from full GitHub URL" do
+        pr = described_class.new(github_token:, repo: "https://github.com/owner/repo", pr_number:)
+        expect(pr.send(:normalize_repo, "https://github.com/owner/repo")).to eq("owner/repo")
+      end
+
+      it "extracts owner/repo from GitHub URL with .git suffix" do
+        pr = described_class.new(github_token:, repo: "https://github.com/owner/repo.git", pr_number:)
+        expect(pr.send(:normalize_repo, "https://github.com/owner/repo.git")).to eq("owner/repo")
+      end
+
+      it "raises ArgumentError for invalid repo format" do
+        pr = described_class.new(github_token:, repo: "owner/repo", pr_number:)
+        expect {
+          pr.send(:normalize_repo, "just-repo-name")
+        }.to raise_error(ArgumentError, "Repository must be in format 'owner/repo' or a full GitHub URL")
+      end
+    end
+
+    describe "#get_pull_request_diff" do
+      let(:diff) { "diff content" }
+
+      before do
+        allow(client).to receive(:pull_request).with(repo, pr_number, accept: 'application/vnd.github.v3.diff').and_return(diff)
+      end
+
+      it "returns the pull request diff" do
+        result = pull_request.send(:get_pull_request_diff)
+        expect(result).to eq(diff)
+      end
+
+      it "memoizes the result" do
+        pull_request.send(:get_pull_request_diff)
+        pull_request.send(:get_pull_request_diff)
+        expect(client).to have_received(:pull_request).with(repo, pr_number, accept: 'application/vnd.github.v3.diff').once
+      end
+    end
+
+    describe "#find_actual_file_path_in_diff" do
+      let(:diff) do
+        <<~DIFF
+          diff --git a/lib/test.rb b/lib/test.rb
+          index 1234567..abcdefg 100644
+          --- a/lib/test.rb
+          +++ b/lib/test.rb
+        DIFF
+      end
+
+      it "finds exact file path match" do
+        result = pull_request.send(:find_actual_file_path_in_diff, diff, "lib/test.rb")
+        expect(result).to eq("lib/test.rb")
+      end
+
+      it "finds basename match" do
+        result = pull_request.send(:find_actual_file_path_in_diff, diff, "test.rb")
+        expect(result).to eq("lib/test.rb")
+      end
+
+      it "returns original path if no match found" do
+        result = pull_request.send(:find_actual_file_path_in_diff, diff, "nonexistent.rb")
+        expect(result).to eq("nonexistent.rb")
+      end
+    end
+
+    describe "#find_diff_line_numbers" do
+      let(:diff) do
+        <<~DIFF
+          diff --git a/lib/test.rb b/lib/test.rb
+          index 1234567..abcdefg 100644
+          --- a/lib/test.rb
+          +++ b/lib/test.rb
+          @@ -7,7 +7,7 @@ class Test
+           def method1
+             puts "hello"
+           end
+          -def old_method
+          +def new_method
+           puts "world"
+           end
+          +def added_method
+          +  puts "new code"
+          +end
+          end
+        DIFF
+      end
+
+      it "finds line numbers for single line comment" do
+        result = pull_request.send(:find_diff_line_numbers, diff, "lib/test.rb", 8, 8)
+        expect(result).to include(
+          line: 8,
+          side: "RIGHT",
+          start_line: nil,
+          start_side: nil
+        )
+      end
+
+      it "finds line numbers for multi-line comment" do
+        result = pull_request.send(:find_diff_line_numbers, diff, "lib/test.rb", 8, 10)
+        expect(result).to include(
+          line: 10,
+          side: "RIGHT",
+          start_line: 8,
+          start_side: "RIGHT"
+        )
+      end
+    end
+  end
+end

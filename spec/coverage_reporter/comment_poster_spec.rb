@@ -4,10 +4,11 @@ require "spec_helper"
 require "coverage_reporter/comment_poster"
 
 RSpec.describe CoverageReporter::CommentPoster do
-  subject(:poster) { described_class.new(pull_request:, analysis:, commit_sha:) }
+  subject(:poster) { described_class.new(pull_request:, analysis:, commit_sha:, logger:) }
 
   let(:pull_request) { instance_double(CoverageReporter::PullRequest) }
   let(:commit_sha) { "abc123" }
+  let(:logger) { instance_double(Logger) }
   let(:diff_coverage) { 87.5 }
   let(:uncovered) do
     {
@@ -30,13 +31,44 @@ RSpec.describe CoverageReporter::CommentPoster do
       inline_comments:      [],
       global_comments:      [],
       add_comment_on_lines: true,
-      add_comment:          true
+      add_comment:          true,
+      latest_commit_sha:    commit_sha
     )
+    allow(logger).to receive(:info)
   end
 
-  describe "#post_all" do
-    it "deletes old inline comments, posts grouped inline comments and a global summary" do
-      poster.call
+  describe "#call" do
+    context "when commit is the latest commit" do
+      it "proceeds with posting comments" do
+        expect(pull_request).to receive(:inline_comments).and_return([])
+        expect(pull_request).to receive(:global_comments).and_return([])
+        expect(pull_request).to receive(:add_comment_on_lines).at_least(:once)
+        expect(pull_request).to receive(:add_comment).at_least(:once)
+        
+        poster.call
+      end
+
+      it "does not log any skip message" do
+        expect(logger).not_to receive(:info)
+        
+        poster.call
+      end
+    end
+
+    context "when commit is not the latest commit" do
+      let(:latest_commit_sha) { "def456" }
+      
+      before do
+        allow(pull_request).to receive(:latest_commit_sha).and_return(latest_commit_sha)
+      end
+
+      it "logs a skip message and returns early" do
+        expect(logger).to receive(:info).with("Skipping comment posting: commit #{commit_sha} is not the latest commit (#{latest_commit_sha})")
+        expect(pull_request).not_to receive(:add_comment_on_lines)
+        expect(pull_request).not_to receive(:add_comment)
+        
+        poster.call
+      end
     end
   end
 
@@ -45,6 +77,34 @@ RSpec.describe CoverageReporter::CommentPoster do
 
     it "groups duplicates into separate chunks according to contiguous rule" do
       poster.call
+    end
+  end
+
+  describe "logger parameter" do
+    context "when no logger is provided" do
+      subject(:poster) { described_class.new(pull_request:, analysis:, commit_sha:) }
+      
+      it "uses the default logger" do
+        expect { poster.call }.not_to raise_error
+      end
+    end
+
+    context "when a custom logger is provided" do
+      let(:custom_logger) { instance_double(Logger) }
+      subject(:poster) { described_class.new(pull_request:, analysis:, commit_sha:, logger: custom_logger) }
+      
+      before do
+        allow(custom_logger).to receive(:info)
+      end
+
+      it "uses the provided logger" do
+        latest_sha = "different_sha"
+        allow(pull_request).to receive(:latest_commit_sha).and_return(latest_sha)
+        
+        expect(custom_logger).to receive(:info).with("Skipping comment posting: commit #{commit_sha} is not the latest commit (#{latest_sha})")
+        
+        poster.call
+      end
     end
   end
 end

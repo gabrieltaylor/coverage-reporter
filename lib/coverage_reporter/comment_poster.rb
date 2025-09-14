@@ -1,18 +1,24 @@
 # frozen_string_literal: true
 
+require 'logger'
+
 module CoverageReporter
   class CommentPoster
     INLINE_MARKER = "<!-- coverage-inline-marker -->"
     GLOBAL_MARKER = "<!-- coverage-comment-marker -->"
 
-    def initialize(pull_request:, analysis:, commit_sha:)
+    def initialize(pull_request:, analysis:, commit_sha:, logger: Logger.new($stdout))
       @pull_request = pull_request
       @analysis = analysis
       @commit_sha = commit_sha
+      @logger = logger
     end
 
     def call
-      return unless latest_commit?
+      unless latest_commit?
+        @logger.info("Skipping comment posting: commit #{commit_sha} is not the latest commit (#{pull_request.latest_commit_sha})")
+        return
+      end
 
       post_inline_comments
       post_global_comment
@@ -20,7 +26,7 @@ module CoverageReporter
 
     private
 
-    attr_reader :pull_request, :analysis, :commit_sha
+    attr_reader :pull_request, :analysis, :commit_sha, :logger
 
     def latest_commit?
       commit_sha == pull_request.latest_commit_sha
