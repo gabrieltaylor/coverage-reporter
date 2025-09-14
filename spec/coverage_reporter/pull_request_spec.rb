@@ -358,8 +358,7 @@ RSpec.describe CoverageReporter::PullRequest do
             path:       file_path,
             line:       end_line,
             side:       "RIGHT",
-            start_line: start_line,
-            start_side: "RIGHT"
+            start_line: start_line
           )
         )
       end

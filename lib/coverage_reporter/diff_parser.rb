@@ -50,7 +50,8 @@ module CoverageReporter
         current_new_line = process_content_line(line, changed, current_file, current_new_line)
       end
 
-      changed.transform_values { |arr| arr.uniq.sort }
+      # Convert arrays of line numbers to ranges
+      changed.transform_values { |arr| consolidate_to_ranges(arr.uniq.sort) }
     end
 
     def file_header_line?(line)
@@ -85,6 +86,30 @@ module CoverageReporter
       if (m = line.match(%r{\A\+\+\+\sb/(.+)\z}))
         m[1]
       end
+    end
+
+    def consolidate_to_ranges(line_numbers)
+      return [] if line_numbers.empty?
+
+      ranges = []
+      start = line_numbers.first
+      last = line_numbers.first
+
+      line_numbers.each_cons(2) do |current, next_line|
+        if next_line == current + 1
+          # Consecutive line, extend current range
+          last = next_line
+        else
+          # Gap found, close current range and start new one
+          ranges << [start, last]
+          start = next_line
+          last = next_line
+        end
+      end
+
+      # Add the final range
+      ranges << [start, last]
+      ranges
     end
   end
 end

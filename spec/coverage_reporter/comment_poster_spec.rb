@@ -9,22 +9,12 @@ RSpec.describe CoverageReporter::CommentPoster do
   let(:pull_request) { instance_double(CoverageReporter::PullRequest) }
   let(:commit_sha) { "abc123" }
   let(:logger) { instance_double(Logger) }
-  let(:diff_coverage) { 87.5 }
-  let(:uncovered) do
+  let(:analysis) do
     {
-      "app/models/user.rb" => [10, 11, 12, 20, 22, 21, 30],
-      "lib/foo.rb"         => [5]
+      "app/models/user.rb" => [[10, 12], [20, 22], [30, 30]],
+      "lib/foo.rb"         => [[5, 5]]
     }
   end
-  let(:total_changed) { 10 }
-  let(:total_covered) { 90 }
-  let(:uncovered_by_file) do
-    {
-      "app/models/user.rb" => [10, 11, 12, 20, 22, 21, 30],
-      "lib/foo.rb"         => [5]
-    }
-  end
-  let(:analysis) { CoverageReporter::AnalysisResult.new(diff_coverage:, total_changed:, total_covered:, uncovered_by_file:) }
 
   before do
     allow(pull_request).to receive_messages(
@@ -78,7 +68,7 @@ RSpec.describe CoverageReporter::CommentPoster do
   end
 
   describe "inline grouping edge cases" do
-    let(:uncovered) { { "lib/edge.rb" => [3, 3, 4] } }
+    let(:analysis) { { "lib/edge.rb" => [[3, 3], [4, 4]] } }
 
     it "groups duplicates into separate chunks according to contiguous rule" do
       poster.call

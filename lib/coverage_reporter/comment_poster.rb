@@ -43,19 +43,13 @@ module CoverageReporter
     def post_inline_comments
       # Post new comments for uncovered lines
       # The PullRequest class will handle updating existing comments instead of creating duplicates
-      analysis.uncovered_by_file.each do |file, lines|
-        contiguous_chunks(lines).each do |start_line, end_line|
+      analysis.each do |file, ranges|
+        ranges.each do |start_line, end_line|
           post_inline_comment(file: file, start_line: start_line, end_line: end_line)
         end
       end
     end
 
-    def contiguous_chunks(lines)
-      lines
-        .sort
-        .chunk_while { |i, j| j == i + 1 }
-        .map { |chunk| [chunk.first, chunk.last] }
-    end
 
     def inline_message(start_line, end_line)
       if start_line == end_line
@@ -93,16 +87,24 @@ module CoverageReporter
     end
 
     def post_global_comment
+      coverage_percentage = calculate_coverage_percentage
       summary = <<~MD
         #{GLOBAL_MARKER}
         🧪 **Test Coverage Summary**
 
-        ✅ **#{analysis.diff_coverage}%** of changed lines are covered.
+        ✅ **#{coverage_percentage}%** of changed lines are covered.
 
         _Commit: #{commit_sha}_
       MD
 
       ensure_global_comment(summary)
+    end
+
+    def calculate_coverage_percentage
+      # Since we only have uncovered ranges, we can't calculate exact coverage percentage
+      # without knowing the total changed lines. For now, return a placeholder.
+      # This could be enhanced to accept total changed lines as a parameter.
+      "N/A"
     end
 
     def ensure_global_comment(body)

@@ -13,22 +13,11 @@ RSpec.describe CoverageReporter::Runner do
   let(:pull_request_instance) { instance_double(CoverageReporter::PullRequest, pull_request_diff: diff_text) }
   let(:poster_instance) { instance_double(CoverageReporter::CommentPoster) }
   let(:diff_text) { "diff --git a/lib/foo.rb b/lib/foo.rb\n+++ b/lib/foo.rb\n@@ -1,0 +1,3 @@\n+line1\n+line2\n+line3" }
-  let(:analysis_result) do
-    CoverageReporter::AnalysisResult.new(
-      uncovered_by_file: uncovered_by_file,
-      diff_coverage:     diff_coverage,
-      total_changed:     total_changed,
-      total_covered:     total_covered
-    )
-  end
+  let(:analysis_result) { { "lib/foo.rb" => [[3, 3]] } }
   let(:analyser_instance) { instance_double(CoverageReporter::CoverageAnalyser, call: analysis_result) }
   # Provide default values overridden per example
   let(:coverage) { { "lib/foo.rb" => [1, 2] } }
   let(:diff) { { "lib/foo.rb" => [1, 2, 3] } }
-  let(:uncovered_by_file) { { "lib/foo.rb" => [3] } }
-  let(:diff_coverage) { 66.67 }
-  let(:total_changed) { 3 }
-  let(:total_covered) { 2 }
   let(:pr_number) { 99 }
   let(:repo) { "user/repo" }
   let(:html_root)     { "coverage" }
@@ -82,10 +71,9 @@ RSpec.describe CoverageReporter::Runner do
     end
 
     context "when there are no uncovered lines" do
-      let(:uncovered_by_file) { {} }
+      let(:analysis_result) { {} }
       let(:coverage) { { "lib/bar.rb" => [5, 6, 7] } }
       let(:diff) { { "lib/bar.rb" => [5, 6, 7] } }
-      let(:diff_coverage) { 100.0 }
 
       it "still publishes both inline (with empty mapping) and global comments" do
         runner.run

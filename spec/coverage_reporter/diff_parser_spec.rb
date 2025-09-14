@@ -65,12 +65,12 @@ RSpec.describe CoverageReporter::DiffParser do
         DIFF
       end
 
-      it "parses and returns a hash of added line numbers per file, ignoring deleted files" do
+      it "parses and returns a hash of line ranges per file, ignoring deleted files" do
         result = parser.call
 
         expect(result).to eq(
-          "lib/sample.rb"      => [5, 11, 12, 13, 14],
-          "app/models/user.rb" => [1, 2]
+          "lib/sample.rb"      => [[5, 5], [11, 14]],
+          "app/models/user.rb" => [[1, 2]]
         )
 
         expect(result).not_to have_key("obsolete.txt")
@@ -81,6 +81,118 @@ RSpec.describe CoverageReporter::DiffParser do
         # Ensure no negative side line numbers (e.g., 10 from -10,2 etc.)
         expect(result.values.flatten).not_to include(10)
       end
+    end
+
+    context "with consecutive line additions" do
+      subject(:parser) { described_class.new(diff_text) }
+
+      let(:diff_text) do
+        <<~DIFF
+          diff --git a/test.rb b/test.rb
+          index 0000001..0000002 100644
+          --- a/test.rb
+          +++ b/test.rb
+          @@ -1,0 +1,5 @@
+          +line 1
+          +line 2
+          +line 3
+          +line 4
+          +line 5
+        DIFF
+      end
+
+      it "consolidates consecutive lines into a single range" do
+        result = parser.call
+
+        expect(result).to eq(
+          "test.rb" => [[1, 5]]
+        )
+      end
+    end
+
+    context "with non-consecutive line additions" do
+      subject(:parser) { described_class.new(diff_text) }
+
+      let(:diff_text) do
+        <<~DIFF
+          diff --git a/test.rb b/test.rb
+          index 0000001..0000002 100644
+          --- a/test.rb
+          +++ b/test.rb
+          @@ -1,0 +1,1 @@
+          +line 1
+          @@ -5,0 +6,1 @@
+          +line 6
+          @@ -10,0 +11,1 @@
+          +line 11
+        DIFF
+      end
+
+      it "creates separate ranges for non-consecutive lines" do
+        result = parser.call
+
+        expect(result).to eq(
+          "test.rb" => [[1, 1], [6, 6], [11, 11]]
+        )
+      end
+    end
+
+    context "with mixed consecutive and non-consecutive lines" do
+      subject(:parser) { described_class.new(diff_text) }
+
+      let(:diff_text) do
+        <<~DIFF
+          diff --git a/test.rb b/test.rb
+          index 0000001..0000002 100644
+          --- a/test.rb
+          +++ b/test.rb
+          @@ -1,0 +1,3 @@
+          +line 1
+          +line 2
+          +line 3
+          @@ -10,0 +11,1 @@
+          +line 11
+          @@ -15,0 +16,2 @@
+          +line 16
+          +line 17
+          @@ -25,0 +27,1 @@
+          +line 27
+        DIFF
+      end
+
+      it "creates appropriate ranges for mixed patterns" do
+        result = parser.call
+
+        expect(result).to eq(
+          "test.rb" => [[1, 3], [11, 11], [16, 17], [27, 27]]
+        )
+      end
+    end
+  end
+
+  describe "#consolidate_to_ranges" do
+    subject(:parser) { described_class.new("") }
+
+    it "returns empty array for empty input" do
+      expect(parser.send(:consolidate_to_ranges, [])).to eq([])
+    end
+
+    it "returns single range for single line" do
+      expect(parser.send(:consolidate_to_ranges, [5])).to eq([[5, 5]])
+    end
+
+    it "consolidates consecutive lines" do
+      expect(parser.send(:consolidate_to_ranges, [1, 2, 3, 4, 5])).to eq([[1, 5]])
+    end
+
+    it "creates separate ranges for non-consecutive lines" do
+      expect(parser.send(:consolidate_to_ranges, [1, 3, 5, 7, 9])).to eq([[1, 1], [3, 3], [5, 5], [7, 7], [9, 9]])
+    end
+
+    it "handles mixed consecutive and non-consecutive lines" do
+      expect(parser.send(:consolidate_to_ranges, [1, 2, 3, 5, 6, 8, 10, 11, 12, 15])).to eq(
+        [[1, 3], [5, 6], [8, 8], [10, 12], [15, 15]]
+      )
     end
   end
 end
