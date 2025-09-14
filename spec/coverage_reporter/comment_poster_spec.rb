@@ -28,13 +28,13 @@ RSpec.describe CoverageReporter::CommentPoster do
 
   before do
     allow(pull_request).to receive_messages(
-      inline_comments:      [],
-      global_comments:      [],
-      add_comment_on_lines: true,
-      add_comment:          true,
-      update_comment:       true,
+      inline_comments:                   [],
+      global_comments:                   [],
+      add_comment_on_lines:              true,
+      add_comment:                       true,
+      update_comment:                    true,
       delete_coverage_comments_for_file: true,
-      latest_commit_sha:    commit_sha
+      latest_commit_sha:                 commit_sha
     )
     allow(logger).to receive(:info)
   end
@@ -45,29 +45,31 @@ RSpec.describe CoverageReporter::CommentPoster do
         expect(pull_request).to receive(:global_comments).and_return([])
         expect(pull_request).to receive(:add_comment_on_lines).at_least(:once)
         expect(pull_request).to receive(:add_comment).at_least(:once)
-        
+
         poster.call
       end
 
       it "does not log any skip message" do
         expect(logger).not_to receive(:info)
-        
+
         poster.call
       end
     end
 
     context "when commit is not the latest commit" do
       let(:latest_commit_sha) { "def456" }
-      
+
       before do
         allow(pull_request).to receive(:latest_commit_sha).and_return(latest_commit_sha)
       end
 
       it "logs a skip message and returns early" do
-        expect(logger).to receive(:info).with("Skipping comment posting: commit #{commit_sha} is not the latest commit (#{latest_commit_sha})")
+        expect(logger).to receive(:info).with(
+          "Skipping comment posting: commit #{commit_sha} is not the latest commit (#{latest_commit_sha})"
+        )
         expect(pull_request).not_to receive(:add_comment_on_lines)
         expect(pull_request).not_to receive(:add_comment)
-        
+
         poster.call
       end
     end
@@ -86,7 +88,7 @@ RSpec.describe CoverageReporter::CommentPoster do
       expect(pull_request).to receive(:add_comment_on_lines) do |args|
         expect(args[:body]).to include("_Commit: #{commit_sha}_")
       end
-      
+
       poster.call
     end
 
@@ -94,7 +96,7 @@ RSpec.describe CoverageReporter::CommentPoster do
       expect(pull_request).to receive(:add_comment) do |args|
         expect(args[:body]).to include("_Commit: #{commit_sha}_")
       end
-      
+
       poster.call
     end
   end
@@ -103,7 +105,7 @@ RSpec.describe CoverageReporter::CommentPoster do
     it "calls delete_coverage_comments_for_file for each file with coverage" do
       expect(pull_request).to receive(:delete_coverage_comments_for_file).with("app/models/user.rb")
       expect(pull_request).to receive(:delete_coverage_comments_for_file).with("lib/foo.rb")
-      
+
       poster.call
     end
   end
@@ -111,16 +113,17 @@ RSpec.describe CoverageReporter::CommentPoster do
   describe "logger parameter" do
     context "when no logger is provided" do
       subject(:poster) { described_class.new(pull_request:, analysis:, commit_sha:) }
-      
+
       it "uses the default logger" do
         expect { poster.call }.not_to raise_error
       end
     end
 
     context "when a custom logger is provided" do
-      let(:custom_logger) { instance_double(Logger) }
       subject(:poster) { described_class.new(pull_request:, analysis:, commit_sha:, logger: custom_logger) }
-      
+
+      let(:custom_logger) { instance_double(Logger) }
+
       before do
         allow(custom_logger).to receive(:info)
       end
@@ -128,9 +131,11 @@ RSpec.describe CoverageReporter::CommentPoster do
       it "uses the provided logger" do
         latest_sha = "different_sha"
         allow(pull_request).to receive(:latest_commit_sha).and_return(latest_sha)
-        
-        expect(custom_logger).to receive(:info).with("Skipping comment posting: commit #{commit_sha} is not the latest commit (#{latest_sha})")
-        
+
+        expect(custom_logger).to receive(:info).with(
+          "Skipping comment posting: commit #{commit_sha} is not the latest commit (#{latest_sha})"
+        )
+
         poster.call
       end
     end
