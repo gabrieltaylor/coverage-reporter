@@ -9,15 +9,15 @@ module CoverageReporter
     end
 
     def call
-      aggregate = Hash.new { |h, k| h[k] = [] }
+      coverage_map = Hash.new { |h, k| h[k] = [] }
 
-      coverage.each do |filename, lines|
+      coverage.each do |filename, data|
         normalized_filename = normalize_filename(filename)
-        uncovered_ranges = extract_uncovered_ranges(lines)
-        aggregate[normalized_filename] = uncovered_ranges
+        uncovered_ranges = extract_uncovered_ranges(data["lines"])
+        coverage_map[normalized_filename] = uncovered_ranges
       end
 
-      aggregate
+      coverage_map
     end
 
     private
