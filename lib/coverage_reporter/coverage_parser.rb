@@ -9,24 +9,12 @@ module CoverageReporter
     end
 
     def call
-      raw = read_json
-      return {} unless raw.is_a?(Hash)
-
       aggregate = Hash.new { |h, k| h[k] = [] }
 
-      raw.each_value do |entry|
-        next unless entry.is_a?(Hash)
-
-        coverage_hash = extract_coverage_hash(entry)
-        next unless coverage_hash
-
-        coverage_hash.each do |file, line_data|
-          normalized_file = normalize_filename(file)
-          next unless normalized_file
-
-          covered_lines = extract_covered_lines(line_data)
-          aggregate[normalized_file] |= covered_lines # set-union to avoid duplicates
-        end
+      coverage.each do |filename, lines|
+        normalized_filename = normalize_filename(filename)
+        uncovered_ranges = extract_uncovered_ranges(lines)
+        aggregate[normalized_filename] = uncovered_ranges
       end
 
       aggregate
@@ -34,75 +22,47 @@ module CoverageReporter
 
     private
 
-    def read_json
+    def coverage
       return {} unless File.file?(@resultset_path)
 
       content = File.read(@resultset_path)
-      JSON.parse(content)
+      JSON.parse(content)["coverage"]
     rescue StandardError
       {}
     end
 
-    def extract_coverage_hash(entry)
-      return entry["coverage"] if coverage_hash?(entry)
-      return extract_from_files_array(entry["files"]) if files_array?(entry)
-      return entry if simplecov_format?(entry)
-
-      nil
-    end
-
-    def coverage_hash?(entry)
-      entry["coverage"].is_a?(Hash)
-    end
-
-    def files_array?(entry)
-      entry["files"].is_a?(Array)
-    end
-
-    def extract_from_files_array(files)
-      files.each_with_object({}) do |f, acc|
-        next unless valid_file_entry?(f)
-
-        acc[f["filename"]] = f["coverage"]
+    def extract_uncovered_ranges(lines)
+      uncovered_lines = []
+      lines.each_with_index do |count, idx|
+        # Only lines with 0 count are considered uncovered
+        # null values are not relevant for coverage
+        uncovered_lines << (idx + 1) if count == 0
       end
+      convert_to_ranges(uncovered_lines)
     end
 
-    def valid_file_entry?(file)
-      file.is_a?(Hash) && file["filename"] && file["coverage"].is_a?(Array)
-    end
+    def convert_to_ranges(lines)
+      return [] if lines.empty?
 
-    def simplecov_format?(entry)
-      entry.is_a?(Hash) && entry.keys.any? { |k| k.start_with?("/") }
-    end
+      ranges = []
+      start_line = lines.first
+      end_line = lines.first
 
-    def extract_covered_lines(line_data)
-      case line_data
-      when Array
-        array_covered_lines(line_data)
-      when Hash
-        if line_data["lines"].is_a?(Array)
-          array_covered_lines(line_data["lines"])
+      lines.each_cons(2) do |current, next_line|
+        if next_line == current + 1
+          # Consecutive lines, extend the range
+          end_line = next_line
         else
-          hash_covered_lines(line_data)
+          # Gap found, close current range and start new one
+          ranges << [start_line, end_line]
+          start_line = next_line
+          end_line = next_line
         end
-      else
-        []
       end
-    end
 
-    def array_covered_lines(arr)
-      covered = []
-      arr.each_with_index do |count, idx|
-        covered << (idx + 1) if count.to_i.positive?
-      end
-      covered
-    end
-
-    def hash_covered_lines(hash)
-      hash.each_with_object([]) do |(k, v), acc|
-        line_no = k.to_i
-        acc << line_no if line_no.positive? && v.to_i.positive?
-      end.sort
+      # Add the last range
+      ranges << [start_line, end_line]
+      ranges
     end
 
     def normalize_filename(file_path)
