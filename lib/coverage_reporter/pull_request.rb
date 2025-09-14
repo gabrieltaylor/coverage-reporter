@@ -84,8 +84,8 @@ module CoverageReporter
       end
     end
 
-    def pull_request_diff
-      @pull_request_diff ||= client.pull_request(repo, pr_number, accept: "application/vnd.github.v3.diff")
+    def diff
+      @diff ||= client.pull_request(repo, pr_number, accept: "application/vnd.github.v3.diff")
     end
 
     private

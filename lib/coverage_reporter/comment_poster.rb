@@ -29,7 +29,7 @@ module CoverageReporter
       post_global_comment
 
       # Clean up any coverage comments that weren't updated
-      cleanup_unused_coverage_comments
+      # cleanup_unused_coverage_comments
     end
 
     private
@@ -44,7 +44,9 @@ module CoverageReporter
       # Post new comments for uncovered lines
       # The PullRequest class will handle updating existing comments instead of creating duplicates
       analysis.each do |file, ranges|
+        puts "Posting inline comments for #{file}"
         ranges.each do |start_line, end_line|
+          puts "Posting inline comment for #{file}: #{start_line}–#{end_line}"
           post_inline_comment(file: file, start_line: start_line, end_line: end_line)
         end
       end
