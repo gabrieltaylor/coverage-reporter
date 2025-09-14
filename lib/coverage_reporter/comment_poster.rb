@@ -78,7 +78,7 @@ module CoverageReporter
 
       if existing_comment
         # Update existing comment and track it
-        pull_request.update_comment(id: existing_comment.id, body: body)
+        pull_request.update_inline_comment(id: existing_comment.id, body: body)
         @updated_comment_ids.add(existing_comment.id)
       else
         # Create new comment
@@ -110,10 +110,9 @@ module CoverageReporter
       existing = comments.find { |c| c.body&.include?(GLOBAL_MARKER) }
       body_with_marker = body.include?(GLOBAL_MARKER) ? body : "#{GLOBAL_MARKER}\n#{body}"
       if existing
-        @pull_request.update_comment(id: existing.id, body: body_with_marker)
-        @updated_comment_ids.add(existing.id)
+        @pull_request.update_global_comment(id: existing.id, body: body_with_marker)
       else
-        @pull_request.add_comment(body: body_with_marker)
+        @pull_request.add_global_comment(body: body_with_marker)
       end
     end
 
@@ -142,7 +141,7 @@ module CoverageReporter
       unused_comment_ids.each do |comment_id|
         comment = @existing_coverage_comments[comment_id]
         logger.info("Removing unused coverage comment: #{comment_id} (#{comment.path || 'global'})")
-        pull_request.delete_comment(comment_id)
+        pull_request.delete_inline_comment(comment_id)
       end
     end
   end

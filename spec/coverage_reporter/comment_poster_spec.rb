@@ -31,11 +31,11 @@ RSpec.describe CoverageReporter::CommentPoster do
       inline_comments:                   [],
       global_comments:                   [],
       add_comment_on_lines:              true,
-      add_comment:                       true,
-      update_comment:                    true,
+      add_global_comment:                true,
+      update_global_comment:             true,
       delete_coverage_comments_for_file: true,
       find_existing_inline_comment:      nil,
-      delete_comment:                    true,
+      delete_inline_comment:             true,
       latest_commit_sha:                 commit_sha
     )
     allow(logger).to receive(:info)
@@ -46,7 +46,7 @@ RSpec.describe CoverageReporter::CommentPoster do
       it "proceeds with posting comments" do
         expect(pull_request).to receive(:global_comments).and_return([])
         expect(pull_request).to receive(:add_comment_on_lines).at_least(:once)
-        expect(pull_request).to receive(:add_comment).at_least(:once)
+        expect(pull_request).to receive(:add_global_comment).at_least(:once)
 
         poster.call
       end
@@ -70,7 +70,7 @@ RSpec.describe CoverageReporter::CommentPoster do
           "Skipping comment posting: commit #{commit_sha} is not the latest commit (#{latest_commit_sha})"
         )
         expect(pull_request).not_to receive(:add_comment_on_lines)
-        expect(pull_request).not_to receive(:add_comment)
+        expect(pull_request).not_to receive(:add_global_comment)
 
         poster.call
       end
@@ -95,7 +95,7 @@ RSpec.describe CoverageReporter::CommentPoster do
     end
 
     it "includes commit SHA in global comment body" do
-      expect(pull_request).to receive(:add_comment) do |args|
+      expect(pull_request).to receive(:add_global_comment) do |args|
         expect(args[:body]).to include("_Commit: #{commit_sha}_")
       end
 
@@ -122,6 +122,8 @@ RSpec.describe CoverageReporter::CommentPoster do
     it "tracks existing coverage comments at the start" do
       expect(pull_request).to receive(:inline_comments).and_return([existing_inline_comment])
       expect(pull_request).to receive(:global_comments).and_return([existing_global_comment])
+      expect(pull_request).to receive(:delete_inline_comment).with(123)
+      expect(pull_request).to receive(:delete_inline_comment).with(456)
 
       poster.call
     end
@@ -133,7 +135,7 @@ RSpec.describe CoverageReporter::CommentPoster do
       allow(pull_request).to receive_messages(find_existing_inline_comment: nil, global_comments: [])
 
       # Expect only the inline comment to be deleted (global comment will be created, not deleted)
-      expect(pull_request).to receive(:delete_comment).with(123)
+      expect(pull_request).to receive(:delete_inline_comment).with(123)
       expect(logger).to receive(:info).with("Removing unused coverage comment: 123 (app/models/user.rb)")
 
       poster.call
@@ -144,12 +146,12 @@ RSpec.describe CoverageReporter::CommentPoster do
       allow(pull_request).to receive(:find_existing_inline_comment).and_return(existing_inline_comment)
 
       # Expect the inline comment to be updated, not deleted
-      expect(pull_request).to receive(:update_comment).with(id: 123, body: anything)
-      expect(pull_request).not_to receive(:delete_comment).with(123)
+      expect(pull_request).to receive(:update_inline_comment).with(id: 123, body: anything).at_least(:once)
+      expect(pull_request).not_to receive(:delete_inline_comment).with(123)
 
       # The global comment will be updated (not deleted) since it exists and gets updated
-      expect(pull_request).to receive(:update_comment).with(id: 456, body: anything)
-      expect(pull_request).not_to receive(:delete_comment).with(456)
+      expect(pull_request).to receive(:update_global_comment).with(id: 456, body: anything)
+      expect(pull_request).not_to receive(:delete_global_comment).with(456)
 
       poster.call
     end

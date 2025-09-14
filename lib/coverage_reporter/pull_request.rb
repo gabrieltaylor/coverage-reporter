@@ -15,34 +15,43 @@ module CoverageReporter
       @pr_number = pr_number
     end
 
-    def inline_comments
-      client.issue_comments(repo, pr_number)
-    end
-
-    def global_comments
-      client.pull_request_comments(repo, pr_number)
-    end
-
     def latest_commit_sha
       @latest_commit_sha ||= client.pull_request(repo, pr_number).head.sha
     end
 
-    def add_comment(body:)
-      client.post(
-        "/repos/#{repo}/pulls/#{pr_number}/comments",
-        body: body
-      )
+    # get global comments
+    def global_comments
+      client.issue_comments(repo, pr_number)
     end
 
-    def update_comment(id:, body:)
-      client.patch(
-        "/repos/#{repo}/pulls/comments/#{id}",
-        body: body
-      )
+    # add global comment
+    def add_global_comment(body:)
+      client.add_comment(repo, pr_number, body)
     end
 
-    def delete_comment(id)
-      client.delete("/repos/#{repo}/pulls/comments/#{id}")
+    # update global comment
+    def update_global_comment(id:, body:)
+      client.update_comment(repo, id, body)
+    end
+
+    # delete global comment
+    def delete_global_comment(id)
+      client.delete_comment(repo, id)
+    end
+
+    # get inline comments
+    def inline_comments
+      client.pull_request_comments(repo, pr_number)
+    end
+
+    # update inline comment
+    def update_inline_comment(id:, body:)
+      client.update_pull_request_comment(repo, id, body)
+    end
+
+    # delete inline comment
+    def delete_inline_comment(id)
+      client.delete_pull_request_comment(repo, id)
     end
 
     def add_comment_on_lines(commit_id:, file_path:, start_line:, end_line:, body:)
@@ -52,7 +61,7 @@ module CoverageReporter
       existing_comment = find_existing_inline_comment(actual_file_path, start_line, end_line)
 
       if existing_comment
-        update_comment(id: existing_comment.id, body: body)
+        update_inline_comment(id: existing_comment.id, body: body)
       else
         payload = build_comment_payload(body, commit_id, actual_file_path, diff_line_info, start_line, end_line)
         create_comment_with_error_handling(payload)
@@ -65,7 +74,7 @@ module CoverageReporter
           comment.path == file_path
       end
 
-      coverage_comments.each { |comment| delete_comment(comment.id) }
+      coverage_comments.each { |comment| delete_inline_comment(comment.id) }
     end
 
     def find_existing_inline_comment(file_path, start_line, end_line)
@@ -204,8 +213,6 @@ module CoverageReporter
         build_single_line_result
       end
     end
-
-    private
 
     def file_header?(line)
       line.start_with?("+++ b/")

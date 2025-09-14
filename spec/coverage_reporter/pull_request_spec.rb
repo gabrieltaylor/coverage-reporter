@@ -127,16 +127,16 @@ RSpec.describe CoverageReporter::PullRequest do
     let(:comments) { [{ id: 1, body: "Comment 1" }, { id: 2, body: "Comment 2" }] }
 
     before do
-      allow(client).to receive(:issue_comments).with(repo, pr_number).and_return(comments)
+      allow(client).to receive(:pull_request_comments).with(repo, pr_number).and_return(comments)
     end
 
-    it "returns issue comments" do
+    it "returns pull request comments" do
       expect(pull_request.inline_comments).to eq(comments)
     end
 
     it "calls the client with correct parameters" do
       pull_request.inline_comments
-      expect(client).to have_received(:issue_comments).with(repo, pr_number)
+      expect(client).to have_received(:pull_request_comments).with(repo, pr_number)
     end
   end
 
@@ -144,16 +144,16 @@ RSpec.describe CoverageReporter::PullRequest do
     let(:comments) { [{ id: 1, body: "Global comment 1" }] }
 
     before do
-      allow(client).to receive(:pull_request_comments).with(repo, pr_number).and_return(comments)
+      allow(client).to receive(:issue_comments).with(repo, pr_number).and_return(comments)
     end
 
-    it "returns pull request comments" do
+    it "returns issue comments" do
       expect(pull_request.global_comments).to eq(comments)
     end
 
     it "calls the client with correct parameters" do
       pull_request.global_comments
-      expect(client).to have_received(:pull_request_comments).with(repo, pr_number)
+      expect(client).to have_received(:issue_comments).with(repo, pr_number)
     end
   end
 
@@ -181,67 +181,88 @@ RSpec.describe CoverageReporter::PullRequest do
     end
   end
 
-  describe "#add_comment" do
+  describe "#add_global_comment" do
     let(:body) { "This is a comment" }
     let(:response) { { id: 1, body: body } }
 
     before do
-      allow(client).to receive(:post).with(
-        "/repos/#{repo}/pulls/#{pr_number}/comments",
-        body: body
-      ).and_return(response)
+      allow(client).to receive(:add_comment).with(repo, pr_number, body).and_return(response)
     end
 
     it "adds a comment to the pull request" do
-      result = pull_request.add_comment(body: body)
+      result = pull_request.add_global_comment(body: body)
       expect(result).to eq(response)
     end
 
     it "calls the client with correct parameters" do
-      pull_request.add_comment(body: body)
-      expect(client).to have_received(:post).with(
-        "/repos/#{repo}/pulls/#{pr_number}/comments",
-        body: body
-      )
+      pull_request.add_global_comment(body: body)
+      expect(client).to have_received(:add_comment).with(repo, pr_number, body)
     end
   end
 
-  describe "#update_comment" do
+  describe "#update_global_comment" do
     let(:comment_id) { 456 }
     let(:body) { "Updated comment" }
     let(:response) { { id: comment_id, body: body } }
 
     before do
-      allow(client).to receive(:patch).with(
-        "/repos/#{repo}/pulls/comments/#{comment_id}",
-        body: body
-      ).and_return(response)
+      allow(client).to receive(:update_comment).with(repo, comment_id, body).and_return(response)
     end
 
     it "updates a comment" do
-      result = pull_request.update_comment(id: comment_id, body: body)
+      result = pull_request.update_global_comment(id: comment_id, body: body)
       expect(result).to eq(response)
     end
 
     it "calls the client with correct parameters" do
-      pull_request.update_comment(id: comment_id, body: body)
-      expect(client).to have_received(:patch).with(
-        "/repos/#{repo}/pulls/comments/#{comment_id}",
-        body: body
-      )
+      pull_request.update_global_comment(id: comment_id, body: body)
+      expect(client).to have_received(:update_comment).with(repo, comment_id, body)
     end
   end
 
-  describe "#delete_comment" do
+  describe "#delete_global_comment" do
     let(:comment_id) { 789 }
 
     before do
-      allow(client).to receive(:delete).with("/repos/#{repo}/pulls/comments/#{comment_id}")
+      allow(client).to receive(:delete_comment).with(repo, comment_id)
     end
 
     it "deletes a comment" do
-      pull_request.delete_comment(comment_id)
-      expect(client).to have_received(:delete).with("/repos/#{repo}/pulls/comments/#{comment_id}")
+      pull_request.delete_global_comment(comment_id)
+      expect(client).to have_received(:delete_comment).with(repo, comment_id)
+    end
+  end
+
+  describe "#update_inline_comment" do
+    let(:comment_id) { 456 }
+    let(:body) { "Updated inline comment" }
+    let(:response) { { id: comment_id, body: body } }
+
+    before do
+      allow(client).to receive(:update_pull_request_comment).with(repo, comment_id, body).and_return(response)
+    end
+
+    it "updates an inline comment" do
+      result = pull_request.update_inline_comment(id: comment_id, body: body)
+      expect(result).to eq(response)
+    end
+
+    it "calls the client with correct parameters" do
+      pull_request.update_inline_comment(id: comment_id, body: body)
+      expect(client).to have_received(:update_pull_request_comment).with(repo, comment_id, body)
+    end
+  end
+
+  describe "#delete_inline_comment" do
+    let(:comment_id) { 789 }
+
+    before do
+      allow(client).to receive(:delete_pull_request_comment).with(repo, comment_id)
+    end
+
+    it "deletes an inline comment" do
+      pull_request.delete_inline_comment(comment_id)
+      expect(client).to have_received(:delete_pull_request_comment).with(repo, comment_id)
     end
   end
 
@@ -276,7 +297,7 @@ RSpec.describe CoverageReporter::PullRequest do
     before do
       allow(client).to receive(:pull_request).with(repo, pr_number, accept: "application/vnd.github.v3.diff").and_return(diff)
       allow(client).to receive(:post).and_return({ id: 1 })
-      allow(client).to receive(:issue_comments).with(repo, pr_number).and_return([])
+      allow(client).to receive(:pull_request_comments).with(repo, pr_number).and_return([])
     end
 
     context "with single line comment" do
@@ -377,7 +398,7 @@ RSpec.describe CoverageReporter::PullRequest do
 
       before do
         allow(pull_request).to receive(:inline_comments).and_return([existing_comment])
-        allow(pull_request).to receive(:update_comment)
+        allow(pull_request).to receive(:update_inline_comment)
       end
 
       it "updates the existing comment instead of creating a new one" do
@@ -389,7 +410,7 @@ RSpec.describe CoverageReporter::PullRequest do
           body:       body
         )
 
-        expect(pull_request).to have_received(:update_comment).with(
+        expect(pull_request).to have_received(:update_inline_comment).with(
           id:   existing_comment.id,
           body: body
         )
@@ -762,23 +783,23 @@ RSpec.describe CoverageReporter::PullRequest do
             coverage_comment_different_file
           ]
         )
-        allow(pull_request).to receive(:delete_comment)
+        allow(pull_request).to receive(:delete_inline_comment)
       end
 
       it "deletes coverage comments for the specified file" do
-        expect(pull_request).to receive(:delete_comment).with(coverage_comment.id)
+        expect(pull_request).to receive(:delete_inline_comment).with(coverage_comment.id)
 
         pull_request.send(:delete_coverage_comments_for_file, file_path)
       end
 
       it "does not delete non-coverage comments" do
-        expect(pull_request).not_to receive(:delete_comment).with(non_coverage_comment.id)
+        expect(pull_request).not_to receive(:delete_inline_comment).with(non_coverage_comment.id)
 
         pull_request.send(:delete_coverage_comments_for_file, file_path)
       end
 
       it "does not delete coverage comments for different files" do
-        expect(pull_request).not_to receive(:delete_comment).with(coverage_comment_different_file.id)
+        expect(pull_request).not_to receive(:delete_inline_comment).with(coverage_comment_different_file.id)
 
         pull_request.send(:delete_coverage_comments_for_file, file_path)
       end
