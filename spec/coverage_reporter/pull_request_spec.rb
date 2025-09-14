@@ -659,7 +659,7 @@ RSpec.describe CoverageReporter::PullRequest do
       end
     end
 
-    describe "#pull_request_diff" do
+    describe "#diff" do
       let(:diff) { "diff content" }
 
       before do
@@ -667,13 +667,13 @@ RSpec.describe CoverageReporter::PullRequest do
       end
 
       it "returns the pull request diff" do
-        result = pull_request.send(:pull_request_diff)
+        result = pull_request.send(:diff)
         expect(result).to eq(diff)
       end
 
       it "memoizes the result" do
-        pull_request.send(:pull_request_diff)
-        pull_request.send(:pull_request_diff)
+        pull_request.send(:diff)
+        pull_request.send(:diff)
         expect(client).to have_received(:pull_request).with(repo, pr_number, accept: "application/vnd.github.v3.diff").once
       end
     end

@@ -29,7 +29,7 @@ module CoverageReporter
       post_global_comment
 
       # Clean up any coverage comments that weren't updated
-      # cleanup_unused_coverage_comments
+      cleanup_unused_coverage_comments
     end
 
     private

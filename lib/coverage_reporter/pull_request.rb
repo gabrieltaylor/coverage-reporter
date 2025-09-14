@@ -55,7 +55,6 @@ module CoverageReporter
     end
 
     def add_comment_on_lines(commit_id:, file_path:, start_line:, end_line:, body:)
-      diff = pull_request_diff
       actual_file_path = find_actual_file_path_in_diff(diff, file_path)
       diff_line_info = find_diff_line_numbers(diff, actual_file_path, start_line, end_line)
       existing_comment = find_existing_inline_comment(actual_file_path, start_line, end_line)
