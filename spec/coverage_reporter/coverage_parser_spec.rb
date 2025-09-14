@@ -3,6 +3,7 @@
 require "spec_helper"
 require "coverage_reporter/coverage_parser"
 require "tempfile"
+require "fileutils"
 
 RSpec.describe CoverageReporter::CoverageParser do
   def write_resultset(json_obj)
@@ -158,6 +159,94 @@ RSpec.describe CoverageReporter::CoverageParser do
 
       expect(result["lib/array_style.rb"]).to contain_exactly(3, 4)
       expect(result["lib/hash_style.rb"]).to contain_exactly(5)
+    end
+  end
+
+  context "with absolute file paths in coverage data" do
+    it "removes current working directory prefix from absolute paths" do
+      # Use the actual current working directory in the test data
+      current_dir = Dir.pwd
+      json = {
+        "Example" => {
+          "coverage" => {
+            "#{current_dir}/lib/absolute.rb" => [nil, 1, 0, 2], # lines 2 & 4 covered
+            "lib/relative.rb"                => [nil, 0, 1], # line 3 covered
+            "/some/other/path/outside.rb"    => [nil, 1] # line 2 covered, but outside project
+          }
+        }
+      }
+
+      # Create a temporary resultset file
+      file = write_resultset(json)
+      parser = described_class.new(file.path)
+      result = parser.call
+
+      # Should remove current working directory prefix from absolute path
+      expect(result["lib/absolute.rb"]).to contain_exactly(2, 4)
+      # Should keep relative paths as-is
+      expect(result["lib/relative.rb"]).to contain_exactly(3)
+      # Should keep paths that don't start with current working directory as-is
+      expect(result["/some/other/path/outside.rb"]).to contain_exactly(2)
+    end
+  end
+
+  context "with various file path formats" do
+    it "removes current working directory prefix when present, keeps others as-is" do
+      # Use the actual current working directory in the test data
+      current_dir = Dir.pwd
+      json = {
+        "Example" => {
+          "coverage" => {
+            "#{current_dir}/lib/absolute.rb" => [nil, 1, 0, 2], # Absolute path with current working directory
+            "lib/relative.rb"                => [nil, 0, 1], # Relative path
+            "/etc/passwd"                    => [nil, 1], # Absolute path outside current working directory
+            "../sibling/file.rb"             => [nil, 1], # Relative path outside current working directory
+            "app/models/user.rb"             => [nil, 1] # Another relative path
+          }
+        }
+      }
+
+      # Create a temporary resultset file
+      file = write_resultset(json)
+      parser = described_class.new(file.path)
+      result = parser.call
+
+      # Should remove current working directory prefix from absolute path that starts with it
+      expect(result["lib/absolute.rb"]).to contain_exactly(2, 4)
+      # Should keep relative paths as-is
+      expect(result["lib/relative.rb"]).to contain_exactly(3)
+      expect(result["app/models/user.rb"]).to contain_exactly(2)
+      # Should keep paths that don't start with current working directory as-is
+      expect(result["/etc/passwd"]).to contain_exactly(2)
+      expect(result["../sibling/file.rb"]).to contain_exactly(2)
+    end
+  end
+
+  context "with paths that don't start with current working directory" do
+    let(:json) do
+      {
+        "Example" => {
+          "coverage" => {
+            "/absolute/path/file.rb" => [nil, 1],
+            "relative/file.rb"       => [nil, 1]
+          }
+        }
+      }
+    end
+
+    it "keeps original paths when they don't start with current working directory" do
+      Dir.mktmpdir do |tmpdir|
+        resultset_file = File.join(tmpdir, "coverage.json")
+        File.write(resultset_file, JSON.dump(json))
+
+        parser = described_class.new(resultset_file)
+        result = parser.call
+
+        # Should keep original paths when they don't start with current working directory
+        expect(result.keys).to contain_exactly("/absolute/path/file.rb", "relative/file.rb")
+        expect(result["/absolute/path/file.rb"]).to contain_exactly(2)
+        expect(result["relative/file.rb"]).to contain_exactly(2)
+      end
     end
   end
 end

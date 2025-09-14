@@ -21,8 +21,11 @@ module CoverageReporter
         next unless coverage_hash
 
         coverage_hash.each do |file, line_data|
+          normalized_file = normalize_filename(file)
+          next unless normalized_file
+
           covered_lines = extract_covered_lines(line_data)
-          aggregate[file] |= covered_lines # set-union to avoid duplicates
+          aggregate[normalized_file] |= covered_lines # set-union to avoid duplicates
         end
       end
 
@@ -41,15 +44,35 @@ module CoverageReporter
     end
 
     def extract_coverage_hash(entry)
-      if entry["coverage"].is_a?(Hash)
-        entry["coverage"]
-      elsif entry["files"].is_a?(Array)
-        entry["files"].each_with_object({}) do |f, acc|
-          next unless f.is_a?(Hash) && f["filename"] && f["coverage"].is_a?(Array)
+      return entry["coverage"] if coverage_hash?(entry)
+      return extract_from_files_array(entry["files"]) if files_array?(entry)
+      return entry if simplecov_format?(entry)
 
-          acc[f["filename"]] = f["coverage"]
-        end
+      nil
+    end
+
+    def coverage_hash?(entry)
+      entry["coverage"].is_a?(Hash)
+    end
+
+    def files_array?(entry)
+      entry["files"].is_a?(Array)
+    end
+
+    def extract_from_files_array(files)
+      files.each_with_object({}) do |f, acc|
+        next unless valid_file_entry?(f)
+
+        acc[f["filename"]] = f["coverage"]
       end
+    end
+
+    def valid_file_entry?(file)
+      file.is_a?(Hash) && file["filename"] && file["coverage"].is_a?(Array)
+    end
+
+    def simplecov_format?(entry)
+      entry.is_a?(Hash) && entry.keys.any? { |k| k.start_with?("/") }
     end
 
     def extract_covered_lines(line_data)
@@ -80,6 +103,21 @@ module CoverageReporter
         line_no = k.to_i
         acc << line_no if line_no.positive? && v.to_i.positive?
       end.sort
+    end
+
+    def normalize_filename(file_path)
+      return nil if file_path.nil? || file_path.empty?
+
+      # Use current working directory as project root
+      project_root = Dir.pwd
+
+      # If the file path starts with the project root, remove that prefix
+      if file_path.start_with?(project_root)
+        file_path.delete_prefix(project_root).delete_prefix("/")
+      else
+        # If it doesn't start with project root, return as-is (assuming it's already relative)
+        file_path
+      end
     end
   end
 end

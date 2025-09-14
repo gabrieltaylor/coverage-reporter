@@ -31,6 +31,8 @@ RSpec.describe CoverageReporter::DiffParser do
     end
 
     context "with a diff containing multiple files, hunks, additions and deletions" do
+      subject(:parser) { described_class.new(diff_text) }
+
       let(:diff_text) do
         <<~DIFF
           diff --git a/lib/sample.rb b/lib/sample.rb
@@ -62,7 +64,6 @@ RSpec.describe CoverageReporter::DiffParser do
           -line b
         DIFF
       end
-      subject(:parser) { described_class.new(diff_text) }
 
       it "parses and returns a hash of added line numbers per file, ignoring deleted files" do
         result = parser.call
