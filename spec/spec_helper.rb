@@ -1,14 +1,22 @@
 # frozen_string_literal: true
 
 require "simplecov"
+require "simplecov_json_formatter"
 
 # Configure SimpleCov for parallel test execution
 if ENV["BUILDKITE_PARALLEL_JOB"]
   # Buildkite parallel execution
   SimpleCov.command_name "RSpec-#{ENV['BUILDKITE_PARALLEL_JOB']}"
+  SimpleCov.formatter = SimpleCov::Formatter::JSONFormatter
 else
   # Single job execution
   SimpleCov.command_name "RSpec"
+  SimpleCov.formatter = SimpleCov::Formatter::MultiFormatter.new(
+    [
+      SimpleCov::Formatter::HTMLFormatter,
+      SimpleCov::Formatter::JSONFormatter
+    ]
+  )
 end
 
 SimpleCov.start

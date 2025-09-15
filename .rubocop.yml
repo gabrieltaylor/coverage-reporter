@@ -57,6 +57,7 @@ Metrics/BlockLength:
     - "lib/tasks/**/*"
 
 Metrics/ClassLength:
+  Max: 200
   Exclude:
     - "test/**/*"
 

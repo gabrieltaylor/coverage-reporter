@@ -3,55 +3,255 @@
 module CoverageReporter
   class PullRequest
     def initialize(github_token:, repo:, pr_number:)
-      opts = { github_token: github_token }
+      opts = { access_token: github_token }
 
-      @client = Octokit::Client.new(**opts)
+      @client = ::Octokit::Client.new(**opts)
       @client.auto_paginate = true
-      @repo = repo
+      @repo = normalize_repo(repo)
       @pr_number = pr_number
     end
 
-    def inline_comments
+    def latest_commit_sha
+      @latest_commit_sha ||= client.pull_request(repo, pr_number).head.sha
+    end
+
+    # get global comments
+    def global_comments
       client.issue_comments(repo, pr_number)
     end
 
-    def global_comments
+    # add global comment
+    def add_global_comment(body:)
+      client.add_comment(repo, pr_number, body)
+    end
+
+    # update global comment
+    def update_global_comment(id:, body:)
+      client.update_comment(repo, id, body)
+    end
+
+    # delete global comment
+    def delete_global_comment(id)
+      client.delete_comment(repo, id)
+    end
+
+    # get inline comments
+    def inline_comments
       client.pull_request_comments(repo, pr_number)
     end
 
-    def add_comment(body:)
-      client.post(
-        "/repos/#{repo}/pulls/#{pr_number}/comments",
-        body: body
-      )
+    # update inline comment
+    def update_inline_comment(id:, body:)
+      client.update_pull_request_comment(repo, id, body)
     end
 
-    def update_comment(id:, body:)
-      client.patch(
-        "/repos/#{repo}/pulls/comments/#{id}",
-        body: body
-      )
+    # delete inline comment
+    def delete_inline_comment(id)
+      client.delete_pull_request_comment(repo, id)
     end
 
-    def add_comment_on_lines(commit_id:, file_path:, start_line:, end_line:, body:, side: "RIGHT")
-      payload = {
-        body:       body,
-        commit_id:  commit_id,
-        path:       file_path,
-        start_line: start_line,
-        start_side: side,
-        line:       end_line,
-        side:       side
-      }
+    def add_comment_on_lines(commit_id:, file_path:, start_line:, end_line:, body:)
+      actual_file_path = find_actual_file_path_in_diff(diff, file_path)
+      diff_line_info = find_diff_line_numbers(diff, actual_file_path, start_line, end_line)
+      existing_comment = find_existing_inline_comment(actual_file_path, start_line, end_line)
 
-      client.post(
-        "/repos/#{repo}/pulls/#{pr_number}/comments",
-        payload
-      )
+      if existing_comment
+        update_inline_comment(id: existing_comment.id, body: body)
+      else
+        payload = build_comment_payload(body, commit_id, actual_file_path, diff_line_info, start_line, end_line)
+        create_comment_with_error_handling(payload)
+      end
+    end
+
+    def delete_coverage_comments_for_file(file_path)
+      coverage_comments = inline_comments.select do |comment|
+        comment.body&.include?("<!-- coverage-inline-marker -->") &&
+          comment.path == file_path
+      end
+
+      coverage_comments.each { |comment| delete_inline_comment(comment.id) }
+    end
+
+    def find_existing_inline_comment(file_path, start_line, end_line)
+      inline_comments.find do |comment|
+        coverage_comment_for_file?(comment, file_path) &&
+          comment_matches_line_range?(comment, start_line, end_line)
+      end
+    end
+
+    def diff
+      @diff ||= client.pull_request(repo, pr_number, accept: "application/vnd.github.v3.diff")
     end
 
     private
 
     attr_reader :client, :repo, :pr_number
+
+    def logger
+      CoverageReporter.logger
+    end
+
+    def find_diff_line_numbers(diff, file_path, start_line, end_line)
+      state = DiffParserState.new(file_path, start_line, end_line)
+      diff.split("\n").each { |line| state.process_line(line) }
+      state.result
+    end
+
+    def find_actual_file_path_in_diff(diff, file_path)
+      lines = diff.split("\n")
+
+      lines.each do |line|
+        # Check for file header
+        next unless line.start_with?("+++ b/")
+
+        actual_path = line[6..] # Remove "+++ b/" prefix
+        # Check if this matches our target file (exact match or basename match)
+        return actual_path if actual_path == file_path || File.basename(actual_path) == File.basename(file_path)
+      end
+
+      # If no exact match found, return the original path
+      file_path
+    end
+
+    def normalize_repo(repo)
+      return repo if repo.include?("/") && !repo.include?("://")
+      return extract_github_repo(repo) if repo.include?("github.com")
+
+      raise ArgumentError, "Repository must be in format 'owner/repo' or a full GitHub URL"
+    end
+
+    def build_comment_payload(body, commit_id, file_path, diff_line_info, start_line, end_line)
+      payload = {
+        body:      body,
+        commit_id: commit_id,
+        path:      file_path,
+        line:      diff_line_info[:line],
+        side:      "RIGHT"
+      }
+
+      if end_line > start_line && diff_line_info[:start_line]
+        payload[:start_line] = diff_line_info[:start_line]
+      elsif end_line == start_line
+        payload[:line] = diff_line_info[:line]
+        # Don't include start_line when it's the same as line
+      end
+
+      payload
+    end
+
+    def create_comment_with_error_handling(payload)
+      client.post("/repos/#{repo}/pulls/#{pr_number}/comments", payload)
+    rescue Octokit::Error => e
+      handle_github_api_error(e, payload)
+    rescue StandardError => e
+      handle_unexpected_error(e, payload)
+    end
+
+    def handle_github_api_error(error, payload)
+      logger.error("GitHub API Error: #{error.message}")
+      logger.error("Repository: #{repo}")
+      logger.error("PR Number: #{pr_number}")
+      logger.error("Payload: #{payload.inspect}")
+      logger.error("Response body: #{error.response_body}") if error.respond_to?(:response_body)
+      logger.error("Status: #{error.status}") if error.respond_to?(:status)
+      raise
+    end
+
+    def handle_unexpected_error(error, payload)
+      logger.error("Unexpected error: #{error.class}: #{error.message}")
+      logger.error("Repository: #{repo}")
+      logger.error("PR Number: #{pr_number}")
+      logger.error("Payload: #{payload.inspect}")
+      raise
+    end
+
+    def coverage_comment_for_file?(comment, file_path)
+      comment.body&.include?("<!-- coverage-inline-marker -->") &&
+        comment.path == file_path
+    end
+
+    def comment_matches_line_range?(comment, start_line, end_line)
+      if end_line > start_line
+        comment.line == end_line && comment.start_line == start_line
+      else
+        comment.line == start_line && (comment.start_line.nil? || comment.start_line == start_line)
+      end
+    end
+
+    def extract_github_repo(repo)
+      match = repo.match(%r{github\.com[:/]([^/]+/[^/]+?)(?:\.git)?/?$})
+      match[1] if match
+    end
+  end
+
+  # Helper class to parse diff and find line numbers
+  # Since coverage is only relevant for added lines, this class only tracks added lines
+  class DiffParserState
+    def initialize(file_path, start_line, end_line)
+      @file_path = file_path
+      @start_line = start_line
+      @end_line = end_line
+      @in_target_file = false
+      @file_line_number = 0
+      @start_found = false
+      @end_found = false
+    end
+
+    def process_line(line)
+      if file_header?(line)
+        handle_file_header(line)
+      elsif @in_target_file
+        process_diff_line(line)
+      end
+    end
+
+    def result
+      if @end_line > @start_line
+        build_multi_line_result
+      else
+        build_single_line_result
+      end
+    end
+
+    def file_header?(line)
+      line.start_with?("+++ b/")
+    end
+
+    def handle_file_header(line)
+      actual_path = line[6..] # Remove "+++ b/" prefix
+      @in_target_file = (actual_path == @file_path)
+      @file_line_number = 0
+    end
+
+    def process_diff_line(line)
+      if line.start_with?("+")
+        process_added_line
+      elsif line.start_with?(" ")
+        @file_line_number += 1
+      end
+    end
+
+    def process_added_line
+      @file_line_number += 1
+      @start_found = true if @file_line_number == @start_line
+      @end_found = true if @file_line_number == @end_line
+    end
+
+    def build_multi_line_result
+      {
+        line:       @end_line,
+        side:       "RIGHT",
+        start_line: @start_line,
+        start_side: "RIGHT"
+      }
+    end
+
+    def build_single_line_result
+      {
+        line:       @start_line,
+        side:       "RIGHT",
+        start_side: "RIGHT"
+      }
+    end
   end
 end

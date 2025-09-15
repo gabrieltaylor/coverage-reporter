@@ -3,16 +3,17 @@
 require "spec_helper"
 require "coverage_reporter/coverage_parser"
 require "tempfile"
+require "fileutils"
 
 RSpec.describe CoverageReporter::CoverageParser do
-  def write_resultset(json_obj)
-    file = Tempfile.new("coverage_resultset")
+  def write_coverage_file(json_obj)
+    file = Tempfile.new("coverage")
     file.write(JSON.dump(json_obj))
     file.flush
     file
   end
 
-  context "when the resultset file does not exist" do
+  context "when the coverage file does not exist" do
     it "returns an empty hash" do
       parser = described_class.new("nonexistent/file/path.json")
       expect(parser.call).to eq({})
@@ -21,7 +22,7 @@ RSpec.describe CoverageReporter::CoverageParser do
 
   context "when the JSON is invalid" do
     it "returns an empty hash" do
-      file = Tempfile.new("coverage_resultset")
+      file = Tempfile.new("coverage")
       file.write("{ invalid json")
       file.flush
 
@@ -32,43 +33,27 @@ RSpec.describe CoverageReporter::CoverageParser do
 
   context "when the top-level JSON is not a Hash" do
     it "returns an empty hash" do
-      file = write_resultset(%w[array not hash])
+      file = write_coverage_file(%w[array not hash])
       parser = described_class.new(file.path)
       expect(parser.call).to eq({})
     end
   end
 
-  context "with mixed legacy and newer schema entries" do
+  context "with SimpleCov format coverage data" do
     let(:json) do
       {
-        # Legacy style entry, using "coverage" hash directly
-        "RSpec"   => {
-          "coverage" => {
-            # Array style (indexes -> line numbers)
-            "lib/foo.rb"  => [nil, 1, 0, 2], # lines 2 & 4 covered
-            # Hash style (explicit string keys mapping to counts)
-            "lib/bar.rb"  => { "1" => 1, "2" => 0, "5" => 3 }, # lines 1 & 5 covered
-            # Hash with "lines" array (SimpleCov sometimes nests)
-            "lib/qux.rb"  => { "lines" => [nil, 0, 5] }, # line 3 covered
-            # Pure hash style (no "lines" key)
-            "lib/quux.rb" => { "1" => 0, "2" => 2, "4" => "3" } # lines 2 & 4 covered
-          }
-        },
-        # Newer style entry, using "files" array
-        "Other"   => {
-          "files" => [
-            { "filename" => "lib/baz.rb", "coverage" => [nil, 0, 1, 1] }, # lines 3 & 4 covered
-            { "filename" => "lib/skip.rb", "coverage" => "not-an-array" }, # ignored
-            { "filename" => "lib/foo.rb", "coverage" => [nil, 0, 1] }      # adds line 3 to lib/foo.rb
-          ]
-        },
-        # An entry that is not a hash (should be skipped gracefully)
-        "Garbage" => "not a hash"
+        "coverage" => {
+          "lib/foo.rb"  => { "lines" => [nil, 1, 0, 2] }, # lines 2 & 4 covered, line 3 uncovered
+          "lib/bar.rb"  => { "lines" => [1, 0, 1, 0, 3] }, # lines 1, 3, 5 covered, lines 2, 4 uncovered
+          "lib/baz.rb"  => { "lines" => [nil, 0, 1, 1] }, # lines 3 & 4 covered, line 2 uncovered
+          "lib/qux.rb"  => { "lines" => [0, 0, 5] }, # lines 1, 2 uncovered, line 3 covered
+          "lib/quux.rb" => { "lines" => [1, 2, 0, 3] } # lines 1, 2, 4 covered, line 3 uncovered
+        }
       }
     end
 
-    it "parses and aggregates covered lines across schemas without duplicates" do
-      file = write_resultset(json)
+    it "parses coverage data and extracts uncovered ranges" do
+      file = write_coverage_file(json)
       parser = described_class.new(file.path)
 
       result = parser.call
@@ -77,87 +62,246 @@ RSpec.describe CoverageReporter::CoverageParser do
         %w[
           lib/foo.rb
           lib/bar.rb
+          lib/baz.rb
           lib/qux.rb
           lib/quux.rb
-          lib/baz.rb
         ]
       )
 
-      # lib/foo.rb: first entry => lines 2 & 4; second entry adds line 3
-      expect(result["lib/foo.rb"]).to contain_exactly(2, 3, 4)
-      expect(result["lib/bar.rb"]).to contain_exactly(1, 5)
-      expect(result["lib/qux.rb"]).to contain_exactly(3)
-      expect(result["lib/quux.rb"]).to contain_exactly(2, 4)
-      expect(result["lib/baz.rb"]).to contain_exactly(3, 4)
+      # lib/foo.rb: line 3 uncovered
+      expect(result["lib/foo.rb"]).to contain_exactly([3, 3])
+      # lib/bar.rb: lines 2, 4 uncovered
+      expect(result["lib/bar.rb"]).to contain_exactly([2, 2], [4, 4])
+      # lib/baz.rb: line 2 uncovered
+      expect(result["lib/baz.rb"]).to contain_exactly([2, 2])
+      # lib/qux.rb: lines 1, 2 uncovered
+      expect(result["lib/qux.rb"]).to contain_exactly([1, 2])
+      # lib/quux.rb: line 3 uncovered
+      expect(result["lib/quux.rb"]).to contain_exactly([3, 3])
     end
   end
 
-  context "when multiple entries provide overlapping coverage for the same file" do
+  context "with multiple files having different coverage patterns" do
     let(:json) do
       {
-        "A" => {
-          "coverage" => {
-            "lib/dup.rb" => [nil, 1, 0, 2] # lines 2 & 4
-          }
-        },
-        "B" => {
-          "files" => [
-            { "filename" => "lib/dup.rb", "coverage" => [nil, 0, 1] } # line 3
-          ]
-        },
-        "C" => {
-          "coverage" => {
-            "lib/dup.rb" => { "6" => 1, "2" => 5 } # lines 6 & 2 (2 already present)
-          }
+        "coverage" => {
+          "lib/file1.rb" => { "lines" => [nil, 1, 0, 2] }, # lines 2 & 4 covered, line 3 uncovered
+          "lib/file2.rb" => { "lines" => [0, 0, 1, 0, 1] }, # lines 3 & 5 covered, lines 1, 2, 4 uncovered
+          "lib/file3.rb" => { "lines" => [1, 2, 0, 3, 0] } # lines 1, 2, 4 covered, lines 3, 5 uncovered
         }
       }
     end
 
-    it "unions line numbers without duplicates" do
-      file = write_resultset(json)
+    it "extracts uncovered ranges for each file" do
+      file = write_coverage_file(json)
       parser = described_class.new(file.path)
       result = parser.call
 
-      expect(result["lib/dup.rb"]).to contain_exactly(2, 3, 4, 6)
+      expect(result["lib/file1.rb"]).to contain_exactly([3, 3])
+      expect(result["lib/file2.rb"]).to contain_exactly([1, 2], [4, 4])
+      expect(result["lib/file3.rb"]).to contain_exactly([3, 3], [5, 5])
     end
   end
 
-  context "when an entry has an empty or invalid coverage section" do
+  context "when coverage data is empty or invalid" do
     let(:json) do
       {
-        "EmptyCoverage" => { "coverage" => {} },
-        "NilCoverage"   => { "coverage" => nil },
-        "BadFiles"      => { "files" => [{ "filename" => "x.rb" }] }, # missing array
-        "NonArrayFiles" => { "files" => "not-an-array" }
+        "coverage" => {}
       }
     end
 
     it "returns an empty hash" do
-      file = write_resultset(json)
+      file = write_coverage_file(json)
       parser = described_class.new(file.path)
       expect(parser.call).to eq({})
     end
   end
 
-  context "with zero / nil / non-positive counts in arrays and hashes" do
+  context "with zero / nil / non-positive counts in coverage arrays" do
     let(:json) do
       {
-        "Example" => {
-          "coverage" => {
-            "lib/array_style.rb" => [0, nil, 1, "2", -1], # lines 3 & 4 covered (1, "2".to_i => 2)
-            "lib/hash_style.rb"  => { "1" => 0, "2" => "0", "3" => nil, "4" => -5, "5" => 1 } # line 5
-          }
+        "coverage" => {
+          "lib/mixed_counts.rb" => { "lines" => [0, nil, 1, 2, 0] }, # lines 3 & 4 covered, lines 1 & 5 uncovered
+          "lib/zero_lines.rb"   => { "lines" => [0, 0, 0, 1, 0] } # lines 1, 2, 3, 5 uncovered, line 4 covered
         }
       }
     end
 
-    it "only includes lines with positive counts" do
-      file = write_resultset(json)
+    it "identifies uncovered lines (count == 0) and ignores null/negative values" do
+      file = write_coverage_file(json)
       parser = described_class.new(file.path)
       result = parser.call
 
-      expect(result["lib/array_style.rb"]).to contain_exactly(3, 4)
-      expect(result["lib/hash_style.rb"]).to contain_exactly(5)
+      expect(result["lib/mixed_counts.rb"]).to contain_exactly([1, 1], [5, 5])
+      expect(result["lib/zero_lines.rb"]).to contain_exactly([1, 3], [5, 5])
+    end
+  end
+
+  context "with absolute file paths in coverage data" do
+    it "removes current working directory prefix from absolute paths" do
+      # Use the actual current working directory in the test data
+      current_dir = Dir.pwd
+      json = {
+        "coverage" => {
+          "#{current_dir}/lib/absolute.rb" => { "lines" => [nil, 1, 0, 2] }, # lines 2 & 4 covered, line 3 uncovered
+          "lib/relative.rb"                => { "lines" => [nil, 0, 1] }, # line 3 covered, line 2 uncovered
+          "/some/other/path/outside.rb"    => { "lines" => [nil, 1] } # line 2 covered, but outside project
+        }
+      }
+
+      # Create a temporary coverage file
+      file = write_coverage_file(json)
+      parser = described_class.new(file.path)
+      result = parser.call
+
+      # Should remove current working directory prefix from absolute path
+      expect(result["lib/absolute.rb"]).to contain_exactly([3, 3])
+      # Should keep relative paths as-is
+      expect(result["lib/relative.rb"]).to contain_exactly([2, 2])
+      # Should keep paths that don't start with current working directory as-is
+      expect(result["/some/other/path/outside.rb"]).to eq([])
+    end
+  end
+
+  context "with various file path formats" do
+    it "removes current working directory prefix when present, keeps others as-is" do
+      # Use the actual current working directory in the test data
+      current_dir = Dir.pwd
+      json = {
+        "coverage" => {
+          "#{current_dir}/lib/absolute.rb" => { "lines" => [nil, 1, 0, 2] }, # Absolute path with current working directory
+          "lib/relative.rb"                => { "lines" => [nil, 0, 1] }, # Relative path
+          "/etc/passwd"                    => { "lines" => [nil, 1] }, # Absolute path outside current working directory
+          "../sibling/file.rb"             => { "lines" => [nil, 1] }, # Relative path outside current working directory
+          "app/models/user.rb"             => { "lines" => [nil, 1] } # Another relative path
+        }
+      }
+
+      # Create a temporary coverage file
+      file = write_coverage_file(json)
+      parser = described_class.new(file.path)
+      result = parser.call
+
+      # Should remove current working directory prefix from absolute path that starts with it
+      expect(result["lib/absolute.rb"]).to contain_exactly([3, 3])
+      # Should keep relative paths as-is
+      expect(result["lib/relative.rb"]).to contain_exactly([2, 2])
+      expect(result["app/models/user.rb"]).to eq([])
+      # Should keep paths that don't start with current working directory as-is
+      expect(result["/etc/passwd"]).to eq([])
+      expect(result["../sibling/file.rb"]).to eq([])
+    end
+  end
+
+  context "with paths that don't start with current working directory" do
+    let(:json) do
+      {
+        "coverage" => {
+          "/absolute/path/file.rb" => { "lines" => [nil, 1] },
+          "relative/file.rb"       => { "lines" => [nil, 1] }
+        }
+      }
+    end
+
+    it "keeps original paths when they don't start with current working directory" do
+      Dir.mktmpdir do |tmpdir|
+        coverage_file = File.join(tmpdir, "coverage.json")
+        File.write(coverage_file, JSON.dump(json))
+
+        parser = described_class.new(coverage_file)
+        result = parser.call
+
+        # Should keep original paths when they don't start with current working directory
+        expect(result.keys).to contain_exactly("/absolute/path/file.rb", "relative/file.rb")
+        expect(result["/absolute/path/file.rb"]).to eq([])
+        expect(result["relative/file.rb"]).to eq([])
+      end
+    end
+  end
+
+  context "range conversion logic" do
+    it "converts consecutive uncovered lines into ranges" do
+      json = {
+        "coverage" => {
+          "lib/consecutive.rb" => { "lines" => [0, 0, 0, 1, 0, 0, 0, 1, 0] } # lines 1,2,3,5,6,7,9 uncovered
+        }
+      }
+
+      file = write_coverage_file(json)
+      parser = described_class.new(file.path)
+      result = parser.call
+
+      expect(result["lib/consecutive.rb"]).to contain_exactly([1, 3], [5, 7], [9, 9])
+    end
+
+    it "handles single uncovered lines as single-element ranges" do
+      json = {
+        "coverage" => {
+          "lib/single.rb" => { "lines" => [1, 0, 1, 0, 1] } # lines 2,4 uncovered
+        }
+      }
+
+      file = write_coverage_file(json)
+      parser = described_class.new(file.path)
+      result = parser.call
+
+      expect(result["lib/single.rb"]).to contain_exactly([2, 2], [4, 4])
+    end
+
+    it "handles all lines uncovered as one range" do
+      json = {
+        "coverage" => {
+          "lib/all_uncovered.rb" => { "lines" => [0, 0, 0, 0] } # lines 1,2,3,4 uncovered
+        }
+      }
+
+      file = write_coverage_file(json)
+      parser = described_class.new(file.path)
+      result = parser.call
+
+      expect(result["lib/all_uncovered.rb"]).to contain_exactly([1, 4])
+    end
+
+    it "handles no uncovered lines as empty array" do
+      json = {
+        "coverage" => {
+          "lib/all_covered.rb" => { "lines" => [1, 2, 3, 4] } # all lines covered
+        }
+      }
+
+      file = write_coverage_file(json)
+      parser = described_class.new(file.path)
+      result = parser.call
+
+      expect(result["lib/all_covered.rb"]).to eq([])
+    end
+
+    it "handles mixed null and zero values correctly" do
+      json = {
+        "coverage" => {
+          "lib/mixed.rb" => { "lines" => [nil, 0, nil, 0, 0, nil, 1] } # lines 2,4,5 uncovered
+        }
+      }
+
+      file = write_coverage_file(json)
+      parser = described_class.new(file.path)
+      result = parser.call
+
+      expect(result["lib/mixed.rb"]).to contain_exactly([2, 2], [4, 5])
+    end
+
+    it "handles empty coverage array" do
+      json = {
+        "coverage" => {
+          "lib/empty.rb" => { "lines" => [] }
+        }
+      }
+
+      file = write_coverage_file(json)
+      parser = described_class.new(file.path)
+      result = parser.call
+
+      expect(result["lib/empty.rb"]).to eq([])
     end
   end
 end

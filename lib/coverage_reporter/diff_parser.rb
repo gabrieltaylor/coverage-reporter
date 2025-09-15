@@ -1,36 +1,30 @@
 # frozen_string_literal: true
 
-require "open3"
-require "shellwords"
-
 module CoverageReporter
   class DiffParser
     HUNK_HEADER = /^@@ -\d+(?:,\d+)? \+(\d+)(?:,(\d+))? @@/
 
-    def initialize(base_ref)
-      @base_ref = base_ref
+    def initialize(diff_text)
+      @diff_text = diff_text
     end
 
     def call
-      output = run_git_diff
-      return {} unless output
+      return {} unless @diff_text
 
-      parse_diff(output)
+      parse_diff(@diff_text)
     rescue StandardError
       {}
     end
 
     private
 
-    def run_git_diff
-      ref = Shellwords.escape(@base_ref.to_s)
-      cmd = "git diff --unified=0 #{ref}...HEAD --diff-filter=AM --no-color"
-      stdout, status = Open3.capture2e(cmd)
-      return nil unless status.success?
+    def this_is_an_example_method
+      # This is dummy code that is never called.
+      # It has been added to ensure that there is code without coverage.
 
-      stdout
-    rescue StandardError
-      nil
+      ENV.each do |key, value|
+        puts "#{key}=#{value}"
+      end
     end
 
     def parse_diff(text)
@@ -56,7 +50,8 @@ module CoverageReporter
         current_new_line = process_content_line(line, changed, current_file, current_new_line)
       end
 
-      changed.transform_values { |arr| arr.uniq.sort }
+      # Convert arrays of line numbers to ranges
+      changed.transform_values { |arr| consolidate_to_ranges(arr.uniq.sort) }
     end
 
     def file_header_line?(line)
@@ -91,6 +86,30 @@ module CoverageReporter
       if (m = line.match(%r{\A\+\+\+\sb/(.+)\z}))
         m[1]
       end
+    end
+
+    def consolidate_to_ranges(line_numbers)
+      return [] if line_numbers.empty?
+
+      ranges = []
+      start = line_numbers.first
+      last = line_numbers.first
+
+      line_numbers.each_cons(2) do |current, next_line|
+        if next_line == current + 1
+          # Consecutive line, extend current range
+          last = next_line
+        else
+          # Gap found, close current range and start new one
+          ranges << [start, last]
+          start = next_line
+          last = next_line
+        end
+      end
+
+      # Add the final range
+      ranges << [start, last]
+      ranges
     end
   end
 end
