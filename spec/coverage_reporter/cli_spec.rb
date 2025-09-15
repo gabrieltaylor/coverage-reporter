@@ -14,7 +14,9 @@ RSpec.describe CoverageReporter::CLI do
         html_root:     "custom_html",
         github_token:  "secret",
         build_url:     nil,
-        base_ref:      "origin/main"
+        commit_sha:    nil,
+        pr_number:     nil,
+        repo:          nil
       }
     end
 

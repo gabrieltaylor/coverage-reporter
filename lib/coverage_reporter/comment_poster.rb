@@ -1,6 +1,5 @@
 # frozen_string_literal: true
 
-require "logger"
 require "set"
 
 module CoverageReporter
@@ -8,16 +7,15 @@ module CoverageReporter
     INLINE_MARKER = "<!-- coverage-inline-marker -->"
     GLOBAL_MARKER = "<!-- coverage-comment-marker -->"
 
-    def initialize(pull_request:, analysis:, commit_sha:, logger: Logger.new($stdout))
+    def initialize(pull_request:, analysis:, commit_sha:)
       @pull_request = pull_request
       @analysis = analysis
       @commit_sha = commit_sha
-      @logger = logger
     end
 
     def call
       unless latest_commit?
-        @logger.info("Skipping comment posting: commit #{commit_sha} is not the latest commit (#{pull_request.latest_commit_sha})")
+        logger.warn("Skipping comment posting: commit #{commit_sha} is not the latest commit (#{pull_request.latest_commit_sha})")
         return
       end
 
@@ -34,19 +32,23 @@ module CoverageReporter
 
     private
 
-    attr_reader :pull_request, :analysis, :commit_sha, :logger
+    attr_reader :pull_request, :analysis, :commit_sha
 
     def latest_commit?
       commit_sha == pull_request.latest_commit_sha
+    end
+
+    def logger
+      CoverageReporter.logger
     end
 
     def post_inline_comments
       # Post new comments for uncovered lines
       # The PullRequest class will handle updating existing comments instead of creating duplicates
       analysis.each do |file, ranges|
-        puts "Posting inline comments for #{file}"
+        logger.debug("Posting inline comments for #{file}")
         ranges.each do |start_line, end_line|
-          puts "Posting inline comment for #{file}: #{start_line}–#{end_line}"
+          logger.debug("Posting inline comment for #{file}: #{start_line}–#{end_line}")
           post_inline_comment(file: file, start_line: start_line, end_line: end_line)
         end
       end
@@ -143,7 +145,7 @@ module CoverageReporter
 
       unused_comment_ids.each do |comment_id|
         comment = @existing_coverage_comments[comment_id]
-        logger.info("Removing unused coverage comment: #{comment_id} (#{comment.path || 'global'})")
+        logger.debug("Removing unused coverage comment: #{comment_id} (#{comment.path || 'global'})")
         pull_request.delete_inline_comment(comment_id)
       end
     end

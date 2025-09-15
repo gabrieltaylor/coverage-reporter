@@ -5,7 +5,6 @@ require "optparse"
 module CoverageReporter
   class Options
     DEFAULTS = {
-      base_ref:      ENV.fetch("BASE_REF", "origin/main"),
       build_url:     ENV.fetch("BUILD_URL", nil),
       commit_sha:    ENV.fetch("COMMIT_SHA", nil),
       coverage_path: ENV.fetch("COVERAGE_PATH", "coverage/coverage.json"),
@@ -23,7 +22,6 @@ module CoverageReporter
 
       parser = OptionParser.new do |o|
         o.banner = "Usage: coverage-reporter [options]"
-        o.on("--base-ref REF", "Base git ref for diff (default: origin/main)") { |v| opts[:base_ref] = v }
         o.on("--build-url URL", "CI build URL used for links (default: $BUILD_URL)") do |v|
           opts[:build_url] = v
         end

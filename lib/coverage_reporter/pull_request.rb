@@ -3,10 +3,6 @@
 module CoverageReporter
   class PullRequest
     def initialize(github_token:, repo:, pr_number:)
-      raise ArgumentError, "GitHub token is required" if github_token.nil? || github_token.empty?
-      raise ArgumentError, "Repository is required" if repo.nil? || repo.empty?
-      raise ArgumentError, "PR number is required" if pr_number.nil? || pr_number.empty?
-
       opts = { access_token: github_token }
 
       @client = ::Octokit::Client.new(**opts)
@@ -91,6 +87,10 @@ module CoverageReporter
 
     attr_reader :client, :repo, :pr_number
 
+    def logger
+      CoverageReporter.logger
+    end
+
     def find_diff_line_numbers(diff, file_path, start_line, end_line)
       state = DiffParserState.new(file_path, start_line, end_line)
       diff.split("\n").each { |line| state.process_line(line) }
@@ -148,20 +148,20 @@ module CoverageReporter
     end
 
     def handle_github_api_error(error, payload)
-      puts "GitHub API Error: #{error.message}"
-      puts "Repository: #{repo}"
-      puts "PR Number: #{pr_number}"
-      puts "Payload: #{payload.inspect}"
-      puts "Response body: #{error.response_body}" if error.respond_to?(:response_body)
-      puts "Status: #{error.status}" if error.respond_to?(:status)
+      logger.error("GitHub API Error: #{error.message}")
+      logger.error("Repository: #{repo}")
+      logger.error("PR Number: #{pr_number}")
+      logger.error("Payload: #{payload.inspect}")
+      logger.error("Response body: #{error.response_body}") if error.respond_to?(:response_body)
+      logger.error("Status: #{error.status}") if error.respond_to?(:status)
       raise
     end
 
     def handle_unexpected_error(error, payload)
-      puts "Unexpected error: #{error.class}: #{error.message}"
-      puts "Repository: #{repo}"
-      puts "PR Number: #{pr_number}"
-      puts "Payload: #{payload.inspect}"
+      logger.error("Unexpected error: #{error.class}: #{error.message}")
+      logger.error("Repository: #{repo}")
+      logger.error("PR Number: #{pr_number}")
+      logger.error("Payload: #{payload.inspect}")
       raise
     end
 
@@ -185,6 +185,7 @@ module CoverageReporter
   end
 
   # Helper class to parse diff and find line numbers
+  # Since coverage is only relevant for added lines, this class only tracks added lines
   class DiffParserState
     def initialize(file_path, start_line, end_line)
       @file_path = file_path
@@ -192,8 +193,8 @@ module CoverageReporter
       @end_line = end_line
       @in_target_file = false
       @file_line_number = 0
-      @start_side = nil
-      @end_side = nil
+      @start_found = false
+      @end_found = false
     end
 
     def process_line(line)
@@ -225,8 +226,6 @@ module CoverageReporter
     def process_diff_line(line)
       if line.start_with?("+")
         process_added_line
-      elsif line.start_with?("-")
-        process_removed_line
       elsif line.start_with?(" ")
         @file_line_number += 1
       end
@@ -234,31 +233,24 @@ module CoverageReporter
 
     def process_added_line
       @file_line_number += 1
-      @start_side = "RIGHT" if @file_line_number == @start_line
-      @end_side = "RIGHT" if @file_line_number == @end_line
-    end
-
-    def process_removed_line
-      @file_line_number += 1
-      @start_side = "LEFT" if @file_line_number == @start_line
-      @end_side = "LEFT" if @file_line_number == @end_line
+      @start_found = true if @file_line_number == @start_line
+      @end_found = true if @file_line_number == @end_line
     end
 
     def build_multi_line_result
       {
         line:       @end_line,
-        side:       @end_side || @start_side || "RIGHT",
+        side:       "RIGHT",
         start_line: @start_line,
-        start_side: @start_side || "RIGHT"
+        start_side: "RIGHT"
       }
     end
 
     def build_single_line_result
       {
         line:       @start_line,
-        side:       @start_side || "RIGHT",
-        start_line: nil,
-        start_side: @start_side || "RIGHT"
+        side:       "RIGHT",
+        start_side: "RIGHT"
       }
     end
   end

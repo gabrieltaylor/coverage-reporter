@@ -6,14 +6,14 @@ require "tempfile"
 require "fileutils"
 
 RSpec.describe CoverageReporter::CoverageParser do
-  def write_resultset(json_obj)
-    file = Tempfile.new("coverage_resultset")
+  def write_coverage_file(json_obj)
+    file = Tempfile.new("coverage")
     file.write(JSON.dump(json_obj))
     file.flush
     file
   end
 
-  context "when the resultset file does not exist" do
+  context "when the coverage file does not exist" do
     it "returns an empty hash" do
       parser = described_class.new("nonexistent/file/path.json")
       expect(parser.call).to eq({})
@@ -22,7 +22,7 @@ RSpec.describe CoverageReporter::CoverageParser do
 
   context "when the JSON is invalid" do
     it "returns an empty hash" do
-      file = Tempfile.new("coverage_resultset")
+      file = Tempfile.new("coverage")
       file.write("{ invalid json")
       file.flush
 
@@ -33,7 +33,7 @@ RSpec.describe CoverageReporter::CoverageParser do
 
   context "when the top-level JSON is not a Hash" do
     it "returns an empty hash" do
-      file = write_resultset(%w[array not hash])
+      file = write_coverage_file(%w[array not hash])
       parser = described_class.new(file.path)
       expect(parser.call).to eq({})
     end
@@ -43,17 +43,17 @@ RSpec.describe CoverageReporter::CoverageParser do
     let(:json) do
       {
         "coverage" => {
-          "lib/foo.rb"  => [nil, 1, 0, 2], # lines 2 & 4 covered, line 3 uncovered
-          "lib/bar.rb"  => [1, 0, 1, 0, 3], # lines 1, 3, 5 covered, lines 2, 4 uncovered
-          "lib/baz.rb"  => [nil, 0, 1, 1], # lines 3 & 4 covered, line 2 uncovered
-          "lib/qux.rb"  => [0, 0, 5], # lines 1, 2 uncovered, line 3 covered
-          "lib/quux.rb" => [1, 2, 0, 3] # lines 1, 2, 4 covered, line 3 uncovered
+          "lib/foo.rb"  => { "lines" => [nil, 1, 0, 2] }, # lines 2 & 4 covered, line 3 uncovered
+          "lib/bar.rb"  => { "lines" => [1, 0, 1, 0, 3] }, # lines 1, 3, 5 covered, lines 2, 4 uncovered
+          "lib/baz.rb"  => { "lines" => [nil, 0, 1, 1] }, # lines 3 & 4 covered, line 2 uncovered
+          "lib/qux.rb"  => { "lines" => [0, 0, 5] }, # lines 1, 2 uncovered, line 3 covered
+          "lib/quux.rb" => { "lines" => [1, 2, 0, 3] } # lines 1, 2, 4 covered, line 3 uncovered
         }
       }
     end
 
     it "parses coverage data and extracts uncovered ranges" do
-      file = write_resultset(json)
+      file = write_coverage_file(json)
       parser = described_class.new(file.path)
 
       result = parser.call
@@ -85,15 +85,15 @@ RSpec.describe CoverageReporter::CoverageParser do
     let(:json) do
       {
         "coverage" => {
-          "lib/file1.rb" => [nil, 1, 0, 2], # lines 2 & 4 covered, line 3 uncovered
-          "lib/file2.rb" => [0, 0, 1, 0, 1], # lines 3 & 5 covered, lines 1, 2, 4 uncovered
-          "lib/file3.rb" => [1, 2, 0, 3, 0] # lines 1, 2, 4 covered, lines 3, 5 uncovered
+          "lib/file1.rb" => { "lines" => [nil, 1, 0, 2] }, # lines 2 & 4 covered, line 3 uncovered
+          "lib/file2.rb" => { "lines" => [0, 0, 1, 0, 1] }, # lines 3 & 5 covered, lines 1, 2, 4 uncovered
+          "lib/file3.rb" => { "lines" => [1, 2, 0, 3, 0] } # lines 1, 2, 4 covered, lines 3, 5 uncovered
         }
       }
     end
 
     it "extracts uncovered ranges for each file" do
-      file = write_resultset(json)
+      file = write_coverage_file(json)
       parser = described_class.new(file.path)
       result = parser.call
 
@@ -111,7 +111,7 @@ RSpec.describe CoverageReporter::CoverageParser do
     end
 
     it "returns an empty hash" do
-      file = write_resultset(json)
+      file = write_coverage_file(json)
       parser = described_class.new(file.path)
       expect(parser.call).to eq({})
     end
@@ -121,14 +121,14 @@ RSpec.describe CoverageReporter::CoverageParser do
     let(:json) do
       {
         "coverage" => {
-          "lib/mixed_counts.rb" => [0, nil, 1, 2, 0], # lines 3 & 4 covered, lines 1 & 5 uncovered
-          "lib/zero_lines.rb"   => [0, 0, 0, 1, 0] # lines 1, 2, 3, 5 uncovered, line 4 covered
+          "lib/mixed_counts.rb" => { "lines" => [0, nil, 1, 2, 0] }, # lines 3 & 4 covered, lines 1 & 5 uncovered
+          "lib/zero_lines.rb"   => { "lines" => [0, 0, 0, 1, 0] } # lines 1, 2, 3, 5 uncovered, line 4 covered
         }
       }
     end
 
     it "identifies uncovered lines (count == 0) and ignores null/negative values" do
-      file = write_resultset(json)
+      file = write_coverage_file(json)
       parser = described_class.new(file.path)
       result = parser.call
 
@@ -143,14 +143,14 @@ RSpec.describe CoverageReporter::CoverageParser do
       current_dir = Dir.pwd
       json = {
         "coverage" => {
-          "#{current_dir}/lib/absolute.rb" => [nil, 1, 0, 2], # lines 2 & 4 covered, line 3 uncovered
-          "lib/relative.rb"                => [nil, 0, 1], # line 3 covered, line 2 uncovered
-          "/some/other/path/outside.rb"    => [nil, 1] # line 2 covered, but outside project
+          "#{current_dir}/lib/absolute.rb" => { "lines" => [nil, 1, 0, 2] }, # lines 2 & 4 covered, line 3 uncovered
+          "lib/relative.rb"                => { "lines" => [nil, 0, 1] }, # line 3 covered, line 2 uncovered
+          "/some/other/path/outside.rb"    => { "lines" => [nil, 1] } # line 2 covered, but outside project
         }
       }
 
-      # Create a temporary resultset file
-      file = write_resultset(json)
+      # Create a temporary coverage file
+      file = write_coverage_file(json)
       parser = described_class.new(file.path)
       result = parser.call
 
@@ -169,16 +169,16 @@ RSpec.describe CoverageReporter::CoverageParser do
       current_dir = Dir.pwd
       json = {
         "coverage" => {
-          "#{current_dir}/lib/absolute.rb" => [nil, 1, 0, 2], # Absolute path with current working directory
-          "lib/relative.rb"                => [nil, 0, 1], # Relative path
-          "/etc/passwd"                    => [nil, 1], # Absolute path outside current working directory
-          "../sibling/file.rb"             => [nil, 1], # Relative path outside current working directory
-          "app/models/user.rb"             => [nil, 1] # Another relative path
+          "#{current_dir}/lib/absolute.rb" => { "lines" => [nil, 1, 0, 2] }, # Absolute path with current working directory
+          "lib/relative.rb"                => { "lines" => [nil, 0, 1] }, # Relative path
+          "/etc/passwd"                    => { "lines" => [nil, 1] }, # Absolute path outside current working directory
+          "../sibling/file.rb"             => { "lines" => [nil, 1] }, # Relative path outside current working directory
+          "app/models/user.rb"             => { "lines" => [nil, 1] } # Another relative path
         }
       }
 
-      # Create a temporary resultset file
-      file = write_resultset(json)
+      # Create a temporary coverage file
+      file = write_coverage_file(json)
       parser = described_class.new(file.path)
       result = parser.call
 
@@ -197,18 +197,18 @@ RSpec.describe CoverageReporter::CoverageParser do
     let(:json) do
       {
         "coverage" => {
-          "/absolute/path/file.rb" => [nil, 1],
-          "relative/file.rb"       => [nil, 1]
+          "/absolute/path/file.rb" => { "lines" => [nil, 1] },
+          "relative/file.rb"       => { "lines" => [nil, 1] }
         }
       }
     end
 
     it "keeps original paths when they don't start with current working directory" do
       Dir.mktmpdir do |tmpdir|
-        resultset_file = File.join(tmpdir, "coverage.json")
-        File.write(resultset_file, JSON.dump(json))
+        coverage_file = File.join(tmpdir, "coverage.json")
+        File.write(coverage_file, JSON.dump(json))
 
-        parser = described_class.new(resultset_file)
+        parser = described_class.new(coverage_file)
         result = parser.call
 
         # Should keep original paths when they don't start with current working directory
@@ -223,11 +223,11 @@ RSpec.describe CoverageReporter::CoverageParser do
     it "converts consecutive uncovered lines into ranges" do
       json = {
         "coverage" => {
-          "lib/consecutive.rb" => [0, 0, 0, 1, 0, 0, 0, 1, 0] # lines 1,2,3,5,6,7,9 uncovered
+          "lib/consecutive.rb" => { "lines" => [0, 0, 0, 1, 0, 0, 0, 1, 0] } # lines 1,2,3,5,6,7,9 uncovered
         }
       }
 
-      file = write_resultset(json)
+      file = write_coverage_file(json)
       parser = described_class.new(file.path)
       result = parser.call
 
@@ -237,11 +237,11 @@ RSpec.describe CoverageReporter::CoverageParser do
     it "handles single uncovered lines as single-element ranges" do
       json = {
         "coverage" => {
-          "lib/single.rb" => [1, 0, 1, 0, 1] # lines 2,4 uncovered
+          "lib/single.rb" => { "lines" => [1, 0, 1, 0, 1] } # lines 2,4 uncovered
         }
       }
 
-      file = write_resultset(json)
+      file = write_coverage_file(json)
       parser = described_class.new(file.path)
       result = parser.call
 
@@ -251,11 +251,11 @@ RSpec.describe CoverageReporter::CoverageParser do
     it "handles all lines uncovered as one range" do
       json = {
         "coverage" => {
-          "lib/all_uncovered.rb" => [0, 0, 0, 0] # lines 1,2,3,4 uncovered
+          "lib/all_uncovered.rb" => { "lines" => [0, 0, 0, 0] } # lines 1,2,3,4 uncovered
         }
       }
 
-      file = write_resultset(json)
+      file = write_coverage_file(json)
       parser = described_class.new(file.path)
       result = parser.call
 
@@ -265,11 +265,11 @@ RSpec.describe CoverageReporter::CoverageParser do
     it "handles no uncovered lines as empty array" do
       json = {
         "coverage" => {
-          "lib/all_covered.rb" => [1, 2, 3, 4] # all lines covered
+          "lib/all_covered.rb" => { "lines" => [1, 2, 3, 4] } # all lines covered
         }
       }
 
-      file = write_resultset(json)
+      file = write_coverage_file(json)
       parser = described_class.new(file.path)
       result = parser.call
 
@@ -279,11 +279,11 @@ RSpec.describe CoverageReporter::CoverageParser do
     it "handles mixed null and zero values correctly" do
       json = {
         "coverage" => {
-          "lib/mixed.rb" => [nil, 0, nil, 0, 0, nil, 1] # lines 2,4,5 uncovered
+          "lib/mixed.rb" => { "lines" => [nil, 0, nil, 0, 0, nil, 1] } # lines 2,4,5 uncovered
         }
       }
 
-      file = write_resultset(json)
+      file = write_coverage_file(json)
       parser = described_class.new(file.path)
       result = parser.call
 
@@ -293,11 +293,11 @@ RSpec.describe CoverageReporter::CoverageParser do
     it "handles empty coverage array" do
       json = {
         "coverage" => {
-          "lib/empty.rb" => []
+          "lib/empty.rb" => { "lines" => [] }
         }
       }
 
-      file = write_resultset(json)
+      file = write_coverage_file(json)
       parser = described_class.new(file.path)
       result = parser.call
 

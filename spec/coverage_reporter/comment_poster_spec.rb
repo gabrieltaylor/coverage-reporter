@@ -4,11 +4,10 @@ require "spec_helper"
 require "coverage_reporter/comment_poster"
 
 RSpec.describe CoverageReporter::CommentPoster do
-  subject(:poster) { described_class.new(pull_request:, analysis:, commit_sha:, logger:) }
+  subject(:poster) { described_class.new(pull_request:, analysis:, commit_sha:) }
 
   let(:pull_request) { instance_double(CoverageReporter::PullRequest) }
   let(:commit_sha) { "abc123" }
-  let(:logger) { instance_double(Logger) }
   let(:analysis) do
     {
       "app/models/user.rb" => [[10, 12], [20, 22], [30, 30]],
@@ -28,7 +27,6 @@ RSpec.describe CoverageReporter::CommentPoster do
       delete_inline_comment:             true,
       latest_commit_sha:                 commit_sha
     )
-    allow(logger).to receive(:info)
   end
 
   describe "#call" do
@@ -42,7 +40,7 @@ RSpec.describe CoverageReporter::CommentPoster do
       end
 
       it "does not log any skip message" do
-        expect(logger).not_to receive(:info)
+        expect(CoverageReporter.logger).not_to receive(:warn)
 
         poster.call
       end
@@ -56,7 +54,7 @@ RSpec.describe CoverageReporter::CommentPoster do
       end
 
       it "logs a skip message and returns early" do
-        expect(logger).to receive(:info).with(
+        expect(CoverageReporter.logger).to receive(:warn).with(
           "Skipping comment posting: commit #{commit_sha} is not the latest commit (#{latest_commit_sha})"
         )
         expect(pull_request).not_to receive(:add_comment_on_lines)
@@ -124,9 +122,12 @@ RSpec.describe CoverageReporter::CommentPoster do
       # Mock the global comment to not be found (simulating no existing global comment)
       allow(pull_request).to receive_messages(find_existing_inline_comment: nil, global_comments: [])
 
+      # Allow all debug calls but expect the specific one we care about
+      allow(CoverageReporter.logger).to receive(:debug)
+      
       # Expect only the inline comment to be deleted (global comment will be created, not deleted)
       expect(pull_request).to receive(:delete_inline_comment).with(123)
-      expect(logger).to receive(:info).with("Removing unused coverage comment: 123 (app/models/user.rb)")
+      expect(CoverageReporter.logger).to receive(:debug).with("Removing unused coverage comment: 123 (app/models/user.rb)")
 
       poster.call
     end
@@ -147,34 +148,9 @@ RSpec.describe CoverageReporter::CommentPoster do
     end
   end
 
-  describe "logger parameter" do
-    context "when no logger is provided" do
-      subject(:poster) { described_class.new(pull_request:, analysis:, commit_sha:) }
-
-      it "uses the default logger" do
-        expect { poster.call }.not_to raise_error
-      end
-    end
-
-    context "when a custom logger is provided" do
-      subject(:poster) { described_class.new(pull_request:, analysis:, commit_sha:, logger: custom_logger) }
-
-      let(:custom_logger) { instance_double(Logger) }
-
-      before do
-        allow(custom_logger).to receive(:info)
-      end
-
-      it "uses the provided logger" do
-        latest_sha = "different_sha"
-        allow(pull_request).to receive(:latest_commit_sha).and_return(latest_sha)
-
-        expect(custom_logger).to receive(:info).with(
-          "Skipping comment posting: commit #{commit_sha} is not the latest commit (#{latest_sha})"
-        )
-
-        poster.call
-      end
+  describe "logger usage" do
+    it "uses the default logger from CoverageReporter" do
+      expect { poster.call }.not_to raise_error
     end
   end
 end

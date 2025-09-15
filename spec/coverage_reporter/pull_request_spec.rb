@@ -57,47 +57,6 @@ RSpec.describe CoverageReporter::PullRequest do
       end
     end
 
-    context "with missing or empty github_token" do
-      it "raises ArgumentError when token is nil" do
-        expect do
-          described_class.new(github_token: nil, repo:, pr_number:)
-        end.to raise_error(ArgumentError, "GitHub token is required")
-      end
-
-      it "raises ArgumentError when token is empty string" do
-        expect do
-          described_class.new(github_token: "", repo:, pr_number:)
-        end.to raise_error(ArgumentError, "GitHub token is required")
-      end
-    end
-
-    context "with missing or empty repo" do
-      it "raises ArgumentError when repo is nil" do
-        expect do
-          described_class.new(github_token:, repo: nil, pr_number:)
-        end.to raise_error(ArgumentError, "Repository is required")
-      end
-
-      it "raises ArgumentError when repo is empty string" do
-        expect do
-          described_class.new(github_token:, repo: "", pr_number:)
-        end.to raise_error(ArgumentError, "Repository is required")
-      end
-    end
-
-    context "with missing or empty pr_number" do
-      it "raises ArgumentError when pr_number is nil" do
-        expect do
-          described_class.new(github_token:, repo:, pr_number: nil)
-        end.to raise_error(ArgumentError, "PR number is required")
-      end
-
-      it "raises ArgumentError when pr_number is empty string" do
-        expect do
-          described_class.new(github_token:, repo:, pr_number: "")
-        end.to raise_error(ArgumentError, "PR number is required")
-      end
-    end
 
     context "with repository normalization" do
       it "keeps owner/repo format as is" do
@@ -731,9 +690,9 @@ RSpec.describe CoverageReporter::PullRequest do
         expect(result).to include(
           line:       8,
           side:       "RIGHT",
-          start_line: nil,
           start_side: "RIGHT"
         )
+        expect(result).not_to have_key(:start_line)
       end
 
       it "finds line numbers for multi-line comment" do

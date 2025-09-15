@@ -4,8 +4,8 @@ require "json"
 
 module CoverageReporter
   class CoverageParser
-    def initialize(resultset_path)
-      @resultset_path = resultset_path
+    def initialize(coverage_file_path)
+      @coverage_file_path = coverage_file_path
     end
 
     def call
@@ -23,9 +23,9 @@ module CoverageReporter
     private
 
     def coverage
-      return {} unless File.file?(@resultset_path)
+      return {} unless File.file?(@coverage_file_path)
 
-      content = File.read(@resultset_path)
+      content = File.read(@coverage_file_path)
       JSON.parse(content)["coverage"]
     rescue StandardError
       {}

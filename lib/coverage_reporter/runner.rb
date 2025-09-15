@@ -7,7 +7,6 @@ module CoverageReporter
       @coverage_path = options[:coverage_path]
       @github_token  = options[:github_token]
       @build_url     = options[:build_url]
-      @base_ref      = options[:base_ref]
       @repo          = options[:repo]
       @pr_number     = options[:pr_number]
     end
@@ -23,6 +22,6 @@ module CoverageReporter
 
     private
 
-    attr_reader :coverage_path, :github_token, :build_url, :base_ref, :repo, :pr_number, :commit_sha
+    attr_reader :coverage_path, :github_token, :build_url, :repo, :pr_number, :commit_sha
   end
 end

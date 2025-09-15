@@ -19,7 +19,11 @@ module CoverageReporter
     end
 
     def call
+      logger = CoverageReporter.logger
+      logger.debug("Starting coverage analysis for #{@diff.size} changed files")
+      
       uncovered_map = {}
+      files_with_overlaps = 0
 
       @diff.each do |file, changed_ranges|
         next unless @coverage.key?(file)
@@ -28,8 +32,12 @@ module CoverageReporter
         uncovered_ranges = @coverage[file] || []
         overlapping_ranges = intersect_ranges(changed_ranges, uncovered_ranges)
         uncovered_map[file] = overlapping_ranges
+        
+        files_with_overlaps += 1 unless overlapping_ranges.empty?
+        logger.debug("File #{file}: #{overlapping_ranges.size} uncovered ranges in changed code")
       end
 
+      logger.info("Coverage analysis complete: #{files_with_overlaps}/#{@diff.size} files have uncovered changes")
       uncovered_map
     end
 
