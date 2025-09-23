@@ -3,13 +3,15 @@
 require "json"
 
 module CoverageReporter
-  class CoverageParser
-    def initialize(coverage_file_path)
-      @coverage_file_path = coverage_file_path
+  class UncoveredRangesExtractor
+    def initialize(coverage_report)
+      @coverage_report = coverage_report
     end
 
     def call
       coverage_map = Hash.new { |h, k| h[k] = [] }
+
+      return coverage_map unless coverage
 
       coverage.each do |filename, data|
         normalized_filename = normalize_filename(filename)
@@ -23,15 +25,14 @@ module CoverageReporter
     private
 
     def coverage
-      return {} unless File.file?(@coverage_file_path)
+      return nil unless @coverage_report.is_a?(Hash)
 
-      content = File.read(@coverage_file_path)
-      JSON.parse(content)["coverage"]
-    rescue StandardError
-      {}
+      @coverage_report["coverage"]
     end
 
     def extract_uncovered_ranges(lines)
+      return [] unless lines.is_a?(Array)
+
       uncovered_lines = []
       lines.each_with_index do |count, idx|
         # Only lines with 0 count are considered uncovered

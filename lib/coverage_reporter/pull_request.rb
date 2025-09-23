@@ -51,14 +51,12 @@ module CoverageReporter
     end
 
     def add_comment_on_lines(commit_id:, file_path:, start_line:, end_line:, body:)
-      actual_file_path = find_actual_file_path_in_diff(diff, file_path)
-      diff_line_info = find_diff_line_numbers(diff, actual_file_path, start_line, end_line)
-      existing_comment = find_existing_inline_comment(actual_file_path, start_line, end_line)
+      existing_comment = find_existing_inline_comment(file_path, start_line, end_line)
 
       if existing_comment
         update_inline_comment(id: existing_comment.id, body: body)
       else
-        payload = build_comment_payload(body, commit_id, actual_file_path, diff_line_info, start_line, end_line)
+        payload = build_comment_payload(body, commit_id, file_path, start_line, end_line)
         create_comment_with_error_handling(payload)
       end
     end
@@ -91,28 +89,6 @@ module CoverageReporter
       CoverageReporter.logger
     end
 
-    def find_diff_line_numbers(diff, file_path, start_line, end_line)
-      state = DiffParserState.new(file_path, start_line, end_line)
-      diff.split("\n").each { |line| state.process_line(line) }
-      state.result
-    end
-
-    def find_actual_file_path_in_diff(diff, file_path)
-      lines = diff.split("\n")
-
-      lines.each do |line|
-        # Check for file header
-        next unless line.start_with?("+++ b/")
-
-        actual_path = line[6..] # Remove "+++ b/" prefix
-        # Check if this matches our target file (exact match or basename match)
-        return actual_path if actual_path == file_path || File.basename(actual_path) == File.basename(file_path)
-      end
-
-      # If no exact match found, return the original path
-      file_path
-    end
-
     def normalize_repo(repo)
       return repo if repo.include?("/") && !repo.include?("://")
       return extract_github_repo(repo) if repo.include?("github.com")
@@ -120,20 +96,19 @@ module CoverageReporter
       raise ArgumentError, "Repository must be in format 'owner/repo' or a full GitHub URL"
     end
 
-    def build_comment_payload(body, commit_id, file_path, diff_line_info, start_line, end_line)
+    def build_comment_payload(body, commit_id, file_path, _diff_line_info, start_line, end_line)
       payload = {
         body:      body,
         commit_id: commit_id,
         path:      file_path,
-        line:      diff_line_info[:line],
         side:      "RIGHT"
       }
 
-      if end_line > start_line && diff_line_info[:start_line]
-        payload[:start_line] = diff_line_info[:start_line]
+      if end_line > start_line && start_line
+        payload[:line] = end_line
+        payload[:start_line] = start_line
       elsif end_line == start_line
-        payload[:line] = diff_line_info[:line]
-        # Don't include start_line when it's the same as line
+        payload[:line] = end_line
       end
 
       payload
@@ -143,24 +118,10 @@ module CoverageReporter
       client.post("/repos/#{repo}/pulls/#{pr_number}/comments", payload)
     rescue Octokit::Error => e
       handle_github_api_error(e, payload)
-    rescue StandardError => e
-      handle_unexpected_error(e, payload)
     end
 
     def handle_github_api_error(error, payload)
       logger.error("GitHub API Error: #{error.message}")
-      logger.error("Repository: #{repo}")
-      logger.error("PR Number: #{pr_number}")
-      logger.error("Payload: #{payload.inspect}")
-      logger.error("Response body: #{error.response_body}") if error.respond_to?(:response_body)
-      logger.error("Status: #{error.status}") if error.respond_to?(:status)
-      raise
-    end
-
-    def handle_unexpected_error(error, payload)
-      logger.error("Unexpected error: #{error.class}: #{error.message}")
-      logger.error("Repository: #{repo}")
-      logger.error("PR Number: #{pr_number}")
       logger.error("Payload: #{payload.inspect}")
       raise
     end
@@ -181,77 +142,6 @@ module CoverageReporter
     def extract_github_repo(repo)
       match = repo.match(%r{github\.com[:/]([^/]+/[^/]+?)(?:\.git)?/?$})
       match[1] if match
-    end
-  end
-
-  # Helper class to parse diff and find line numbers
-  # Since coverage is only relevant for added lines, this class only tracks added lines
-  class DiffParserState
-    def initialize(file_path, start_line, end_line)
-      @file_path = file_path
-      @start_line = start_line
-      @end_line = end_line
-      @in_target_file = false
-      @file_line_number = 0
-      @start_found = false
-      @end_found = false
-    end
-
-    def process_line(line)
-      if file_header?(line)
-        handle_file_header(line)
-      elsif @in_target_file
-        process_diff_line(line)
-      end
-    end
-
-    def result
-      if @end_line > @start_line
-        build_multi_line_result
-      else
-        build_single_line_result
-      end
-    end
-
-    def file_header?(line)
-      line.start_with?("+++ b/")
-    end
-
-    def handle_file_header(line)
-      actual_path = line[6..] # Remove "+++ b/" prefix
-      @in_target_file = (actual_path == @file_path)
-      @file_line_number = 0
-    end
-
-    def process_diff_line(line)
-      if line.start_with?("+")
-        process_added_line
-      elsif line.start_with?(" ")
-        @file_line_number += 1
-      end
-    end
-
-    def process_added_line
-      @file_line_number += 1
-      @start_found = true if @file_line_number == @start_line
-      @end_found = true if @file_line_number == @end_line
-    end
-
-    def build_multi_line_result
-      {
-        line:       @end_line,
-        side:       "RIGHT",
-        start_line: @start_line,
-        start_side: "RIGHT"
-      }
-    end
-
-    def build_single_line_result
-      {
-        line:       @start_line,
-        side:       "RIGHT",
-        start_side: "RIGHT"
-      }
     end
   end
 end

@@ -1,37 +1,36 @@
 # frozen_string_literal: true
 
 require "spec_helper"
-require "coverage_reporter/diff_parser"
 
-RSpec.describe CoverageReporter::DiffParser do
+RSpec.describe CoverageReporter::ModifiedRangesExtractor do
   describe "#call" do
     context "when diff text is nil" do
-      subject(:parser) { described_class.new(nil) }
+      subject(:extractor) { described_class.new(nil) }
 
       it "returns an empty hash" do
-        expect(parser.call).to eq({})
+        expect(extractor.call).to eq({})
       end
     end
 
     context "when diff text is empty" do
-      subject(:parser) { described_class.new("") }
+      subject(:extractor) { described_class.new("") }
 
       it "returns an empty hash" do
-        expect(parser.call).to eq({})
+        expect(extractor.call).to eq({})
       end
     end
 
     context "when parsing raises an exception" do
-      subject(:parser) { described_class.new("invalid diff") }
+      subject(:extractor) { described_class.new("invalid diff") }
 
       it "returns an empty hash" do
-        allow(parser).to receive(:parse_diff).and_raise("boom")
-        expect(parser.call).to eq({})
+        allow(extractor).to receive(:parse_diff).and_raise("boom")
+        expect(extractor.call).to eq({})
       end
     end
 
     context "with a diff containing multiple files, hunks, additions and deletions" do
-      subject(:parser) { described_class.new(diff_text) }
+      subject(:extractor) { described_class.new(diff_text) }
 
       let(:diff_text) do
         <<~DIFF
@@ -66,7 +65,7 @@ RSpec.describe CoverageReporter::DiffParser do
       end
 
       it "parses and returns a hash of line ranges per file, ignoring deleted files" do
-        result = parser.call
+        result = extractor.call
 
         expect(result).to eq(
           "lib/sample.rb"      => [[5, 5], [11, 14]],
@@ -77,14 +76,14 @@ RSpec.describe CoverageReporter::DiffParser do
       end
 
       it "does not include removed lines" do
-        result = parser.call
+        result = extractor.call
         # Ensure no negative side line numbers (e.g., 10 from -10,2 etc.)
         expect(result.values.flatten).not_to include(10)
       end
     end
 
     context "with consecutive line additions" do
-      subject(:parser) { described_class.new(diff_text) }
+      subject(:extractor) { described_class.new(diff_text) }
 
       let(:diff_text) do
         <<~DIFF
@@ -102,7 +101,7 @@ RSpec.describe CoverageReporter::DiffParser do
       end
 
       it "consolidates consecutive lines into a single range" do
-        result = parser.call
+        result = extractor.call
 
         expect(result).to eq(
           "test.rb" => [[1, 5]]
@@ -111,7 +110,7 @@ RSpec.describe CoverageReporter::DiffParser do
     end
 
     context "with non-consecutive line additions" do
-      subject(:parser) { described_class.new(diff_text) }
+      subject(:extractor) { described_class.new(diff_text) }
 
       let(:diff_text) do
         <<~DIFF
@@ -129,7 +128,7 @@ RSpec.describe CoverageReporter::DiffParser do
       end
 
       it "creates separate ranges for non-consecutive lines" do
-        result = parser.call
+        result = extractor.call
 
         expect(result).to eq(
           "test.rb" => [[1, 1], [6, 6], [11, 11]]
@@ -138,7 +137,7 @@ RSpec.describe CoverageReporter::DiffParser do
     end
 
     context "with mixed consecutive and non-consecutive lines" do
-      subject(:parser) { described_class.new(diff_text) }
+      subject(:extractor) { described_class.new(diff_text) }
 
       let(:diff_text) do
         <<~DIFF
@@ -161,7 +160,7 @@ RSpec.describe CoverageReporter::DiffParser do
       end
 
       it "creates appropriate ranges for mixed patterns" do
-        result = parser.call
+        result = extractor.call
 
         expect(result).to eq(
           "test.rb" => [[1, 3], [11, 11], [16, 17], [27, 27]]
@@ -171,26 +170,26 @@ RSpec.describe CoverageReporter::DiffParser do
   end
 
   describe "#consolidate_to_ranges" do
-    subject(:parser) { described_class.new("") }
+    subject(:extractor) { described_class.new("") }
 
     it "returns empty array for empty input" do
-      expect(parser.send(:consolidate_to_ranges, [])).to eq([])
+      expect(extractor.send(:consolidate_to_ranges, [])).to eq([])
     end
 
     it "returns single range for single line" do
-      expect(parser.send(:consolidate_to_ranges, [5])).to eq([[5, 5]])
+      expect(extractor.send(:consolidate_to_ranges, [5])).to eq([[5, 5]])
     end
 
     it "consolidates consecutive lines" do
-      expect(parser.send(:consolidate_to_ranges, [1, 2, 3, 4, 5])).to eq([[1, 5]])
+      expect(extractor.send(:consolidate_to_ranges, [1, 2, 3, 4, 5])).to eq([[1, 5]])
     end
 
     it "creates separate ranges for non-consecutive lines" do
-      expect(parser.send(:consolidate_to_ranges, [1, 3, 5, 7, 9])).to eq([[1, 1], [3, 3], [5, 5], [7, 7], [9, 9]])
+      expect(extractor.send(:consolidate_to_ranges, [1, 3, 5, 7, 9])).to eq([[1, 1], [3, 3], [5, 5], [7, 7], [9, 9]])
     end
 
     it "handles mixed consecutive and non-consecutive lines" do
-      expect(parser.send(:consolidate_to_ranges, [1, 2, 3, 5, 6, 8, 10, 11, 12, 15])).to eq(
+      expect(extractor.send(:consolidate_to_ranges, [1, 2, 3, 5, 6, 8, 10, 11, 12, 15])).to eq(
         [[1, 3], [5, 6], [8, 8], [10, 12], [15, 15]]
       )
     end

@@ -12,36 +12,36 @@ module CoverageReporter
   #   - Keys are filenames (e.g., "app/models/user.rb")
   #   - Values are arrays of arrays representing modified or new line ranges
   #   - Example: { "app/services/foo.rb" => [[100,120]] }
-  class CoverageAnalyser
-    def initialize(coverage:, diff:)
-      @coverage = coverage
-      @diff     = diff
+  class ModifiedUncoveredIntersection
+    def initialize(uncovered_ranges:, modified_ranges:)
+      @uncovered_ranges = uncovered_ranges
+      @modified_ranges = modified_ranges
     end
 
     def call
-      logger = CoverageReporter.logger
-      logger.debug("Starting coverage analysis for #{@diff.size} changed files")
-      
-      uncovered_map = {}
-      files_with_overlaps = 0
+      logger.debug("Starting coverage analysis for #{@modified_ranges.size} modified files")
 
-      @diff.each do |file, changed_ranges|
-        next unless @coverage.key?(file)
-        next if changed_ranges.nil?
+      intersections = {}
 
-        uncovered_ranges = @coverage[file] || []
-        overlapping_ranges = intersect_ranges(changed_ranges, uncovered_ranges)
-        uncovered_map[file] = overlapping_ranges
-        
-        files_with_overlaps += 1 unless overlapping_ranges.empty?
-        logger.debug("File #{file}: #{overlapping_ranges.size} uncovered ranges in changed code")
+      @modified_ranges.each do |file, modified_ranges|
+        next unless @uncovered_ranges.key?(file)
+        next if modified_ranges.nil?
+
+        uncovered_ranges = @uncovered_ranges[file] || []
+        intersecting_ranges = intersect_ranges(modified_ranges, uncovered_ranges)
+        intersections[file] = intersecting_ranges
       end
 
-      logger.info("Coverage analysis complete: #{files_with_overlaps}/#{@diff.size} files have uncovered changes")
-      uncovered_map
+      logger.debug("Identified modified uncovered intersection: #{intersections}")
+
+      intersections
     end
 
     private
+
+    def logger
+      CoverageReporter.logger
+    end
 
     # rubocop:disable Metrics/AbcSize
     def intersect_ranges(changed, uncovered)

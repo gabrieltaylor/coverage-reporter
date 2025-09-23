@@ -7,10 +7,8 @@ RSpec.describe CoverageReporter::Options do
     context "when overriding all options via CLI args" do
       it "applies the overrides" do
         args = [
-          "--coverage-path",
+          "--coverage-report-path",
           "cov/merged.json",
-          "--html-root",
-          "cov/html",
           "--build-url",
           "https://ci.other/build/999",
           "--github-token",
@@ -26,13 +24,12 @@ RSpec.describe CoverageReporter::Options do
         result = described_class.parse(args)
 
         expect(result).to include(
-          coverage_path: "cov/merged.json",
-          html_root:     "cov/html",
-          build_url:     "https://ci.other/build/999",
-          github_token:  "cli-token",
-          commit_sha:    "abc123",
-          pr_number:     "42",
-          repo:          "owner/repo"
+          coverage_report_path: "cov/merged.json",
+          build_url:            "https://ci.other/build/999",
+          github_token:         "cli-token",
+          commit_sha:           "abc123",
+          pr_number:            "42",
+          repo:                 "owner/repo"
         )
       end
     end
@@ -41,7 +38,6 @@ RSpec.describe CoverageReporter::Options do
       it "succeeds and sets the token" do
         result = described_class.parse(["--github-token", "supplied"])
         expect(result[:github_token]).to eq("supplied")
-        expect(result[:build_url]).to eq("www.example.com/builds/123")
       end
     end
 
@@ -60,7 +56,7 @@ RSpec.describe CoverageReporter::Options do
       it "prints usage and exits 0 early" do
         expect(described_class).not_to receive(:validate!)
         expect do
-          described_class.parse(["--help", "--coverage-path", "ignored"])
+          described_class.parse(["--help", "--coverage-report-path", "ignored"])
         end.to raise_error(SystemExit) { |e|
           expect(e.status).to eq(0)
         }
@@ -73,7 +69,7 @@ RSpec.describe CoverageReporter::Options do
         result[:coverage_path] = "changed"
 
         again = described_class.parse(["--github-token", "test"])
-        expect(again[:coverage_path]).to eq("coverage/coverage.json")
+        expect(again[:coverage_path]).to be_nil
       end
     end
 

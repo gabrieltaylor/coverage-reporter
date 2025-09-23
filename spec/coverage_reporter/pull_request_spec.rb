@@ -57,7 +57,6 @@ RSpec.describe CoverageReporter::PullRequest do
       end
     end
 
-
     context "with repository normalization" do
       it "keeps owner/repo format as is" do
         described_class.new(github_token:, repo: "owner/repo", pr_number:)

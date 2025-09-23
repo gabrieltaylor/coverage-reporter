@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 module CoverageReporter
-  class DiffParser
+  class ModifiedRangesExtractor
     HUNK_HEADER = /^@@ -\d+(?:,\d+)? \+(\d+)(?:,(\d+))? @@/
 
     def initialize(diff_text)

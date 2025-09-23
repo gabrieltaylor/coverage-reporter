@@ -5,18 +5,16 @@ require "optparse"
 module CoverageReporter
   class Options
     DEFAULTS = {
-      build_url:     ENV.fetch("BUILD_URL", nil),
-      commit_sha:    ENV.fetch("COMMIT_SHA", nil),
-      coverage_path: ENV.fetch("COVERAGE_PATH", "coverage/coverage.json"),
-      github_token:  ENV.fetch("GITHUB_TOKEN", nil),
-      html_root:     ENV.fetch("HTML_ROOT", "coverage"),
-      pr_number:     ENV.fetch("PR_NUMBER", nil),
-      repo:          ENV.fetch("REPO", nil)
+      build_url:            ENV.fetch("BUILD_URL", nil),
+      commit_sha:           ENV.fetch("COMMIT_SHA", nil),
+      coverage_report_path: ENV.fetch("COVERAGE_REPORT_PATH", "coverage/coverage.json"),
+      github_token:         ENV.fetch("GITHUB_TOKEN", nil),
+      pr_number:            ENV.fetch("PR_NUMBER", nil),
+      repo:                 ENV.fetch("REPO", nil)
     }.freeze
 
     # rubocop:disable Metrics/AbcSize
     # rubocop:disable Metrics/MethodLength
-    # rubocop:disable Metrics/BlockLength
     def self.parse(argv)
       opts = DEFAULTS.dup
 
@@ -29,15 +27,12 @@ module CoverageReporter
           opts[:commit_sha] = v
         end
         o.on(
-          "--coverage-path PATH",
+          "--coverage-report-path PATH",
           "Path to merged SimpleCov coverage.json (default: coverage/coverage.json)"
         ) do |v|
-          opts[:coverage_path] = v
+          opts[:coverage_report_path] = v
         end
         o.on("--github-token TOKEN", "GitHub token (default: $GITHUB_TOKEN)") { |v| opts[:github_token] = v }
-        o.on("--html-root PATH", "Root of HTML coverage report (default: coverage)") do |v|
-          opts[:html_root] = v
-        end
         o.on("--pr-number NUMBER", "GitHub pull request number (default: $PR_NUMBER)") do |v|
           opts[:pr_number] = v
         end
@@ -51,8 +46,6 @@ module CoverageReporter
       end
       # rubocop:enable Metrics/AbcSize
       # rubocop:enable Metrics/MethodLength
-      # rubocop:enable Metrics/BlockLength
-
       parser.parse!(argv)
 
       validate!(opts)
