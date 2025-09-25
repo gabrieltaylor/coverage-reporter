@@ -4,7 +4,7 @@ require "spec_helper"
 
 RSpec.describe CoverageReporter::GlobalCommentPoster do
   let(:pull_request) { instance_double(CoverageReporter::PullRequest) }
-  let(:poster) { described_class.new(pull_request: pull_request) }
+  let(:poster) { described_class.new(pull_request: pull_request, global_comment: global_comment) }
 
   let(:global_comment) do
     CoverageReporter::GlobalComment.new(
@@ -25,12 +25,12 @@ RSpec.describe CoverageReporter::GlobalCommentPoster do
           body: global_comment.body
         )
 
-        poster.call(global_comment)
+        poster.call
       end
     end
 
     context "when a global comment already exists" do
-      let(:existing_comment) { instance_double(Sawyer::Resource, id: 123, body: "<!-- coverage-comment-marker -->\nold body") }
+      let(:existing_comment) { instance_double(Comment, id: 123, body: "<!-- coverage-comment-marker -->\nold body") }
 
       before do
         allow(pull_request).to receive(:global_comments).and_return([existing_comment])
@@ -43,7 +43,7 @@ RSpec.describe CoverageReporter::GlobalCommentPoster do
           body: global_comment.body
         )
 
-        poster.call(global_comment)
+        poster.call
       end
     end
 
@@ -54,6 +54,8 @@ RSpec.describe CoverageReporter::GlobalCommentPoster do
           commit_sha:          "abc123"
         )
       end
+
+      let(:poster_without_marker) { described_class.new(pull_request: pull_request, global_comment: comment_without_marker) }
 
       before do
         # Mock the body to not include the marker
@@ -69,7 +71,7 @@ RSpec.describe CoverageReporter::GlobalCommentPoster do
           body: expected_body
         )
 
-        poster.call(comment_without_marker)
+        poster_without_marker.call
       end
     end
 
@@ -84,13 +86,13 @@ RSpec.describe CoverageReporter::GlobalCommentPoster do
           body: global_comment.body
         )
 
-        poster.call(global_comment)
+        poster.call
       end
     end
 
     context "when multiple global comments exist but none have the marker" do
-      let(:first_comment) { instance_double(Sawyer::Resource, id: 1, body: "comment 1") }
-      let(:second_comment) { instance_double(Sawyer::Resource, id: 2, body: "comment 2") }
+      let(:first_comment) { instance_double(Comment, id: 1, body: "comment 1") }
+      let(:second_comment) { instance_double(Comment, id: 2, body: "comment 2") }
 
       before do
         allow(pull_request).to receive(:global_comments).and_return([first_comment, second_comment])
@@ -102,7 +104,7 @@ RSpec.describe CoverageReporter::GlobalCommentPoster do
           body: global_comment.body
         )
 
-        poster.call(global_comment)
+        poster.call
       end
     end
   end

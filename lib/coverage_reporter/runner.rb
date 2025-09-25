@@ -3,12 +3,12 @@
 module CoverageReporter
   class Runner
     def initialize(options)
-      @commit_sha = options[:commit_sha]
+      @commit_sha           = options[:commit_sha]
       @coverage_report_path = options[:coverage_report_path]
-      @github_token  = options[:github_token]
-      @build_url     = options[:build_url]
-      @repo          = options[:repo]
-      @pr_number     = options[:pr_number]
+      @github_token         = options[:github_token]
+      @build_url            = options[:build_url]
+      @repo                 = options[:repo]
+      @pr_number            = options[:pr_number]
     end
 
     # rubocop:disable Metrics/AbcSize
@@ -18,10 +18,10 @@ module CoverageReporter
       modified_ranges = ModifiedRangesExtractor.new(pull_request.diff).call
       uncovered_ranges = UncoveredRangesExtractor.new(coverage_report).call
       intersection = ModifiedUncoveredIntersection.new(uncovered_ranges:, modified_ranges:).call
-      inline_comments = InlineCommentFactory.new(intersection:, commit_sha:)
+      inline_comments = InlineCommentFactory.new(intersection:, commit_sha:).call
       InlineCommentPoster.new(pull_request:, commit_sha:, inline_comments:).call
-      global_comment = GlobalCommentFactory.new(commit_sha:)
-      GlobalCommentPoster.new(pull_request:).call(global_comment)
+      global_comment = GlobalCommentFactory.new(commit_sha:).call
+      GlobalCommentPoster.new(pull_request:, global_comment:).call
     end
     # rubocop:enable Metrics/AbcSize
 

@@ -5,7 +5,7 @@ require "logger"
 require "coverage_reporter"
 
 # Set up logging
-logger = Logger.new(STDOUT)
+logger = Logger.new($stdout)
 logger.level = Logger::DEBUG
 CoverageReporter.logger = logger
 
@@ -18,17 +18,17 @@ end
 # Monkey patch to log HTTP requests
 module Octokit
   class Client
-    alias_method :request_without_logging, :request
-    
-    def request(method, path, data = {}, options = {})
+    alias request_without_logging request
+
+    def request(method, path, data={}, options={})
       logger.debug("🌐 #{method.upcase} #{path}")
       logger.debug("📤 Request data: #{data.inspect}") if data.any?
-      
+
       response = request_without_logging(method, path, data, options)
-      
+
       logger.debug("📥 Response status: #{response.status}")
       logger.debug("📥 Response body: #{response.body[0..500]}...") if response.body && response.body.length > 500
-      
+
       response
     end
   end

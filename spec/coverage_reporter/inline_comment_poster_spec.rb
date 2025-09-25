@@ -62,7 +62,7 @@ RSpec.describe CoverageReporter::InlineCommentPoster do
     end
 
     context "when some comments already exist" do
-      let(:existing_comment) { double("Comment", id: 123) }
+      let(:existing_comment) { instance_double(Comment, id: 123) }
 
       before do
         allow(pull_request).to receive(:find_existing_inline_comment)
@@ -99,16 +99,16 @@ RSpec.describe CoverageReporter::InlineCommentPoster do
     end
 
     context "when all comments already exist" do
-      let(:existing_comment_1) { double("Comment", id: 123) }
-      let(:existing_comment_2) { double("Comment", id: 456) }
+      let(:first_existing_comment) { instance_double(Comment, id: 123) }
+      let(:second_existing_comment) { instance_double(Comment, id: 456) }
 
       before do
         allow(pull_request).to receive(:find_existing_inline_comment)
           .with("app/models/user.rb", 5, 5)
-          .and_return(existing_comment_1)
+          .and_return(first_existing_comment)
         allow(pull_request).to receive(:find_existing_inline_comment)
           .with("app/controllers/users_controller.rb", 10, 15)
-          .and_return(existing_comment_2)
+          .and_return(second_existing_comment)
         allow(pull_request).to receive(:update_inline_comment)
       end
 

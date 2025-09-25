@@ -20,9 +20,8 @@ end
 # Create fixtures directory if it doesn't exist
 FileUtils.mkdir_p("spec/fixtures/vcr_cassettes")
 
-def capture_pr_interactions
-  # Set up your real PR details here
-  options = {
+def build_options
+  {
     github_token:         ENV.fetch("GITHUB_TOKEN", nil),
     repo:                 ENV["REPO"] || "your-org/your-repo",
     pr_number:            ENV["PR_NUMBER"] || "123",
@@ -30,18 +29,22 @@ def capture_pr_interactions
     coverage_report_path: ENV["COVERAGE_REPORT_PATH"] || "coverage/coverage.json",
     build_url:            ENV["BUILD_URL"] || "https://ci.example.com/build/123"
   }
+end
 
-  # Validate required options
-  unless options[:github_token]
-    puts "Error: GITHUB_TOKEN environment variable is required"
-    exit 1
-  end
+def validate_options(options)
+  return if options[:github_token]
 
+  puts "Error: GITHUB_TOKEN environment variable is required"
+  exit 1
+end
+
+def print_capture_info(options)
   puts "Capturing interactions for PR ##{options[:pr_number]} in #{options[:repo]}"
   puts "Commit SHA: #{options[:commit_sha]}"
   puts "Coverage report: #{options[:coverage_report_path]}"
+end
 
-  # Record the interactions
+def run_coverage_reporter(options)
   VCR.use_cassette("real_pr_#{options[:pr_number]}") do
     runner = CoverageReporter::Runner.new(options)
     runner.run
@@ -51,7 +54,13 @@ def capture_pr_interactions
     puts e.backtrace.first(5)
     exit 1
   end
+end
 
+def capture_pr_interactions
+  options = build_options
+  validate_options(options)
+  print_capture_info(options)
+  run_coverage_reporter(options)
   puts "📁 Cassette saved to: spec/fixtures/vcr_cassettes/real_pr_#{options[:pr_number]}.yml"
 end
 

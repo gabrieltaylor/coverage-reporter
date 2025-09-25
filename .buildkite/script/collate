@@ -2,5 +2,5 @@
 
 bundle config set path 'vendor/bundle'
 bundle install --jobs=4 --retry=3
-bundle exec rake coverage:merge
+bundle exec rake coverage:collate
 tar -czf coverage/assets.tar.gz coverage/assets

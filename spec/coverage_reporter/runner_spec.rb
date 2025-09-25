@@ -62,20 +62,24 @@ RSpec.describe CoverageReporter::Runner do
       .to receive(:new).with(intersection: analysis_result, commit_sha: commit_sha)
       .and_return(inline_comment_factory_instance)
 
+    allow(inline_comment_factory_instance).to receive(:call).and_return([])
+
     allow(CoverageReporter::InlineCommentPoster)
-      .to receive(:new).with(pull_request: pull_request_instance, commit_sha: commit_sha, inline_comments: inline_comment_factory_instance)
+      .to receive(:new).with(pull_request: pull_request_instance, commit_sha: commit_sha, inline_comments: [])
       .and_return(inline_comment_poster_instance)
 
     allow(CoverageReporter::GlobalCommentFactory)
       .to receive(:new).with(commit_sha: commit_sha)
       .and_return(global_comment_factory_instance)
 
+    allow(global_comment_factory_instance).to receive(:call).and_return(instance_double(CoverageReporter::GlobalComment))
+
     allow(CoverageReporter::GlobalCommentPoster)
-      .to receive(:new).with(pull_request: pull_request_instance)
+      .to receive(:new).with(pull_request: pull_request_instance, global_comment: anything)
       .and_return(global_comment_poster_instance)
 
     allow(inline_comment_poster_instance).to receive(:call)
-    allow(global_comment_poster_instance).to receive(:call).with(global_comment_factory_instance)
+    allow(global_comment_poster_instance).to receive(:call)
   end
 
   describe "#run" do
@@ -88,7 +92,7 @@ RSpec.describe CoverageReporter::Runner do
       expect(modified_uncovered_intersection_instance).to have_received(:call).once
 
       expect(inline_comment_poster_instance).to have_received(:call)
-      expect(global_comment_poster_instance).to have_received(:call).with(global_comment_factory_instance)
+      expect(global_comment_poster_instance).to have_received(:call)
     end
 
     context "when there are no uncovered lines" do
@@ -100,7 +104,7 @@ RSpec.describe CoverageReporter::Runner do
         runner.run
 
         expect(inline_comment_poster_instance).to have_received(:call)
-        expect(global_comment_poster_instance).to have_received(:call).with(global_comment_factory_instance)
+        expect(global_comment_poster_instance).to have_received(:call)
       end
     end
   end

@@ -20,18 +20,6 @@ class Head
   end
 end
 
-class Comment
-  attr_reader :id, :body, :path, :line, :start_line
-
-  def initialize(id:, body:, path:, line: nil, start_line: nil)
-    @id = id
-    @body = body
-    @path = path
-    @line = line
-    @start_line = start_line
-  end
-end
-
 RSpec.describe CoverageReporter::PullRequest do
   let(:github_token) { "ghp_test_token" }
   let(:pull_request) { described_class.new(github_token:, repo:, pr_number:) }

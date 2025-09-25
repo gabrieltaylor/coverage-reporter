@@ -24,6 +24,19 @@ SimpleCov.start
 # Require the library under test
 require "coverage_reporter"
 
+# Test double class for GitHub API comments
+class Comment
+  attr_reader :id, :body, :path, :line, :start_line
+
+  def initialize(id:, body:, path: nil, line: nil, start_line: nil)
+    @id = id
+    @body = body
+    @path = path
+    @line = line
+    @start_line = start_line
+  end
+end
+
 # If you later add support files (custom matchers, shared contexts, etc.)
 # you can keep them in spec/support and uncomment the Dir[] line below.
 # Dir[File.join(__dir__, "support", "**", "*.rb")].sort.each { |f| require f }

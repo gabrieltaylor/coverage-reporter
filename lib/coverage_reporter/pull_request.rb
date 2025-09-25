@@ -56,7 +56,8 @@ module CoverageReporter
       if existing_comment
         update_inline_comment(id: existing_comment.id, body: body)
       else
-        payload = build_comment_payload(body, commit_id, file_path, start_line, end_line)
+        diff_line_info = find_diff_line_numbers(diff, file_path, start_line, end_line)
+        payload = build_comment_payload(body, commit_id, file_path, diff_line_info, start_line, end_line)
         create_comment_with_error_handling(payload)
       end
     end
@@ -97,10 +98,11 @@ module CoverageReporter
     end
 
     def build_comment_payload(body, commit_id, file_path, _diff_line_info, start_line, end_line)
+      actual_file_path = find_actual_file_path_in_diff(diff, file_path)
       payload = {
         body:      body,
         commit_id: commit_id,
-        path:      file_path,
+        path:      actual_file_path,
         side:      "RIGHT"
       }
 
@@ -142,6 +144,37 @@ module CoverageReporter
     def extract_github_repo(repo)
       match = repo.match(%r{github\.com[:/]([^/]+/[^/]+?)(?:\.git)?/?$})
       match[1] if match
+    end
+
+    def find_actual_file_path_in_diff(diff_text, file_path)
+      return file_path if diff_text.nil? || diff_text.empty?
+
+      # Try exact match first
+      return file_path if diff_text.include?("diff --git a/#{file_path}")
+
+      # Try basename match
+      basename = File.basename(file_path)
+      diff_text.scan(%r{diff --git a/([^\s]+)}) do |match|
+        return match[0] if File.basename(match[0]) == basename
+      end
+
+      file_path
+    end
+
+    def find_diff_line_numbers(diff_text, file_path, start_line, end_line)
+      find_actual_file_path_in_diff(diff_text, file_path)
+
+      # For now, return basic structure - this could be enhanced to parse actual diff
+      # and determine the correct side and line numbers
+      result = {
+        side:       "RIGHT",
+        start_side: "RIGHT"
+      }
+
+      result[:line] = end_line
+      result[:start_line] = start_line if end_line > start_line
+
+      result
     end
   end
 end

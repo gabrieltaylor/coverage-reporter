@@ -4,22 +4,23 @@ module CoverageReporter
   class GlobalCommentPoster
     GLOBAL_MARKER = "<!-- coverage-comment-marker -->"
 
-    def initialize(pull_request:)
+    def initialize(pull_request:, global_comment:)
       @pull_request = pull_request
+      @global_comment = global_comment
     end
 
-    def call(global_comment)
-      ensure_global_comment(global_comment.body)
+    def call
+      ensure_global_comment
     end
 
     private
 
-    attr_reader :pull_request
+    attr_reader :pull_request, :global_comment
 
-    def ensure_global_comment(body)
+    def ensure_global_comment
       comments = pull_request.global_comments
       existing = comments.find { |c| c.body&.include?(GLOBAL_MARKER) }
-      body_with_marker = body.include?(GLOBAL_MARKER) ? body : "#{GLOBAL_MARKER}\n#{body}"
+      body_with_marker = global_comment.body.include?(GLOBAL_MARKER) ? global_comment.body : "#{GLOBAL_MARKER}\n#{global_comment.body}"
 
       if existing
         pull_request.update_global_comment(id: existing.id, body: body_with_marker)
