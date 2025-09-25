@@ -62,15 +62,6 @@ module CoverageReporter
       end
     end
 
-    def delete_coverage_comments_for_file(file_path)
-      coverage_comments = inline_comments.select do |comment|
-        comment.body&.include?(INLINE_COMMENT_MARKER) &&
-          comment.path == file_path
-      end
-
-      coverage_comments.each { |comment| delete_inline_comment(comment.id) }
-    end
-
     def find_existing_inline_comment(file_path, start_line, end_line)
       inline_comments.find do |comment|
         coverage_comment_for_file?(comment, file_path) &&
