@@ -1,0 +1,142 @@
+[
+  {
+    "type": "inline_comment",
+    "path": "/repos/gabrieltaylor/coverage-reporter/pulls/5/comments",
+    "payload": {
+      "body": "<!-- coverage-inline-marker -->\n❌ Lines 25–26 are not covered by tests.\n\n_File: lib/coverage_reporter/modified_ranges_extractor.rb, line 25_\n_Commit: abc123def456_",
+      "commit_id": "abc123def456",
+      "path": "lib/coverage_reporter/modified_ranges_extractor.rb",
+      "side": "RIGHT",
+      "line": 26,
+      "start_line": 25
+    }
+  },
+  {
+    "type": "inline_comment",
+    "path": "/repos/gabrieltaylor/coverage-reporter/pulls/5/comments",
+    "payload": {
+      "body": "<!-- coverage-inline-marker -->\n❌ Line 90 is not covered by tests.\n\n_File: lib/coverage_reporter/pull_request.rb, line 90_\n_Commit: abc123def456_",
+      "commit_id": "abc123def456",
+      "path": "lib/coverage_reporter/pull_request.rb",
+      "side": "RIGHT",
+      "line": 90
+    }
+  },
+  {
+    "type": "inline_comment",
+    "path": "/repos/gabrieltaylor/coverage-reporter/pulls/5/comments",
+    "payload": {
+      "body": "<!-- coverage-inline-marker -->\n❌ Line 122 is not covered by tests.\n\n_File: lib/coverage_reporter/pull_request.rb, line 122_\n_Commit: abc123def456_",
+      "commit_id": "abc123def456",
+      "path": "lib/coverage_reporter/pull_request.rb",
+      "side": "RIGHT",
+      "line": 122
+    }
+  },
+  {
+    "type": "inline_comment",
+    "path": "/repos/gabrieltaylor/coverage-reporter/pulls/5/comments",
+    "payload": {
+      "body": "<!-- coverage-inline-marker -->\n❌ Lines 126–128 are not covered by tests.\n\n_File: lib/coverage_reporter/pull_request.rb, line 126_\n_Commit: abc123def456_",
+      "commit_id": "abc123def456",
+      "path": "lib/coverage_reporter/pull_request.rb",
+      "side": "RIGHT",
+      "line": 128,
+      "start_line": 126
+    }
+  },
+  {
+    "type": "inline_comment",
+    "path": "/repos/gabrieltaylor/coverage-reporter/pulls/5/comments",
+    "payload": {
+      "body": "<!-- coverage-inline-marker -->\n❌ Line 140 is not covered by tests.\n\n_File: lib/coverage_reporter/pull_request.rb, line 140_\n_Commit: abc123def456_",
+      "commit_id": "abc123def456",
+      "path": "lib/coverage_reporter/pull_request.rb",
+      "side": "RIGHT",
+      "line": 140
+    }
+  },
+  {
+    "type": "inline_comment",
+    "path": "/repos/gabrieltaylor/coverage-reporter/pulls/5/comments",
+    "payload": {
+      "body": "<!-- coverage-inline-marker -->\n❌ Line 48 is not covered by tests.\n\n_File: spec/coverage_reporter/integration_spec.rb, line 48_\n_Commit: abc123def456_",
+      "commit_id": "abc123def456",
+      "path": "spec/coverage_reporter/integration_spec.rb",
+      "side": "RIGHT",
+      "line": 48
+    }
+  },
+  {
+    "type": "inline_comment",
+    "path": "/repos/gabrieltaylor/coverage-reporter/pulls/5/comments",
+    "payload": {
+      "body": "<!-- coverage-inline-marker -->\n❌ Line 57 is not covered by tests.\n\n_File: spec/coverage_reporter/integration_spec.rb, line 57_\n_Commit: abc123def456_",
+      "commit_id": "abc123def456",
+      "path": "spec/coverage_reporter/integration_spec.rb",
+      "side": "RIGHT",
+      "line": 57
+    }
+  },
+  {
+    "type": "inline_comment",
+    "path": "/repos/gabrieltaylor/coverage-reporter/pulls/5/comments",
+    "payload": {
+      "body": "<!-- coverage-inline-marker -->\n❌ Line 11 is not covered by tests.\n\n_File: spec/coverage_reporter/pull_request_spec.rb, line 11_\n_Commit: abc123def456_",
+      "commit_id": "abc123def456",
+      "path": "spec/coverage_reporter/pull_request_spec.rb",
+      "side": "RIGHT",
+      "line": 11
+    }
+  },
+  {
+    "type": "inline_comment",
+    "path": "/repos/gabrieltaylor/coverage-reporter/pulls/5/comments",
+    "payload": {
+      "body": "<!-- coverage-inline-marker -->\n❌ Line 19 is not covered by tests.\n\n_File: spec/coverage_reporter/pull_request_spec.rb, line 19_\n_Commit: abc123def456_",
+      "commit_id": "abc123def456",
+      "path": "spec/coverage_reporter/pull_request_spec.rb",
+      "side": "RIGHT",
+      "line": 19
+    }
+  },
+  {
+    "type": "inline_comment",
+    "path": "/repos/gabrieltaylor/coverage-reporter/pulls/5/comments",
+    "payload": {
+      "body": "<!-- coverage-inline-marker -->\n❌ Line 391 is not covered by tests.\n\n_File: spec/coverage_reporter/pull_request_spec.rb, line 391_\n_Commit: abc123def456_",
+      "commit_id": "abc123def456",
+      "path": "spec/coverage_reporter/pull_request_spec.rb",
+      "side": "RIGHT",
+      "line": 391
+    }
+  },
+  {
+    "type": "inline_comment",
+    "path": "/repos/gabrieltaylor/coverage-reporter/pulls/5/comments",
+    "payload": {
+      "body": "<!-- coverage-inline-marker -->\n❌ Line 395 is not covered by tests.\n\n_File: spec/coverage_reporter/pull_request_spec.rb, line 395_\n_Commit: abc123def456_",
+      "commit_id": "abc123def456",
+      "path": "spec/coverage_reporter/pull_request_spec.rb",
+      "side": "RIGHT",
+      "line": 395
+    }
+  },
+  {
+    "type": "inline_comment",
+    "path": "/repos/gabrieltaylor/coverage-reporter/pulls/5/comments",
+    "payload": {
+      "body": "<!-- coverage-inline-marker -->\n❌ Line 399 is not covered by tests.\n\n_File: spec/coverage_reporter/pull_request_spec.rb, line 399_\n_Commit: abc123def456_",
+      "commit_id": "abc123def456",
+      "path": "spec/coverage_reporter/pull_request_spec.rb",
+      "side": "RIGHT",
+      "line": 399
+    }
+  },
+  {
+    "type": "global_comment",
+    "repo": "gabrieltaylor/coverage-reporter",
+    "pr_number": "5",
+    "body": "<!-- coverage-comment-marker -->\n🧪 **Test Coverage Summary**\n\n✅ **N/A%** of changed lines are covered.\n\n_Commit: abc123def456_\n"
+  }
+]

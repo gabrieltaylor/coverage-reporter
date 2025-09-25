@@ -24,6 +24,21 @@ SimpleCov.start
 # Require the library under test
 require "coverage_reporter"
 
+# Configure VCR for integration tests
+require "vcr"
+require "webmock"
+
+VCR.configure do |config|
+  config.cassette_library_dir = "spec/fixtures/vcr_cassettes"
+  config.hook_into :webmock
+  config.configure_rspec_metadata!
+  config.allow_http_connections_when_no_cassette = false
+  config.default_cassette_options = {
+    record:            :once,
+    match_requests_on: %i[method uri body]
+  }
+end
+
 # Test double class for GitHub API comments
 class Comment
   attr_reader :id, :body, :path, :line, :start_line
