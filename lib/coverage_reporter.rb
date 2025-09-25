@@ -4,6 +4,10 @@ require "logger"
 require "octokit"
 
 module CoverageReporter
+  # Comment markers for identifying coverage-related comments
+  INLINE_COMMENT_MARKER = "<!-- coverage-inline-marker -->"
+  GLOBAL_COMMENT_MARKER = "<!-- coverage-comment-marker -->"
+
   autoload :CLI, "coverage_reporter/cli"
   autoload :VERSION, "coverage_reporter/version"
 

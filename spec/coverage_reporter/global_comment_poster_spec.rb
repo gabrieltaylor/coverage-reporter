@@ -47,34 +47,6 @@ RSpec.describe CoverageReporter::GlobalCommentPoster do
       end
     end
 
-    context "when global comment body doesn't include marker" do
-      let(:comment_without_marker) do
-        CoverageReporter::GlobalComment.new(
-          coverage_percentage: "85",
-          commit_sha:          "abc123"
-        )
-      end
-
-      let(:poster_without_marker) { described_class.new(pull_request: pull_request, global_comment: comment_without_marker) }
-
-      before do
-        # Mock the body to not include the marker
-        allow(comment_without_marker).to receive(:body).and_return("No marker here")
-        allow(pull_request).to receive(:global_comments).and_return([])
-        allow(pull_request).to receive(:add_global_comment)
-      end
-
-      it "adds the marker to the body" do
-        expected_body = "<!-- coverage-comment-marker -->\nNo marker here"
-
-        expect(pull_request).to receive(:add_global_comment).with(
-          body: expected_body
-        )
-
-        poster_without_marker.call
-      end
-    end
-
     context "when global comment body already includes marker" do
       before do
         allow(pull_request).to receive(:global_comments).and_return([])
@@ -115,9 +87,9 @@ RSpec.describe CoverageReporter::GlobalCommentPoster do
     end
   end
 
-  describe "GLOBAL_MARKER constant" do
+  describe "GLOBAL_COMMENT_MARKER constant" do
     it "has the correct marker value" do
-      expect(described_class::GLOBAL_MARKER).to eq("<!-- coverage-comment-marker -->")
+      expect(CoverageReporter::GLOBAL_COMMENT_MARKER).to eq("<!-- coverage-comment-marker -->")
     end
   end
 end

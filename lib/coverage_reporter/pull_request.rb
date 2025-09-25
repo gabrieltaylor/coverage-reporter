@@ -64,7 +64,7 @@ module CoverageReporter
 
     def delete_coverage_comments_for_file(file_path)
       coverage_comments = inline_comments.select do |comment|
-        comment.body&.include?("<!-- coverage-inline-marker -->") &&
+        comment.body&.include?(INLINE_COMMENT_MARKER) &&
           comment.path == file_path
       end
 
@@ -129,7 +129,7 @@ module CoverageReporter
     end
 
     def coverage_comment_for_file?(comment, file_path)
-      comment.body&.include?("<!-- coverage-inline-marker -->") &&
+      comment.body&.include?(INLINE_COMMENT_MARKER) &&
         comment.path == file_path
     end
 

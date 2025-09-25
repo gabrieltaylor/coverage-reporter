@@ -2,7 +2,6 @@
 
 module CoverageReporter
   class InlineCommentFactory
-    INLINE_MARKER = "<!-- coverage-inline-marker -->"
 
     def initialize(commit_sha:, intersection:)
       @commit_sha = commit_sha
@@ -43,7 +42,7 @@ module CoverageReporter
     end
 
     def build_body(file:, start_line:, message:)
-      "#{INLINE_MARKER}\n#{message}\n\n_File: #{file}, line #{start_line}_\n_Commit: #{commit_sha}_"
+      "#{INLINE_COMMENT_MARKER}\n#{message}\n\n_File: #{file}, line #{start_line}_\n_Commit: #{commit_sha}_"
     end
   end
 end

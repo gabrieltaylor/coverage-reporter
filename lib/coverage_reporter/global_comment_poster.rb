@@ -2,7 +2,6 @@
 
 module CoverageReporter
   class GlobalCommentPoster
-    GLOBAL_MARKER = "<!-- coverage-comment-marker -->"
 
     def initialize(pull_request:, global_comment:)
       @pull_request = pull_request
@@ -19,13 +18,12 @@ module CoverageReporter
 
     def ensure_global_comment
       comments = pull_request.global_comments
-      existing = comments.find { |c| c.body&.include?(GLOBAL_MARKER) }
-      body_with_marker = global_comment.body.include?(GLOBAL_MARKER) ? global_comment.body : "#{GLOBAL_MARKER}\n#{global_comment.body}"
+      existing = comments.find { |c| c.body&.include?(GLOBAL_COMMENT_MARKER) }
 
       if existing
-        pull_request.update_global_comment(id: existing.id, body: body_with_marker)
+        pull_request.update_global_comment(id: existing.id, body: global_comment.body)
       else
-        pull_request.add_global_comment(body: body_with_marker)
+        pull_request.add_global_comment(body: global_comment.body)
       end
     end
   end
