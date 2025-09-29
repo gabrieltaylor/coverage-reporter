@@ -16,7 +16,7 @@ module CoverageReporter
       retrieve_existing_coverage_comments
 
       inline_comments.each do |comment|
-        logger.debug("Posting inline comment for #{comment.path}: #{comment.start_line}–#{comment.line}")
+        logger.info("Posting inline comment for #{comment.path}: #{comment.start_line}–#{comment.line}")
         post_comment(comment)
       end
 
@@ -49,7 +49,7 @@ module CoverageReporter
         logger.debug("Cleaning up #{comment_ids_to_delete.size} unused coverage comments")
 
         comment_ids_to_delete.each do |comment_id|
-          logger.debug("Deleting unused coverage comment: #{comment_id}")
+          logger.info("Deleting stale coverage comment: #{comment_id}")
           pull_request.delete_inline_comment(comment_id)
         end
       else
