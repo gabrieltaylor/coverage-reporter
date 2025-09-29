@@ -23,6 +23,7 @@ module CoverageReporter
   end
 
   require_relative "coverage_reporter/coverage_report_loader"
+  require_relative "coverage_reporter/file_path_normalizer"
   require_relative "coverage_reporter/modified_uncovered_intersection"
   require_relative "coverage_reporter/global_comment"
   require_relative "coverage_reporter/global_comment_factory"

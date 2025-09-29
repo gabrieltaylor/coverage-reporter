@@ -117,76 +117,20 @@ RSpec.describe CoverageReporter::UncoveredRangesExtractor do
     end
   end
 
-  context "with absolute file paths in coverage data" do
-    it "removes current working directory prefix from absolute paths" do
-      # Use the actual current working directory in the test data
-      current_dir = Dir.pwd
+  context "with filename normalization" do
+    it "uses FilePathNormalizer to normalize file paths" do
+      allow(CoverageReporter::FilePathNormalizer).to receive(:call).and_call_original
+      
       coverage_report = {
         "coverage" => {
-          "#{current_dir}/lib/absolute.rb" => { "lines" => [nil, 1, 0, 2] }, # lines 2 & 4 covered, line 3 uncovered
-          "lib/relative.rb"                => { "lines" => [nil, 0, 1] }, # line 3 covered, line 2 uncovered
-          "/some/other/path/outside.rb"    => { "lines" => [nil, 1] } # line 2 covered, but outside project
+          "lib/example.rb" => { "lines" => [nil, 1, 0, 2] }
         }
       }
 
       parser = described_class.new(coverage_report)
-      result = parser.call
+      parser.call
 
-      # Should remove current working directory prefix from absolute path
-      expect(result["lib/absolute.rb"]).to contain_exactly([3, 3])
-      # Should keep relative paths as-is
-      expect(result["lib/relative.rb"]).to contain_exactly([2, 2])
-      # Should keep paths that don't start with current working directory as-is
-      expect(result["/some/other/path/outside.rb"]).to eq([])
-    end
-  end
-
-  context "with various file path formats" do
-    it "removes current working directory prefix when present, keeps others as-is" do
-      # Use the actual current working directory in the test data
-      current_dir = Dir.pwd
-      coverage_report = {
-        "coverage" => {
-          "#{current_dir}/lib/absolute.rb" => { "lines" => [nil, 1, 0, 2] }, # Absolute path with current working directory
-          "lib/relative.rb"                => { "lines" => [nil, 0, 1] }, # Relative path
-          "/etc/passwd"                    => { "lines" => [nil, 1] }, # Absolute path outside current working directory
-          "../sibling/file.rb"             => { "lines" => [nil, 1] }, # Relative path outside current working directory
-          "app/models/user.rb"             => { "lines" => [nil, 1] } # Another relative path
-        }
-      }
-
-      parser = described_class.new(coverage_report)
-      result = parser.call
-
-      # Should remove current working directory prefix from absolute path that starts with it
-      expect(result["lib/absolute.rb"]).to contain_exactly([3, 3])
-      # Should keep relative paths as-is
-      expect(result["lib/relative.rb"]).to contain_exactly([2, 2])
-      expect(result["app/models/user.rb"]).to eq([])
-      # Should keep paths that don't start with current working directory as-is
-      expect(result["/etc/passwd"]).to eq([])
-      expect(result["../sibling/file.rb"]).to eq([])
-    end
-  end
-
-  context "with paths that don't start with current working directory" do
-    let(:coverage_report) do
-      {
-        "coverage" => {
-          "/absolute/path/file.rb" => { "lines" => [nil, 1] },
-          "relative/file.rb"       => { "lines" => [nil, 1] }
-        }
-      }
-    end
-
-    it "keeps original paths when they don't start with current working directory" do
-      parser = described_class.new(coverage_report)
-      result = parser.call
-
-      # Should keep original paths when they don't start with current working directory
-      expect(result.keys).to contain_exactly("/absolute/path/file.rb", "relative/file.rb")
-      expect(result["/absolute/path/file.rb"]).to eq([])
-      expect(result["relative/file.rb"]).to eq([])
+      expect(CoverageReporter::FilePathNormalizer).to have_received(:call).with("lib/example.rb")
     end
   end
 
