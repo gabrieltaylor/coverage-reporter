@@ -2,6 +2,42 @@
 
 module CoverageReporter
   class FilePathNormalizer
+    NON_SOURCE_DIRS = %w[
+      tmp
+      temp
+      cache
+      log
+      logs
+      vendor
+      node_modules
+      bower_components
+      public
+      assets
+      images
+      css
+      js
+      fonts
+      config
+      db
+      migrations
+      bin
+      exe
+      scripts
+      tools
+      build
+      dist
+      target
+      out
+      coverage
+      doc
+      docs
+      documentation
+      .git
+      .github
+      .vscode
+      .idea
+    ].freeze
+
     def self.call(file_path)
       new.call(file_path)
     end
@@ -10,9 +46,9 @@ module CoverageReporter
       return nil if file_path.nil? || file_path.empty?
 
       if file_path.start_with?(Dir.pwd)
-        remove_project_root_prefix(file_path)
+        file_path.delete_prefix(Dir.pwd).delete_prefix("/")
       elsif file_path.start_with?("/")
-        extract_relative_path_from_absolute(file_path)
+        extract_from_absolute_path(file_path)
       else
         file_path
       end
@@ -20,24 +56,34 @@ module CoverageReporter
 
     private
 
-    def remove_project_root_prefix(file_path)
-      project_root = Dir.pwd
-      file_path.delete_prefix(project_root).delete_prefix("/")
-    end
-
-    def extract_relative_path_from_absolute(file_path)
-      if file_path.include?("/lib/")
-        extract_path_after_pattern(file_path, "/lib/")
-      elsif file_path.include?("/spec/")
-        extract_path_after_pattern(file_path, "/spec/")
+    def extract_from_absolute_path(file_path)
+      source_dir = find_source_directory_in_path(file_path)
+      if source_dir
+        pattern_index = file_path.rindex("/#{source_dir}/")
+        file_path[(pattern_index + 1)..]
       else
         file_path
       end
     end
 
-    def extract_path_after_pattern(file_path, pattern)
-      index = file_path.rindex(pattern)
-      file_path[(index + pattern.length)..]
+    def find_source_directory_in_path(file_path)
+      # Get directories that contain Ruby files in this project
+      source_dirs = Dir.glob("#{Dir.pwd}/*")
+        .select { |path| File.directory?(path) && contains_ruby_files?(path) }
+        .map { |path| File.basename(path) }
+
+      # Find the first source directory that appears in the file path
+      source_dirs.find { |dir| file_path.include?("/#{dir}/") }
+    end
+
+    def contains_ruby_files?(dir_path)
+      # Skip common non-source directories
+      dir_name = File.basename(dir_path).downcase
+
+      return false if NON_SOURCE_DIRS.include?(dir_name)
+
+      # Look for Ruby files in this directory
+      Dir.glob("#{dir_path}/**/*.rb", File::FNM_DOTMATCH).any?
     end
   end
 end

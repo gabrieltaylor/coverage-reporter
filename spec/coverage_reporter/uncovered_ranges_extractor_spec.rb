@@ -120,7 +120,7 @@ RSpec.describe CoverageReporter::UncoveredRangesExtractor do
   context "with filename normalization" do
     it "uses FilePathNormalizer to normalize file paths" do
       allow(CoverageReporter::FilePathNormalizer).to receive(:call).and_call_original
-      
+
       coverage_report = {
         "coverage" => {
           "lib/example.rb" => { "lines" => [nil, 1, 0, 2] }
