@@ -7,7 +7,7 @@ module CoverageReporter
 
       @client = ::Octokit::Client.new(**opts)
       @client.auto_paginate = true
-      @repo = normalize_repo(repo)
+      @repo = repo
       @pr_number = pr_number
     end
 
@@ -50,23 +50,9 @@ module CoverageReporter
       client.delete_pull_request_comment(repo, id)
     end
 
-    def add_comment_on_lines(commit_id:, file_path:, start_line:, end_line:, body:)
-      existing_comment = find_existing_inline_comment(file_path, start_line, end_line)
-
-      if existing_comment
-        update_inline_comment(id: existing_comment.id, body: body)
-      else
-        diff_line_info = find_diff_line_numbers(diff, file_path, start_line, end_line)
-        payload = build_comment_payload(body, commit_id, file_path, diff_line_info, start_line, end_line)
-        create_comment_with_error_handling(payload)
-      end
-    end
-
-    def find_existing_inline_comment(file_path, start_line, end_line)
-      inline_comments.find do |comment|
-        coverage_comment_for_file?(comment, file_path) &&
-          comment_matches_line_range?(comment, start_line, end_line)
-      end
+    def add_comment_on_lines(commit_id:, path:, start_line:, line:, body:)
+      payload = build_comment_payload(body:, commit_id:, path:, start_line:, line:)
+      create_comment_with_error_handling(payload)
     end
 
     def diff
@@ -81,27 +67,19 @@ module CoverageReporter
       CoverageReporter.logger
     end
 
-    def normalize_repo(repo)
-      return repo if repo.include?("/") && !repo.include?("://")
-      return extract_github_repo(repo) if repo.include?("github.com")
-
-      raise ArgumentError, "Repository must be in format 'owner/repo' or a full GitHub URL"
-    end
-
-    def build_comment_payload(body, commit_id, file_path, _diff_line_info, start_line, end_line)
-      actual_file_path = find_actual_file_path_in_diff(diff, file_path)
+    def build_comment_payload(body:, commit_id:, path:, start_line:, line:)
       payload = {
         body:      body,
         commit_id: commit_id,
-        path:      actual_file_path,
+        path:      path,
         side:      "RIGHT"
       }
 
-      if end_line > start_line && start_line
-        payload[:line] = end_line
+      if start_line && line > start_line
+        payload[:line] = line
         payload[:start_line] = start_line
-      elsif end_line == start_line
-        payload[:line] = end_line
+      elsif start_line == line
+        payload[:line] = line
       end
 
       payload
@@ -117,55 +95,6 @@ module CoverageReporter
       logger.error("GitHub API Error: #{error.message}")
       logger.error("Payload: #{payload.inspect}")
       raise
-    end
-
-    def coverage_comment_for_file?(comment, file_path)
-      comment.body&.include?(INLINE_COMMENT_MARKER) &&
-        comment.path == file_path
-    end
-
-    def comment_matches_line_range?(comment, start_line, end_line)
-      if end_line > start_line
-        comment.line == end_line && comment.start_line == start_line
-      else
-        comment.line == start_line && (comment.start_line.nil? || comment.start_line == start_line)
-      end
-    end
-
-    def extract_github_repo(repo)
-      match = repo.match(%r{github\.com[:/]([^/]+/[^/]+?)(?:\.git)?/?$})
-      match[1] if match
-    end
-
-    def find_actual_file_path_in_diff(diff_text, file_path)
-      return file_path if diff_text.nil? || diff_text.empty?
-
-      # Try exact match first
-      return file_path if diff_text.include?("diff --git a/#{file_path}")
-
-      # Try basename match
-      basename = File.basename(file_path)
-      diff_text.scan(%r{diff --git a/([^\s]+)}) do |match|
-        return match[0] if File.basename(match[0]) == basename
-      end
-
-      file_path
-    end
-
-    def find_diff_line_numbers(diff_text, file_path, start_line, end_line)
-      find_actual_file_path_in_diff(diff_text, file_path)
-
-      # For now, return basic structure - this could be enhanced to parse actual diff
-      # and determine the correct side and line numbers
-      result = {
-        side:       "RIGHT",
-        start_side: "RIGHT"
-      }
-
-      result[:line] = end_line
-      result[:start_line] = start_line if end_line > start_line
-
-      result
     end
   end
 end

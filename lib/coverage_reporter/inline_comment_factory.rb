@@ -2,7 +2,6 @@
 
 module CoverageReporter
   class InlineCommentFactory
-
     def initialize(commit_sha:, intersection:)
       @commit_sha = commit_sha
       @intersection = intersection
@@ -11,16 +10,14 @@ module CoverageReporter
     def call
       comments = []
 
-      @intersection.each do |file, ranges|
-        ranges.each do |start_line, end_line|
-          message = build_message(start_line, end_line)
-          body = build_body(file: file, start_line: start_line, message: message)
+      @intersection.each do |path, ranges|
+        ranges.each do |start_line, line|
+          body = build_body(path:, start_line:, line:)
 
           comments << InlineComment.new(
-            file:       file,
+            path:       path,
             start_line: start_line,
-            end_line:   end_line,
-            message:    message,
+            line:       line,
             body:       body
           )
         end
@@ -33,16 +30,17 @@ module CoverageReporter
 
     attr_reader :commit_sha, :intersection
 
-    def build_message(start_line, end_line)
-      if start_line == end_line
-        "❌ Line #{start_line} is not covered by tests."
-      else
-        "❌ Lines #{start_line}–#{end_line} are not covered by tests."
-      end
+    def build_body(path:, start_line:, line:)
+      message = build_message(start_line, line)
+      "#{INLINE_COMMENT_MARKER}\n#{message}\n\n_File: #{path}, line #{start_line}_\n_Commit: #{commit_sha}_"
     end
 
-    def build_body(file:, start_line:, message:)
-      "#{INLINE_COMMENT_MARKER}\n#{message}\n\n_File: #{file}, line #{start_line}_\n_Commit: #{commit_sha}_"
+    def build_message(start_line, line)
+      if start_line == line
+        "❌ Line #{start_line} is not covered by tests."
+      else
+        "❌ Lines #{start_line}–#{line} are not covered by tests."
+      end
     end
   end
 end

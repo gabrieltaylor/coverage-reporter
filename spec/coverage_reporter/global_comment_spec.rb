@@ -27,18 +27,6 @@ RSpec.describe CoverageReporter::GlobalComment do
     end
   end
 
-  describe "#to_h" do
-    it "returns a hash with all attributes" do
-      expected_hash = {
-        coverage_percentage: coverage_percentage,
-        commit_sha:          commit_sha,
-        body:                global_comment.body
-      }
-
-      expect(global_comment.to_h).to eq(expected_hash)
-    end
-  end
-
   describe "body formatting" do
     it "includes the global marker at the beginning" do
       expect(global_comment.body).to start_with("<!-- coverage-comment-marker -->")

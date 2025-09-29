@@ -44,29 +44,6 @@ RSpec.describe CoverageReporter::PullRequest do
         expect(client).to have_received(:auto_paginate=).with(true)
       end
     end
-
-    context "with repository normalization" do
-      it "keeps owner/repo format as is" do
-        described_class.new(github_token:, repo: "owner/repo", pr_number:)
-        expect(Octokit::Client).to have_received(:new).with(access_token: github_token)
-      end
-
-      it "extracts owner/repo from full GitHub URL" do
-        described_class.new(github_token:, repo: "https://github.com/owner/repo", pr_number:)
-        expect(Octokit::Client).to have_received(:new).with(access_token: github_token)
-      end
-
-      it "extracts owner/repo from GitHub URL with .git suffix" do
-        described_class.new(github_token:, repo: "https://github.com/owner/repo.git", pr_number:)
-        expect(Octokit::Client).to have_received(:new).with(access_token: github_token)
-      end
-
-      it "raises ArgumentError for invalid repo format" do
-        expect do
-          described_class.new(github_token:, repo: "just-repo-name", pr_number:)
-        end.to raise_error(ArgumentError, "Repository must be in format 'owner/repo' or a full GitHub URL")
-      end
-    end
   end
 
   describe "#inline_comments" do
@@ -214,9 +191,9 @@ RSpec.describe CoverageReporter::PullRequest do
 
   describe "#add_comment_on_lines" do
     let(:commit_id) { "commit123" }
-    let(:file_path) { "lib/test.rb" }
+    let(:path) { "lib/test.rb" }
     let(:start_line) { 8 }
-    let(:end_line) { 10 }
+    let(:line) { 10 }
     let(:body) { "Coverage comment" }
     let(:side) { "RIGHT" }
     let(:diff) do
@@ -247,14 +224,14 @@ RSpec.describe CoverageReporter::PullRequest do
     end
 
     context "with single line comment" do
-      let(:end_line) { 8 }
+      let(:line) { 8 }
 
       it "adds a comment on a single line" do
         pull_request.add_comment_on_lines(
           commit_id:  commit_id,
-          file_path:  file_path,
+          path:       path,
           start_line: start_line,
-          end_line:   end_line,
+          line:       line,
           body:       body
         )
 
@@ -263,8 +240,8 @@ RSpec.describe CoverageReporter::PullRequest do
           hash_including(
             body:      body,
             commit_id: commit_id,
-            path:      file_path,
-            line:      start_line,
+            path:      path,
+            line:      line,
             side:      "RIGHT"
           )
         )
@@ -273,9 +250,9 @@ RSpec.describe CoverageReporter::PullRequest do
       it "does not include start_line in payload when same as line" do
         pull_request.add_comment_on_lines(
           commit_id:  commit_id,
-          file_path:  file_path,
+          path:       path,
           start_line: start_line,
-          end_line:   end_line,
+          line:       line,
           body:       body
         )
 
@@ -290,9 +267,9 @@ RSpec.describe CoverageReporter::PullRequest do
       it "adds a comment on multiple lines" do
         pull_request.add_comment_on_lines(
           commit_id:  commit_id,
-          file_path:  file_path,
+          path:       path,
           start_line: start_line,
-          end_line:   end_line,
+          line:       line,
           body:       body
         )
 
@@ -301,8 +278,8 @@ RSpec.describe CoverageReporter::PullRequest do
           hash_including(
             body:       body,
             commit_id:  commit_id,
-            path:       file_path,
-            line:       end_line,
+            path:       path,
+            line:       line,
             side:       "RIGHT",
             start_line: start_line
           )
@@ -316,70 +293,15 @@ RSpec.describe CoverageReporter::PullRequest do
       it "ignores the specified side and uses calculated side from diff" do
         pull_request.add_comment_on_lines(
           commit_id:  commit_id,
-          file_path:  file_path,
+          path:       path,
           start_line: start_line,
-          end_line:   end_line,
+          line:       line,
           body:       body
         )
 
         expect(client).to have_received(:post).with(
           "/repos/#{repo}/pulls/#{pr_number}/comments",
           hash_including(side: "RIGHT") # Calculated from diff, not the passed side parameter
-        )
-      end
-    end
-
-    context "when existing comment exists for same file and line range" do
-      let(:existing_comment) do
-        instance_double(
-          Comment,
-          id:         456,
-          body:       "<!-- coverage-inline-marker -->\n❌ Lines 8–10 are not covered by tests.",
-          path:       file_path,
-          line:       end_line,
-          start_line: start_line
-        )
-      end
-
-      before do
-        allow(pull_request).to receive(:inline_comments).and_return([existing_comment])
-        allow(pull_request).to receive(:update_inline_comment)
-      end
-
-      it "updates the existing comment instead of creating a new one" do
-        pull_request.add_comment_on_lines(
-          commit_id:  commit_id,
-          file_path:  file_path,
-          start_line: start_line,
-          end_line:   end_line,
-          body:       body
-        )
-
-        expect(pull_request).to have_received(:update_inline_comment).with(
-          id:   existing_comment.id,
-          body: body
-        )
-        expect(client).not_to have_received(:post)
-      end
-    end
-
-    context "when no existing comment exists" do
-      before do
-        allow(pull_request).to receive(:inline_comments).and_return([])
-      end
-
-      it "creates a new comment" do
-        pull_request.add_comment_on_lines(
-          commit_id:  commit_id,
-          file_path:  file_path,
-          start_line: start_line,
-          end_line:   end_line,
-          body:       body
-        )
-
-        expect(client).to have_received(:post).with(
-          "/repos/#{repo}/pulls/#{pr_number}/comments",
-          hash_including(body: body)
         )
       end
     end
@@ -409,9 +331,9 @@ RSpec.describe CoverageReporter::PullRequest do
         expect do
           pull_request.add_comment_on_lines(
             commit_id:  commit_id,
-            file_path:  file_path,
+            path:       path,
             start_line: start_line,
-            end_line:   end_line,
+            line:       line,
             body:       body
           )
         end.to raise_error(StandardError, "API Error")
@@ -429,182 +351,17 @@ RSpec.describe CoverageReporter::PullRequest do
         expect do
           pull_request.add_comment_on_lines(
             commit_id:  commit_id,
-            file_path:  file_path,
+            path:       path,
             start_line: start_line,
-            end_line:   end_line,
+            line:       line,
             body:       body
           )
         end.to raise_error(StandardError, "Unexpected error")
       end
     end
-
-    context "with file path matching" do
-      let(:file_path) { "test.rb" }
-      let(:diff) do
-        <<~DIFF
-          diff --git a/lib/test.rb b/lib/test.rb
-          index 1234567..abcdefg 100644
-          --- a/lib/test.rb
-          +++ b/lib/test.rb
-          @@ -7,7 +7,7 @@ class Test
-           def method1
-             puts "hello"
-           end
-          -def old_method
-          +def new_method
-             puts "world"
-           end
-          end
-        DIFF
-      end
-
-      it "finds the actual file path in the diff" do
-        pull_request.add_comment_on_lines(
-          commit_id:  commit_id,
-          file_path:  file_path,
-          start_line: start_line,
-          end_line:   end_line,
-          body:       body
-        )
-
-        expect(client).to have_received(:post).with(
-          "/repos/#{repo}/pulls/#{pr_number}/comments",
-          hash_including(path: "lib/test.rb")
-        )
-      end
-    end
-  end
-
-  describe "#find_existing_inline_comment" do
-    let(:file_path) { "lib/test.rb" }
-    let(:start_line) { 8 }
-    let(:end_line) { 10 }
-
-    context "when no comments exist" do
-      before do
-        allow(pull_request).to receive(:inline_comments).and_return([])
-      end
-
-      it "returns nil" do
-        result = pull_request.send(:find_existing_inline_comment, file_path, start_line, end_line)
-        expect(result).to be_nil
-      end
-    end
-
-    context "when coverage comment exists for same file and line range" do
-      let(:existing_comment) do
-        instance_double(
-          Comment,
-          id:         123,
-          body:       "<!-- coverage-inline-marker -->\n❌ Lines 8–10 are not covered by tests.",
-          path:       file_path,
-          line:       end_line,
-          start_line: start_line
-        )
-      end
-
-      before do
-        allow(pull_request).to receive(:inline_comments).and_return([existing_comment])
-      end
-
-      it "returns the existing comment" do
-        result = pull_request.send(:find_existing_inline_comment, file_path, start_line, end_line)
-        expect(result).to eq(existing_comment)
-      end
-    end
-
-    context "when coverage comment exists for different file" do
-      let(:existing_comment) do
-        instance_double(
-          Comment,
-          id:         123,
-          body:       "<!-- coverage-inline-marker -->\n❌ Lines 8–10 are not covered by tests.",
-          path:       "different/file.rb",
-          line:       end_line,
-          start_line: start_line
-        )
-      end
-
-      before do
-        allow(pull_request).to receive(:inline_comments).and_return([existing_comment])
-      end
-
-      it "returns nil" do
-        result = pull_request.send(:find_existing_inline_comment, file_path, start_line, end_line)
-        expect(result).to be_nil
-      end
-    end
-
-    context "when coverage comment exists for different line range" do
-      let(:existing_comment) do
-        instance_double(
-          Comment,
-          id:         123,
-          body:       "<!-- coverage-inline-marker -->\n❌ Lines 5–7 are not covered by tests.",
-          path:       file_path,
-          line:       7,
-          start_line: 5
-        )
-      end
-
-      before do
-        allow(pull_request).to receive(:inline_comments).and_return([existing_comment])
-      end
-
-      it "returns nil" do
-        result = pull_request.send(:find_existing_inline_comment, file_path, start_line, end_line)
-        expect(result).to be_nil
-      end
-    end
-
-    context "when non-coverage comment exists" do
-      let(:existing_comment) do
-        instance_double(
-          Comment,
-          id:         123,
-          body:       "This is a regular comment",
-          path:       file_path,
-          line:       end_line,
-          start_line: start_line
-        )
-      end
-
-      before do
-        allow(pull_request).to receive(:inline_comments).and_return([existing_comment])
-      end
-
-      it "returns nil" do
-        result = pull_request.send(:find_existing_inline_comment, file_path, start_line, end_line)
-        expect(result).to be_nil
-      end
-    end
   end
 
   describe "private methods" do
-    describe "#normalize_repo" do
-      it "returns owner/repo format as is" do
-        pr = described_class.new(github_token:, repo: "owner/repo", pr_number:)
-        expect(pr.send(:normalize_repo, "owner/repo")).to eq("owner/repo")
-      end
-
-      it "extracts owner/repo from full GitHub URL" do
-        pr = described_class.new(github_token:, repo: "https://github.com/owner/repo", pr_number:)
-        expect(pr.send(:normalize_repo, "https://github.com/owner/repo")).to eq("owner/repo")
-      end
-
-      it "extracts owner/repo from GitHub URL with .git suffix" do
-        pr = described_class.new(github_token:, repo: "https://github.com/owner/repo.git", pr_number:)
-        expect(pr.send(:normalize_repo, "https://github.com/owner/repo.git")).to eq("owner/repo")
-      end
-
-      it "raises ArgumentError for invalid repo format" do
-        pr = described_class.new(github_token:, repo: "owner/repo", pr_number:)
-        expect do
-          pr.send(:normalize_repo, "just-repo-name")
-        end.to raise_error(ArgumentError, "Repository must be in format 'owner/repo' or a full GitHub URL")
-      end
-    end
-
     describe "#diff" do
       let(:diff) { "diff content" }
 
@@ -621,75 +378,6 @@ RSpec.describe CoverageReporter::PullRequest do
         pull_request.send(:diff)
         pull_request.send(:diff)
         expect(client).to have_received(:pull_request).with(repo, pr_number, accept: "application/vnd.github.v3.diff").once
-      end
-    end
-
-    describe "#find_actual_file_path_in_diff" do
-      let(:diff) do
-        <<~DIFF
-          diff --git a/lib/test.rb b/lib/test.rb
-          index 1234567..abcdefg 100644
-          --- a/lib/test.rb
-          +++ b/lib/test.rb
-        DIFF
-      end
-
-      it "finds exact file path match" do
-        result = pull_request.send(:find_actual_file_path_in_diff, diff, "lib/test.rb")
-        expect(result).to eq("lib/test.rb")
-      end
-
-      it "finds basename match" do
-        result = pull_request.send(:find_actual_file_path_in_diff, diff, "test.rb")
-        expect(result).to eq("lib/test.rb")
-      end
-
-      it "returns original path if no match found" do
-        result = pull_request.send(:find_actual_file_path_in_diff, diff, "nonexistent.rb")
-        expect(result).to eq("nonexistent.rb")
-      end
-    end
-
-    describe "#find_diff_line_numbers" do
-      let(:diff) do
-        <<~DIFF
-          diff --git a/lib/test.rb b/lib/test.rb
-          index 1234567..abcdefg 100644
-          --- a/lib/test.rb
-          +++ b/lib/test.rb
-          @@ -7,7 +7,7 @@ class Test
-           def method1
-             puts "hello"
-           end
-          -def old_method
-          +def new_method
-             puts "world"
-           end
-          +def added_method
-          +  puts "new code"
-          +end
-          end
-        DIFF
-      end
-
-      it "finds line numbers for single line comment" do
-        result = pull_request.send(:find_diff_line_numbers, diff, "lib/test.rb", 8, 8)
-        expect(result).to include(
-          line:       8,
-          side:       "RIGHT",
-          start_side: "RIGHT"
-        )
-        expect(result).not_to have_key(:start_line)
-      end
-
-      it "finds line numbers for multi-line comment" do
-        result = pull_request.send(:find_diff_line_numbers, diff, "lib/test.rb", 8, 10)
-        expect(result).to include(
-          line:       10,
-          side:       "RIGHT",
-          start_line: 8,
-          start_side: "RIGHT"
-        )
       end
     end
   end

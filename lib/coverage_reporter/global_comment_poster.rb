@@ -2,7 +2,6 @@
 
 module CoverageReporter
   class GlobalCommentPoster
-
     def initialize(pull_request:, global_comment:)
       @pull_request = pull_request
       @global_comment = global_comment

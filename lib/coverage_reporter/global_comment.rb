@@ -8,14 +8,6 @@ module CoverageReporter
       @body = build_body
     end
 
-    def to_h
-      {
-        coverage_percentage: coverage_percentage,
-        commit_sha:          commit_sha,
-        body:                body
-      }
-    end
-
     attr_reader :coverage_percentage, :commit_sha, :body
 
     private
