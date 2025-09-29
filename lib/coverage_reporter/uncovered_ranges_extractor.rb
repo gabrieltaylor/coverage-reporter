@@ -77,6 +77,7 @@ module CoverageReporter
         file_path.delete_prefix(project_root).delete_prefix("/")
       else
         # If it doesn't start with project root, return as-is (assuming it's already relative)
+        # adding a comment to test the deletion of stale comments
         file_path
       end
     end
