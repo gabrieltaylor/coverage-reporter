@@ -22,10 +22,9 @@ RSpec.describe "CoverageReporter Integration" do
         # Capture any requests that would be made to create comments
         comment_requests = []
 
-        # Create a mock Octokit client
-        octokit_client = instance_double(Octokit::Client)
+        # Create a real Octokit client that VCR can intercept
+        octokit_client = Octokit::Client.new(access_token: "fake_token_for_testing")
         allow(Octokit::Client).to receive(:new).and_return(octokit_client)
-        allow(octokit_client).to receive(:auto_paginate=).and_return(true)
 
         # Mock the POST request for inline comments
         allow(octokit_client).to receive(:post) do |path, payload|
@@ -74,6 +73,8 @@ RSpec.describe "CoverageReporter Integration" do
           issue_comments:        []
         )
 
+        # Let VCR handle the pull_request method for diff retrieval
+
         # Run the coverage reporter - VCR will automatically provide the diff from the cassette
         runner = CoverageReporter::Runner.new(options)
         runner.run
@@ -114,15 +115,15 @@ RSpec.describe "CoverageReporter Integration" do
         # Mock existing global comment
         existing_global_comments = [
           instance_double(
-            Sawyer::Resource,
+            Comment,
             id:   54_321,
             body: "<!-- coverage-comment-marker -->\n🧪 **Test Coverage Summary**\n\n" \
                   "✅ **N/A%** of changed lines are covered.\n\n_Commit: abc123def456_\n"
           )
         ]
 
-        # Create a mock Octokit client
-        octokit_client = instance_double(Octokit::Client)
+        # Create a real Octokit client that VCR can intercept
+        octokit_client = Octokit::Client.new(access_token: "fake_token_for_testing")
         allow(Octokit::Client).to receive(:new).and_return(octokit_client)
 
         # Mock the POST request for new inline comments (shouldn't be called)
@@ -171,6 +172,8 @@ RSpec.describe "CoverageReporter Integration" do
           pull_request_comments: existing_inline_comments,
           issue_comments:        existing_global_comments
         )
+
+        # Let VCR handle the pull_request method for diff retrieval
 
         # Run the coverage reporter - VCR will automatically provide the diff from the cassette
         runner = CoverageReporter::Runner.new(options)

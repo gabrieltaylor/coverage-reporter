@@ -138,15 +138,18 @@ RSpec.describe CoverageReporter::InlineCommentPoster do
       end
     end
 
-    it "logs debug information for each comment" do
+    it "logs information for each comment" do
       allow(pull_request).to receive(:inline_comments).and_return([])
       allow(pull_request).to receive(:add_comment_on_lines)
       allow(pull_request).to receive(:delete_inline_comment)
 
+      # Set logger level to DEBUG to enable debug messages
+      CoverageReporter.logger.level = Logger::DEBUG
+
       expect(CoverageReporter.logger).to receive(:debug).with("Recording existing coverage comments")
       expect(CoverageReporter.logger).to receive(:debug).with("No stale coverage comments to clean up")
-      expect(CoverageReporter.logger).to receive(:debug).with("Posting inline comment for app/models/user.rb: 5–5")
-      expect(CoverageReporter.logger).to receive(:debug).with("Posting inline comment for app/controllers/users_controller.rb: 10–15")
+      expect(CoverageReporter.logger).to receive(:info).with("Posting inline comment for app/models/user.rb: 5–5")
+      expect(CoverageReporter.logger).to receive(:info).with("Posting inline comment for app/controllers/users_controller.rb: 10–15")
 
       poster.call
     end
@@ -177,11 +180,15 @@ RSpec.describe CoverageReporter::InlineCommentPoster do
       end
 
       it "logs cleanup information" do
+        # Set logger level to DEBUG to enable debug messages
+        CoverageReporter.logger.level = Logger::DEBUG
+
         expect(CoverageReporter.logger).to receive(:debug).with("Recording existing coverage comments")
         expect(CoverageReporter.logger).to receive(:debug).with("Found existing coverage comment: 999 for app/models/old_file.rb:20-20")
         expect(CoverageReporter.logger).to receive(:debug).with("Cleaning up 1 unused coverage comments")
-        expect(CoverageReporter.logger).to receive(:debug).with("Deleting unused coverage comment: 999")
-        expect(CoverageReporter.logger).to receive(:debug).at_least(:once) # Allow for other debug messages
+        expect(CoverageReporter.logger).to receive(:info).with("Posting inline comment for app/models/user.rb: 5–5")
+        expect(CoverageReporter.logger).to receive(:info).with("Posting inline comment for app/controllers/users_controller.rb: 10–15")
+        expect(CoverageReporter.logger).to receive(:info).with("Deleting stale coverage comment: 999")
 
         poster.call
       end
@@ -204,9 +211,11 @@ RSpec.describe CoverageReporter::InlineCommentPoster do
       end
 
       it "logs that no cleanup is needed" do
+        # Set logger level to DEBUG to enable debug messages
+        CoverageReporter.logger.level = Logger::DEBUG
+
         expect(CoverageReporter.logger).to receive(:debug).with("Recording existing coverage comments")
         expect(CoverageReporter.logger).to receive(:debug).with("No stale coverage comments to clean up")
-        expect(CoverageReporter.logger).to receive(:debug).at_least(:once) # Allow for other debug messages
 
         poster.call
       end
