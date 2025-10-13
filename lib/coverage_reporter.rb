@@ -23,7 +23,6 @@ module CoverageReporter
   end
 
   require_relative "coverage_reporter/coverage_report_loader"
-  require_relative "coverage_reporter/file_path_normalizer"
   require_relative "coverage_reporter/modified_uncovered_intersection"
   require_relative "coverage_reporter/global_comment"
   require_relative "coverage_reporter/global_comment_factory"
@@ -36,4 +35,5 @@ module CoverageReporter
   require_relative "coverage_reporter/pull_request"
   require_relative "coverage_reporter/runner"
   require_relative "coverage_reporter/uncovered_ranges_extractor"
+  require_relative "coverage_reporter/simple_cov/patches/result_hash_formatter_patch"
 end

@@ -3,7 +3,7 @@
     "simplecov_version": "0.22.0"
   },
   "coverage": {
-    "/Users/gabriel/Documents/code/coverage-reporter/lib/coverage_reporter.rb": {
+    "lib/coverage_reporter.rb": {
       "lines": [
         null,
         null,
@@ -41,7 +41,7 @@
         null
       ]
     },
-    "/Users/gabriel/Documents/code/coverage-reporter/lib/coverage_reporter/cli.rb": {
+    "lib/coverage_reporter/cli.rb": {
       "lines": [
         null,
         null,
@@ -55,7 +55,7 @@
         null
       ]
     },
-    "/Users/gabriel/Documents/code/coverage-reporter/lib/coverage_reporter/coverage_report_loader.rb": {
+    "lib/coverage_reporter/coverage_report_loader.rb": {
       "lines": [
         null,
         null,
@@ -79,7 +79,7 @@
         null
       ]
     },
-    "/Users/gabriel/Documents/code/coverage-reporter/lib/coverage_reporter/global_comment.rb": {
+    "lib/coverage_reporter/global_comment.rb": {
       "lines": [
         null,
         null,
@@ -117,7 +117,7 @@
         null
       ]
     },
-    "/Users/gabriel/Documents/code/coverage-reporter/lib/coverage_reporter/global_comment_factory.rb": {
+    "lib/coverage_reporter/global_comment_factory.rb": {
       "lines": [
         null,
         null,
@@ -149,7 +149,7 @@
         null
       ]
     },
-    "/Users/gabriel/Documents/code/coverage-reporter/lib/coverage_reporter/global_comment_poster.rb": {
+    "lib/coverage_reporter/global_comment_poster.rb": {
       "lines": [
         null,
         null,
@@ -185,7 +185,7 @@
         null
       ]
     },
-    "/Users/gabriel/Documents/code/coverage-reporter/lib/coverage_reporter/inline_comment.rb": {
+    "lib/coverage_reporter/inline_comment.rb": {
       "lines": [
         null,
         null,
@@ -222,7 +222,7 @@
         null
       ]
     },
-    "/Users/gabriel/Documents/code/coverage-reporter/lib/coverage_reporter/inline_comment_factory.rb": {
+    "lib/coverage_reporter/inline_comment_factory.rb": {
       "lines": [
         null,
         null,
@@ -275,7 +275,7 @@
         null
       ]
     },
-    "/Users/gabriel/Documents/code/coverage-reporter/lib/coverage_reporter/inline_comment_poster.rb": {
+    "lib/coverage_reporter/inline_comment_poster.rb": {
       "lines": [
         null,
         null,
@@ -327,7 +327,7 @@
         null
       ]
     },
-    "/Users/gabriel/Documents/code/coverage-reporter/lib/coverage_reporter/modified_ranges_extractor.rb": {
+    "lib/coverage_reporter/modified_ranges_extractor.rb": {
       "lines": [
         null,
         null,
@@ -446,7 +446,7 @@
         null
       ]
     },
-    "/Users/gabriel/Documents/code/coverage-reporter/lib/coverage_reporter/modified_uncovered_intersection.rb": {
+    "lib/coverage_reporter/modified_uncovered_intersection.rb": {
       "lines": [
         null,
         null,
@@ -514,7 +514,7 @@
         null
       ]
     },
-    "/Users/gabriel/Documents/code/coverage-reporter/lib/coverage_reporter/options.rb": {
+    "lib/coverage_reporter/options.rb": {
       "lines": [
         null,
         null,
@@ -581,7 +581,7 @@
         null
       ]
     },
-    "/Users/gabriel/Documents/code/coverage-reporter/lib/coverage_reporter/pull_request.rb": {
+    "lib/coverage_reporter/pull_request.rb": {
       "lines": [
         null,
         null,
@@ -765,7 +765,7 @@
         null
       ]
     },
-    "/Users/gabriel/Documents/code/coverage-reporter/lib/coverage_reporter/runner.rb": {
+    "lib/coverage_reporter/runner.rb": {
       "lines": [
         null,
         null,
@@ -801,7 +801,7 @@
         null
       ]
     },
-    "/Users/gabriel/Documents/code/coverage-reporter/lib/coverage_reporter/uncovered_ranges_extractor.rb": {
+    "lib/coverage_reporter/uncovered_ranges_extractor.rb": {
       "lines": [
         null,
         null,
@@ -889,7 +889,7 @@
         null
       ]
     },
-    "/Users/gabriel/Documents/code/coverage-reporter/spec/coverage_reporter/cli_spec.rb": {
+    "spec/coverage_reporter/cli_spec.rb": {
       "lines": [
         null,
         null,
@@ -947,7 +947,7 @@
         null
       ]
     },
-    "/Users/gabriel/Documents/code/coverage-reporter/spec/coverage_reporter/coverage_reporter_spec.rb": {
+    "spec/coverage_reporter/coverage_reporter_spec.rb": {
       "lines": [
         null,
         null,
@@ -970,7 +970,7 @@
         null
       ]
     },
-    "/Users/gabriel/Documents/code/coverage-reporter/spec/coverage_reporter/global_comment_factory_spec.rb": {
+    "spec/coverage_reporter/global_comment_factory_spec.rb": {
       "lines": [
         null,
         null,
@@ -1021,7 +1021,7 @@
         null
       ]
     },
-    "/Users/gabriel/Documents/code/coverage-reporter/spec/coverage_reporter/global_comment_poster_spec.rb": {
+    "spec/coverage_reporter/global_comment_poster_spec.rb": {
       "lines": [
         null,
         null,
@@ -1148,7 +1148,7 @@
         null
       ]
     },
-    "/Users/gabriel/Documents/code/coverage-reporter/spec/coverage_reporter/global_comment_spec.rb": {
+    "spec/coverage_reporter/global_comment_spec.rb": {
       "lines": [
         null,
         null,
@@ -1224,7 +1224,7 @@
         null
       ]
     },
-    "/Users/gabriel/Documents/code/coverage-reporter/spec/coverage_reporter/inline_comment_poster_spec.rb": {
+    "spec/coverage_reporter/inline_comment_poster_spec.rb": {
       "lines": [
         null,
         null,
@@ -1397,7 +1397,7 @@
         null
       ]
     },
-    "/Users/gabriel/Documents/code/coverage-reporter/spec/coverage_reporter/inline_comment_spec.rb": {
+    "spec/coverage_reporter/inline_comment_spec.rb": {
       "lines": [
         null,
         null,
@@ -1478,7 +1478,7 @@
         null
       ]
     },
-    "/Users/gabriel/Documents/code/coverage-reporter/spec/coverage_reporter/integration_spec.rb": {
+    "spec/coverage_reporter/integration_spec.rb": {
       "lines": [
         null,
         null,
@@ -1584,7 +1584,7 @@
         null
       ]
     },
-    "/Users/gabriel/Documents/code/coverage-reporter/spec/coverage_reporter/modified_ranges_extractor_spec.rb": {
+    "spec/coverage_reporter/modified_ranges_extractor_spec.rb": {
       "lines": [
         null,
         null,
@@ -1785,7 +1785,7 @@
         null
       ]
     },
-    "/Users/gabriel/Documents/code/coverage-reporter/spec/coverage_reporter/modified_uncovered_intersection_spec.rb": {
+    "spec/coverage_reporter/modified_uncovered_intersection_spec.rb": {
       "lines": [
         null,
         null,
@@ -1877,7 +1877,7 @@
         null
       ]
     },
-    "/Users/gabriel/Documents/code/coverage-reporter/spec/coverage_reporter/options_spec.rb": {
+    "spec/coverage_reporter/options_spec.rb": {
       "lines": [
         null,
         null,
@@ -1984,7 +1984,7 @@
         null
       ]
     },
-    "/Users/gabriel/Documents/code/coverage-reporter/spec/coverage_reporter/pull_request_spec.rb": {
+    "spec/coverage_reporter/pull_request_spec.rb": {
       "lines": [
         null,
         null,
@@ -2741,7 +2741,7 @@
         null
       ]
     },
-    "/Users/gabriel/Documents/code/coverage-reporter/spec/coverage_reporter/runner_spec.rb": {
+    "spec/coverage_reporter/runner_spec.rb": {
       "lines": [
         null,
         null,
@@ -2856,7 +2856,7 @@
         null
       ]
     },
-    "/Users/gabriel/Documents/code/coverage-reporter/spec/coverage_reporter/uncovered_ranges_extractor_spec.rb": {
+    "spec/coverage_reporter/uncovered_ranges_extractor_spec.rb": {
       "lines": [
         null,
         null,
@@ -3132,7 +3132,7 @@
         null
       ]
     },
-    "/Users/gabriel/Documents/code/coverage-reporter/spec/coverage_reporter/version_spec.rb": {
+    "spec/coverage_reporter/version_spec.rb": {
       "lines": [
         null,
         null,

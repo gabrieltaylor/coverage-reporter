@@ -23,6 +23,9 @@ module CoverageReporter
 
       intersections = {}
 
+      puts("Modified ranges: #{@modified_ranges}")
+      puts("Uncovered ranges: #{@uncovered_ranges}")
+
       @modified_ranges.each do |file, modified_ranges|
         next unless @uncovered_ranges.key?(file)
         next if modified_ranges.nil?

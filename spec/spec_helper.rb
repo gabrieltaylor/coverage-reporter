@@ -2,6 +2,7 @@
 
 require "simplecov"
 require "simplecov_json_formatter"
+require "coverage_reporter/simple_cov/patches/result_hash_formatter_patch"
 
 # Configure SimpleCov for parallel test execution
 if ENV["BUILDKITE_PARALLEL_JOB"]
@@ -11,6 +12,8 @@ if ENV["BUILDKITE_PARALLEL_JOB"]
 else
   # Single job execution
   SimpleCov.command_name "RSpec"
+  SimpleCov.root(File.expand_path("../..", __dir__))
+
   SimpleCov.formatter = SimpleCov::Formatter::MultiFormatter.new(
     [
       SimpleCov::Formatter::HTMLFormatter,

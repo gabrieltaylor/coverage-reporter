@@ -117,23 +117,6 @@ RSpec.describe CoverageReporter::UncoveredRangesExtractor do
     end
   end
 
-  context "with filename normalization" do
-    it "uses FilePathNormalizer to normalize file paths" do
-      allow(CoverageReporter::FilePathNormalizer).to receive(:call).and_call_original
-
-      coverage_report = {
-        "coverage" => {
-          "lib/example.rb" => { "lines" => [nil, 1, 0, 2] }
-        }
-      }
-
-      parser = described_class.new(coverage_report)
-      parser.call
-
-      expect(CoverageReporter::FilePathNormalizer).to have_received(:call).with("lib/example.rb")
-    end
-  end
-
   context "range conversion logic" do
     it "converts consecutive uncovered lines into ranges" do
       coverage_report = {

@@ -14,9 +14,8 @@ module CoverageReporter
       return coverage_map unless coverage
 
       coverage.each do |filename, data|
-        normalized_filename = FilePathNormalizer.call(filename)
         uncovered_ranges = extract_uncovered_ranges(data["lines"])
-        coverage_map[normalized_filename] = uncovered_ranges
+        coverage_map[filename] = uncovered_ranges
       end
 
       coverage_map
