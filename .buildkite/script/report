@@ -2,4 +2,4 @@
 
 bundle config set path 'vendor/bundle'
 gem install coverage-reporter
-coverage-reporter report
+coverage-reporter

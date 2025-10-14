@@ -3,27 +3,30 @@
 module CoverageReporter
   class Runner
     def initialize(options)
-      @commit_sha    = options[:commit_sha]
-      @coverage_path = options[:coverage_path]
-      @github_token  = options[:github_token]
-      @build_url     = options[:build_url]
-      @base_ref      = options[:base_ref]
-      @repo          = options[:repo]
-      @pr_number     = options[:pr_number]
+      @commit_sha           = options[:commit_sha]
+      @coverage_report_path = options[:coverage_report_path]
+      @github_token         = options[:github_token]
+      @build_url            = options[:build_url]
+      @repo                 = options[:repo]
+      @pr_number            = options[:pr_number]
     end
 
+    # rubocop:disable Metrics/AbcSize
     def run
-      coverage = CoverageParser.new(coverage_path).call
-      diff     = DiffParser.new(base_ref).call
-
-      analysis = CoverageAnalyser.new(coverage:, diff:).call
       pull_request = PullRequest.new(github_token:, repo:, pr_number:)
-
-      CommentPoster.new(pull_request:, analysis:, commit_sha:).call
+      coverage_report = CoverageReportLoader.new(coverage_report_path).call
+      modified_ranges = ModifiedRangesExtractor.new(pull_request.diff).call
+      uncovered_ranges = UncoveredRangesExtractor.new(coverage_report).call
+      intersection = ModifiedUncoveredIntersection.new(uncovered_ranges:, modified_ranges:).call
+      inline_comments = InlineCommentFactory.new(intersection:, commit_sha:).call
+      InlineCommentPoster.new(pull_request:, commit_sha:, inline_comments:).call
+      global_comment = GlobalCommentFactory.new(commit_sha:).call
+      GlobalCommentPoster.new(pull_request:, global_comment:).call
     end
+    # rubocop:enable Metrics/AbcSize
 
     private
 
-    attr_reader :coverage_path, :github_token, :build_url, :base_ref, :repo, :pr_number, :commit_sha
+    attr_reader :coverage_report_path, :github_token, :build_url, :repo, :pr_number, :commit_sha
   end
 end

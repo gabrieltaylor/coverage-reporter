@@ -1,20 +1,59 @@
 # frozen_string_literal: true
 
 require "simplecov"
+require "simplecov_json_formatter"
+require "coverage_reporter/simple_cov/patches/result_hash_formatter_patch"
 
 # Configure SimpleCov for parallel test execution
 if ENV["BUILDKITE_PARALLEL_JOB"]
   # Buildkite parallel execution
   SimpleCov.command_name "RSpec-#{ENV['BUILDKITE_PARALLEL_JOB']}"
+  SimpleCov.formatter = SimpleCov::Formatter::JSONFormatter
 else
   # Single job execution
   SimpleCov.command_name "RSpec"
+  SimpleCov.root(File.expand_path("../..", __dir__))
+
+  SimpleCov.formatter = SimpleCov::Formatter::MultiFormatter.new(
+    [
+      SimpleCov::Formatter::HTMLFormatter,
+      SimpleCov::Formatter::JSONFormatter
+    ]
+  )
 end
 
 SimpleCov.start
 
 # Require the library under test
 require "coverage_reporter"
+
+# Configure VCR for integration tests
+require "vcr"
+require "webmock"
+
+VCR.configure do |config|
+  config.cassette_library_dir = "spec/fixtures/vcr_cassettes"
+  config.hook_into :webmock
+  config.configure_rspec_metadata!
+  config.allow_http_connections_when_no_cassette = false
+  config.default_cassette_options = {
+    record:            :once,
+    match_requests_on: %i[method uri body]
+  }
+end
+
+# Test double class for GitHub API comments
+class Comment
+  attr_reader :id, :body, :path, :line, :start_line
+
+  def initialize(id:, body:, path: nil, line: nil, start_line: nil)
+    @id = id
+    @body = body
+    @path = path
+    @line = line
+    @start_line = start_line
+  end
+end
 
 # If you later add support files (custom matchers, shared contexts, etc.)
 # you can keep them in spec/support and uncomment the Dir[] line below.

@@ -1,0 +1,92 @@
+{
+    "captured_at": "2024-01-01T12:00:00Z",
+    "requests": [
+        {
+            "method": "GET",
+            "uri": "https://api.github.com/repos/test/repo/pulls/123",
+            "headers": {
+                "Authorization": "token ghp_xxxxxxxxxxxx",
+                "Accept": "application/vnd.github.v3+json",
+                "User-Agent": "Octokit Ruby Gem 4.25.1"
+            },
+            "body": "",
+            "timestamp": "2024-01-01T12:00:01Z"
+        },
+        {
+            "method": "GET",
+            "uri": "https://api.github.com/repos/test/repo/pulls/123",
+            "headers": {
+                "Authorization": "token ghp_xxxxxxxxxxxx",
+                "Accept": "application/vnd.github.v3.diff",
+                "User-Agent": "Octokit Ruby Gem 4.25.1"
+            },
+            "body": "",
+            "timestamp": "2024-01-01T12:00:02Z"
+        },
+        {
+            "method": "GET",
+            "uri": "https://api.github.com/repos/test/repo/pulls/123/comments",
+            "headers": {
+                "Authorization": "token ghp_xxxxxxxxxxxx",
+                "Accept": "application/vnd.github.v3+json",
+                "User-Agent": "Octokit Ruby Gem 4.25.1"
+            },
+            "body": "",
+            "timestamp": "2024-01-01T12:00:03Z"
+        },
+        {
+            "method": "POST",
+            "uri": "https://api.github.com/repos/test/repo/pulls/123/comments",
+            "headers": {
+                "Authorization": "token ghp_xxxxxxxxxxxx",
+                "Accept": "application/vnd.github.v3+json",
+                "Content-Type": "application/json",
+                "User-Agent": "Octokit Ruby Gem 4.25.1"
+            },
+            "body": "{\"body\":\"<!-- coverage-inline-marker -->\\nCoverage: 0% (0/10 lines)\\n\\nUncovered lines: 1-10\",\"commit_id\":\"abc123def456\",\"path\":\"lib/example.rb\",\"line\":5,\"side\":\"RIGHT\"}",
+            "timestamp": "2024-01-01T12:00:04Z"
+        }
+    ],
+    "responses": [
+        {
+            "status": 200,
+            "headers": {
+                "content-type": "application/json; charset=utf-8",
+                "x-ratelimit-limit": "5000",
+                "x-ratelimit-remaining": "4999"
+            },
+            "body": "{\"id\":123,\"number\":123,\"state\":\"open\",\"title\":\"Test PR\",\"body\":\"Test description\",\"head\":{\"sha\":\"abc123def456\"}}",
+            "timestamp": "2024-01-01T12:00:01Z"
+        },
+        {
+            "status": 200,
+            "headers": {
+                "content-type": "text/plain; charset=utf-8",
+                "x-ratelimit-limit": "5000",
+                "x-ratelimit-remaining": "4998"
+            },
+            "body": "diff --git a/lib/example.rb b/lib/example.rb\nindex 1234567..abcdefg 100644\n--- a/lib/example.rb\n+++ b/lib/example.rb\n@@ -1,10 +1,10 @@\n class Example\n-  def old_method\n+  def new_method\n     puts \"hello\"\n   end\n end",
+            "timestamp": "2024-01-01T12:00:02Z"
+        },
+        {
+            "status": 200,
+            "headers": {
+                "content-type": "application/json; charset=utf-8",
+                "x-ratelimit-limit": "5000",
+                "x-ratelimit-remaining": "4997"
+            },
+            "body": "[]",
+            "timestamp": "2024-01-01T12:00:03Z"
+        },
+        {
+            "status": 201,
+            "headers": {
+                "content-type": "application/json; charset=utf-8",
+                "x-ratelimit-limit": "5000",
+                "x-ratelimit-remaining": "4996"
+            },
+            "body": "{\"id\":456,\"body\":\"<!-- coverage-inline-marker -->\\nCoverage: 0% (0/10 lines)\\n\\nUncovered lines: 1-10\",\"path\":\"lib/example.rb\",\"line\":5,\"side\":\"RIGHT\"}",
+            "timestamp": "2024-01-01T12:00:04Z"
+        }
+    ]
+}
