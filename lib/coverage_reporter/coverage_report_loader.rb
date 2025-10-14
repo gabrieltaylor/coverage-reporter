@@ -23,7 +23,7 @@ module CoverageReporter
       raise CoverageFileAccessError, "Permission denied reading coverage file: #{@coverage_file_path}"
     rescue JSON::ParserError => e
       raise CoverageFileParseError, "Invalid JSON in coverage file #{@coverage_file_path}: #{e.message}"
-    rescue => e
+    rescue StandardError => e
       raise CoverageFileError, "Unexpected error reading coverage file #{@coverage_file_path}: #{e.message}"
     end
 

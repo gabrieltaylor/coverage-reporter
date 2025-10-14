@@ -17,7 +17,7 @@ module CoverageReporter
     def logger
       @logger ||= Logger.new($stdout).tap do |log|
         log.progname = name
-        log.level = valid_log_level(ENV["COVERAGE_REPORTER_LOG_LEVEL"])
+        log.level = valid_log_level(ENV.fetch("COVERAGE_REPORTER_LOG_LEVEL", nil))
       end
     end
 

@@ -136,9 +136,9 @@ RSpec.describe CoverageReporter::CoverageReportLoader do
       end
 
       it "raises JSON::ParserError for invalid JSON" do
-        expect {
+        expect do
           loader.send(:parse_json_content, "invalid json")
-        }.to raise_error(JSON::ParserError)
+        end.to raise_error(JSON::ParserError)
       end
     end
   end

@@ -5,19 +5,23 @@ require "coverage_reporter/pull_request"
 
 RSpec.describe CoverageReporter::PullRequest do
   # Test classes for verified doubles
-  class PullRequestData
-    attr_reader :head
+  let(:pull_request_data_class) do
+    Class.new do
+      attr_reader :head
 
-    def initialize(head)
-      @head = head
+      def initialize(head)
+        @head = head
+      end
     end
   end
 
-  class Head
-    attr_reader :sha
+  let(:head_class) do
+    Class.new do
+      attr_reader :sha
 
-    def initialize(sha)
-      @sha = sha
+      def initialize(sha)
+        @sha = sha
+      end
     end
   end
   let(:github_token) { "ghp_test_token" }
@@ -81,7 +85,7 @@ RSpec.describe CoverageReporter::PullRequest do
 
   describe "#latest_commit_sha" do
     let(:commit_sha) { "abc123def456" }
-    let(:pull_request_data) { instance_double(PullRequestData, head: instance_double(Head, sha: commit_sha)) }
+    let(:pull_request_data) { instance_double(pull_request_data_class, head: instance_double(head_class, sha: commit_sha)) }
 
     before do
       allow(client).to receive(:pull_request).with(repo, pr_number).and_return(pull_request_data)
