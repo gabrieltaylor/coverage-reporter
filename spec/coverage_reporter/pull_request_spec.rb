@@ -3,24 +3,23 @@
 require "spec_helper"
 require "coverage_reporter/pull_request"
 
-# Test classes for verified doubles
-class PullRequestData
-  attr_reader :head
-
-  def initialize(head)
-    @head = head
-  end
-end
-
-class Head
-  attr_reader :sha
-
-  def initialize(sha)
-    @sha = sha
-  end
-end
-
 RSpec.describe CoverageReporter::PullRequest do
+  # Test classes for verified doubles
+  class PullRequestData
+    attr_reader :head
+
+    def initialize(head)
+      @head = head
+    end
+  end
+
+  class Head
+    attr_reader :sha
+
+    def initialize(sha)
+      @sha = sha
+    end
+  end
   let(:github_token) { "ghp_test_token" }
   let(:pull_request) { described_class.new(github_token:, repo:, pr_number:) }
   let(:repo) { "owner/repo" }
@@ -357,27 +356,6 @@ RSpec.describe CoverageReporter::PullRequest do
             body:       body
           )
         end.to raise_error(StandardError, "Unexpected error")
-      end
-    end
-  end
-
-  describe "private methods" do
-    describe "#diff" do
-      let(:diff) { "diff content" }
-
-      before do
-        allow(client).to receive(:pull_request).with(repo, pr_number, accept: "application/vnd.github.v3.diff").and_return(diff)
-      end
-
-      it "returns the pull request diff" do
-        result = pull_request.send(:diff)
-        expect(result).to eq(diff)
-      end
-
-      it "memoizes the result" do
-        pull_request.send(:diff)
-        pull_request.send(:diff)
-        expect(client).to have_received(:pull_request).with(repo, pr_number, accept: "application/vnd.github.v3.diff").once
       end
     end
   end

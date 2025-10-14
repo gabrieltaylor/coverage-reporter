@@ -1,5 +1,4 @@
 #!/bin/bash
-# frozen_string_literal: true
 
 set -e
 
@@ -83,15 +82,15 @@ case $choice in
     4)
         echo -e "${GREEN}🚀 Running all capture methods...${NC}"
         echo ""
-        
+
         echo -e "${YELLOW}1/3: VCR Cassette Capture${NC}"
         ./scripts/capture_fixtures.rb
         echo ""
-        
+
         echo -e "${YELLOW}2/3: Raw Request Capture${NC}"
         ./scripts/capture_raw_requests.rb
         echo ""
-        
+
         echo -e "${YELLOW}3/3: Logging Mode${NC}"
         ./scripts/run_with_logging.rb \
             --github-token "$GITHUB_TOKEN" \

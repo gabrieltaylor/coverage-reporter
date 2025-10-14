@@ -1,7 +1,5 @@
 # frozen_string_literal: true
 
-require "json"
-
 module CoverageReporter
   class UncoveredRangesExtractor
     def initialize(coverage_report)

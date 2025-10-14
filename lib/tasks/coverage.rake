@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 namespace :coverage do
-  desc "Merge coverage reports and upload artifacts"
+  desc "Merge coverage reports"
   task :collate do
     require "simplecov"
     require "simplecov_json_formatter"

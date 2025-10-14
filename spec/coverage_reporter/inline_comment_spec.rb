@@ -52,7 +52,7 @@ RSpec.describe CoverageReporter::InlineComment do
       end
     end
 
-    context "when start_line differs from end_line" do
+    context "when start_line differs from line" do
       it "returns true" do
         expect(comment.range?).to be true
       end

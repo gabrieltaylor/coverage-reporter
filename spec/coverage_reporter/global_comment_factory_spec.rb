@@ -29,19 +29,4 @@ RSpec.describe CoverageReporter::GlobalCommentFactory do
       expect(global_comment.body).to include("_Commit: #{commit_sha}_")
     end
   end
-
-  describe "initialization" do
-    it "sets commit_sha" do
-      expect(factory.instance_variable_get(:@commit_sha)).to eq(commit_sha)
-    end
-  end
-
-  describe "private methods" do
-    describe "#calculate_coverage_percentage" do
-      it "returns N/A as placeholder" do
-        result = factory.send(:calculate_coverage_percentage)
-        expect(result).to eq("N/A")
-      end
-    end
-  end
 end

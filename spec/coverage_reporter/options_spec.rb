@@ -66,10 +66,10 @@ RSpec.describe CoverageReporter::Options do
     context "immutability / independence of returned hash" do
       it "returns a new hash (mutating result does not change defaults)" do
         result = described_class.parse(["--github-token", "test"])
-        result[:coverage_path] = "changed"
+        result[:coverage_report_path] = "changed"
 
         again = described_class.parse(["--github-token", "test"])
-        expect(again[:coverage_path]).to be_nil
+        expect(again[:coverage_report_path]).to eq("coverage/coverage.json")
       end
     end
 

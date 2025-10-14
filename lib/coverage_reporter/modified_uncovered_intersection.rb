@@ -3,12 +3,12 @@
 module CoverageReporter
   # Analyzes coverage data against diff data to find uncovered lines in changed code
   #
-  # @param coverage [Hash] Coverage data where:
+  # @param uncovered_ranges [Hash] Uncovered data where:
   #   - Keys are filenames (e.g., "app/models/user.rb")
   #   - Values are arrays of ranges representing uncovered lines
   #   - Example: { "app/models/user.rb" => [[12,14],[29,30]] }
   #
-  # @param diff [Hash] Diff data where:
+  # @param modified_ranges [Hash] Modified data where:
   #   - Keys are filenames (e.g., "app/models/user.rb")
   #   - Values are arrays of arrays representing modified or new line ranges
   #   - Example: { "app/services/foo.rb" => [[100,120]] }
@@ -22,9 +22,6 @@ module CoverageReporter
       logger.debug("Starting coverage analysis for #{@modified_ranges.size} modified files")
 
       intersections = {}
-
-      puts("Modified ranges: #{@modified_ranges}")
-      puts("Uncovered ranges: #{@uncovered_ranges}")
 
       @modified_ranges.each do |file, modified_ranges|
         next unless @uncovered_ranges.key?(file)

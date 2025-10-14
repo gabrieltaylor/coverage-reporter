@@ -57,7 +57,7 @@ module CoverageReporter
       missing << "--github-token or $GITHUB_TOKEN" if opts[:github_token].to_s.strip.empty?
       return unless missing.any?
 
-      abort "coverage_reporter: missing required option(s): #{missing.join(', ')}"
+      abort "coverage-reporter: missing required option(s): #{missing.join(', ')}"
     end
   end
 end

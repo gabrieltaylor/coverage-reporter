@@ -25,7 +25,6 @@ RSpec.describe CoverageReporter::Runner do
   let(:coverage_report_data) { { "lib/foo.rb" => { "lines" => [1, 1, 0, 1, nil] } } }
   let(:pr_number) { 99 }
   let(:repo) { "user/repo" }
-  let(:html_root)     { "coverage" }
   let(:github_token)  { "gh-token" }
   let(:commit_sha)    { "abc123" }
 

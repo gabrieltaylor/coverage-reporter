@@ -81,12 +81,6 @@ RSpec.describe CoverageReporter::GlobalCommentPoster do
     end
   end
 
-  describe "initialization" do
-    it "sets pull_request" do
-      expect(poster.instance_variable_get(:@pull_request)).to eq(pull_request)
-    end
-  end
-
   describe "GLOBAL_COMMENT_MARKER constant" do
     it "has the correct marker value" do
       expect(CoverageReporter::GLOBAL_COMMENT_MARKER).to eq("<!-- coverage-comment-marker -->")

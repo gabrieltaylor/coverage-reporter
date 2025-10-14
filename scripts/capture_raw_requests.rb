@@ -5,6 +5,7 @@ require "json"
 require "net/http"
 require "uri"
 require "coverage_reporter"
+require "fileutils"
 
 # Custom HTTP interceptor to capture raw requests/responses
 class RequestCapture

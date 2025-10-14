@@ -17,8 +17,19 @@ module CoverageReporter
     def logger
       @logger ||= Logger.new($stdout).tap do |log|
         log.progname = name
-        log.level = ENV["COVERAGE_REPORTER_LOG_LEVEL"]&.upcase || "INFO"
+        log.level = valid_log_level(ENV["COVERAGE_REPORTER_LOG_LEVEL"])
       end
+    end
+
+    private
+
+    def valid_log_level(env_level)
+      return "INFO" if env_level.nil? || env_level.empty?
+
+      level = env_level.upcase
+      valid_levels = %w[DEBUG INFO WARN ERROR]
+
+      level.in?(valid_levels) ? level : "INFO"
     end
   end
 

@@ -167,6 +167,29 @@ RSpec.describe CoverageReporter::ModifiedRangesExtractor do
         )
       end
     end
+
+    context "with only one line modified in a file" do
+      subject(:extractor) { described_class.new(diff_text) }
+
+      let(:diff_text) do
+        <<~DIFF
+          diff --git a/single_line.rb b/single_line.rb
+          index 0000001..0000002 100644
+          --- a/single_line.rb
+          +++ b/single_line.rb
+          @@ -5,0 +6,1 @@
+          +puts "Hello, World!"
+        DIFF
+      end
+
+      it "returns a single range with the same start and end line" do
+        result = extractor.call
+
+        expect(result).to eq(
+          "single_line.rb" => [[6, 6]]
+        )
+      end
+    end
   end
 
   describe "#consolidate_to_ranges" do
