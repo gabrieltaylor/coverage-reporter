@@ -13,7 +13,7 @@ RSpec.describe CoverageReporter::CLI do
         coverage_path: "custom/result.json",
         html_root:     "custom_html",
         github_token:  "secret",
-        build_url:     nil,
+        report_url:    nil,
         commit_sha:    nil,
         pr_number:     nil,
         repo:          nil

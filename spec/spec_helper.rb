@@ -53,6 +53,16 @@ class Comment
     @line = line
     @start_line = start_line
   end
+
+  def to_hash
+    {
+      id:         id,
+      body:       body,
+      path:       path,
+      line:       line,
+      start_line: start_line
+    }
+  end
 end
 
 # If you later add support files (custom matchers, shared contexts, etc.)

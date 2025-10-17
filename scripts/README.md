@@ -16,7 +16,7 @@ This directory contains scripts to help you capture real HTTP requests and respo
    export PR_NUMBER="123"
    export COMMIT_SHA="abc123def456"
    export COVERAGE_REPORT_PATH="coverage/coverage.json"
-   export BUILD_URL="https://ci.example.com/build/123"
+   export REPORT_URL="https://ci.example.com/build/123"
    ```
 
 ## Available Scripts
@@ -85,7 +85,7 @@ RSpec.describe "CoverageReporter Integration" do
       pr_number: "123",
       # ... other options
     }
-    
+
     expect { CoverageReporter::Runner.new(options).run }.not_to raise_error
   end
 end
@@ -102,7 +102,7 @@ end
 # Use in tests
 it "matches expected API calls" do
   fixture = load_fixture("pr_123_20240101_120000.json")
-  
+
   expect(fixture["requests"]).to include(
     hash_including("method" => "GET", "uri" => /\/repos\/.*\/pulls\/123/)
   )
@@ -126,7 +126,7 @@ end
 | `PR_NUMBER` | Pull request number | `123` |
 | `COMMIT_SHA` | Git commit SHA | `abc123def456` |
 | `COVERAGE_REPORT_PATH` | Path to coverage.json | `coverage/coverage.json` |
-| `BUILD_URL` | CI build URL for links | `https://github.com/owner/repo/actions/runs/123` |
+| `REPORT_URL` | CI build URL for links | `https://github.com/owner/repo/actions/runs/123` |
 
 ## Troubleshooting
 

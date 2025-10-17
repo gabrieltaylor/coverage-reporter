@@ -74,7 +74,7 @@ module CoverageReporter
     def parse_new_file_path(line)
       return nil if line.end_with?(File::NULL)
 
-      if (m = line.match(%r{\A\+\+\+\sb/(.+)\z}))
+      if (m = line.match(%r{\A\+\+\+\s[wb]/(.+)\z}))
         m[1]
       end
     end

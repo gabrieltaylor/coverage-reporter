@@ -8,7 +8,7 @@ RSpec.describe CoverageReporter::GlobalCommentPoster do
 
   let(:global_comment) do
     CoverageReporter::GlobalComment.new(
-      coverage_percentage: "85",
+      coverage_percentage: 85,
       commit_sha:          "abc123"
     )
   end

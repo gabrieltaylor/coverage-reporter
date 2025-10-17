@@ -26,7 +26,7 @@ def build_options
     pr_number:            ENV["PR_NUMBER"] || "123",
     commit_sha:           ENV["COMMIT_SHA"] || "abc123def456",
     coverage_report_path: ENV["COVERAGE_REPORT_PATH"] || "coverage/coverage.json",
-    build_url:            ENV["BUILD_URL"] || "https://ci.example.com/build/123"
+    report_url:           ENV["REPORT_URL"] || "https://ci.example.com/build/123"
   }
 end
 

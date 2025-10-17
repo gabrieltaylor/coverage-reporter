@@ -13,15 +13,17 @@ RSpec.describe CoverageReporter::Runner do
   let(:pull_request_instance) { instance_double(CoverageReporter::PullRequest, diff: diff_text) }
   let(:inline_comment_factory_instance) { instance_double(CoverageReporter::InlineCommentFactory) }
   let(:inline_comment_poster_instance) { instance_double(CoverageReporter::InlineCommentPoster) }
-  let(:global_comment_factory_instance) { instance_double(CoverageReporter::GlobalCommentFactory) }
+  let(:global_comment_instance) { instance_double(CoverageReporter::GlobalComment) }
   let(:global_comment_poster_instance) { instance_double(CoverageReporter::GlobalCommentPoster) }
   let(:diff_text) { "diff --git a/lib/foo.rb b/lib/foo.rb\n+++ b/lib/foo.rb\n@@ -1,0 +1,3 @@\n+line1\n+line2\n+line3" }
   let(:analysis_result) { { "lib/foo.rb" => [[3, 3]] } }
-  let(:modified_uncovered_intersection_instance) { instance_double(CoverageReporter::ModifiedUncoveredIntersection, call: analysis_result) }
+  let(:coverage_analyzer_instance) { instance_double(CoverageReporter::CoverageAnalyzer, call: analysis_result_with_stats) }
   # Provide default values overridden per example
   let(:coverage) { { "lib/foo.rb" => [[1, 2]] } }
   let(:diff) { { "lib/foo.rb" => [[1, 3]] } }
   let(:modified_ranges_extractor_instance) { instance_double(CoverageReporter::ModifiedRangesExtractor, call: diff) }
+  let(:coverage_stats) { { total_modified_lines: 3, uncovered_modified_lines: 1, covered_modified_lines: 2, coverage_percentage: 66.67 } }
+  let(:analysis_result_with_stats) { { intersections: analysis_result, coverage_stats: coverage_stats } }
   let(:coverage_report_data) { { "lib/foo.rb" => { "lines" => [1, 1, 0, 1, nil] } } }
   let(:pr_number) { 99 }
   let(:repo) { "user/repo" }
@@ -35,7 +37,7 @@ RSpec.describe CoverageReporter::Runner do
       pr_number:            pr_number,
       repo:                 repo,
       commit_sha:           commit_sha,
-      build_url:            nil
+      report_url:           "https://ci.example.com/build/123#artifacts/coverage/index.html"
     }
   end
 
@@ -49,9 +51,9 @@ RSpec.describe CoverageReporter::Runner do
     allow(CoverageReporter::ModifiedRangesExtractor)
       .to receive(:new).with(diff_text).and_return(modified_ranges_extractor_instance)
 
-    allow(CoverageReporter::ModifiedUncoveredIntersection)
+    allow(CoverageReporter::CoverageAnalyzer)
       .to receive(:new).with(uncovered_ranges: coverage, modified_ranges: diff)
-      .and_return(modified_uncovered_intersection_instance)
+      .and_return(coverage_analyzer_instance)
 
     allow(CoverageReporter::PullRequest)
       .to receive(:new).with(github_token: github_token, repo: repo, pr_number: pr_number)
@@ -67,11 +69,14 @@ RSpec.describe CoverageReporter::Runner do
       .to receive(:new).with(pull_request: pull_request_instance, commit_sha: commit_sha, inline_comments: [])
       .and_return(inline_comment_poster_instance)
 
-    allow(CoverageReporter::GlobalCommentFactory)
-      .to receive(:new).with(commit_sha: commit_sha)
-      .and_return(global_comment_factory_instance)
-
-    allow(global_comment_factory_instance).to receive(:call).and_return(instance_double(CoverageReporter::GlobalComment))
+    allow(CoverageReporter::GlobalComment)
+      .to receive(:new).with(
+        commit_sha:          commit_sha,
+        report_url:          "https://ci.example.com/build/123#artifacts/coverage/index.html",
+        coverage_percentage: anything,
+        intersections:       anything
+      )
+      .and_return(global_comment_instance)
 
     allow(CoverageReporter::GlobalCommentPoster)
       .to receive(:new).with(pull_request: pull_request_instance, global_comment: anything)
@@ -88,7 +93,7 @@ RSpec.describe CoverageReporter::Runner do
       expect(coverage_report_loader_instance).to have_received(:call).once
       expect(uncovered_ranges_extractor_instance).to have_received(:call).once
       expect(modified_ranges_extractor_instance).to have_received(:call).once
-      expect(modified_uncovered_intersection_instance).to have_received(:call).once
+      expect(coverage_analyzer_instance).to have_received(:call).once
 
       expect(inline_comment_poster_instance).to have_received(:call)
       expect(global_comment_poster_instance).to have_received(:call)

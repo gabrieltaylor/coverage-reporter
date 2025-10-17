@@ -1,5 +1,26 @@
 #!/bin/sh
 
 bundle config set path 'vendor/bundle'
-gem install coverage-reporter
+gem build coverage-reporter.gemspec
+gem install coverage-reporter-*.gem
+
+# Get the artifact ID for the coverage report
+API_URL="https://api.buildkite.com/v2/organizations/${BUILDKITE_ORGANIZATION_SLUG}/pipelines/${BUILDKITE_PIPELINE_SLUG}/builds/${BUILDKITE_BUILD_NUMBER}/artifacts?per_page=100"
+
+API_RESPONSE=$(curl -s -H "Authorization: Bearer ${ARTIFACT_API_ACCESS_TOKEN}" "$API_URL")
+
+ARTIFACT_DATA=$(echo "$API_RESPONSE" | ruby -rjson -e '
+  artifact = JSON.parse(STDIN.read).find { |a| a["path"] == "coverage/index.html" }
+  if artifact
+    puts "#{artifact["id"]}:#{artifact["job_id"]}"
+  else
+    puts "::"
+  end
+')
+
+ARTIFACT_ID=$(echo "$ARTIFACT_DATA" | cut -d: -f1)
+JOB_ID=$(echo "$ARTIFACT_DATA" | cut -d: -f2)
+
+export REPORT_URL="https://buildkite.com/organizations/${BUILDKITE_ORGANIZATION_SLUG}/pipelines/${BUILDKITE_PIPELINE_SLUG}/builds/${BUILDKITE_BUILD_NUMBER}/jobs/${JOB_ID}/artifacts/${ARTIFACT_ID}"
+
 coverage-reporter

@@ -6,7 +6,7 @@ module CoverageReporter
       @commit_sha           = options[:commit_sha]
       @coverage_report_path = options[:coverage_report_path]
       @github_token         = options[:github_token]
-      @build_url            = options[:build_url]
+      @report_url           = options[:report_url]
       @repo                 = options[:repo]
       @pr_number            = options[:pr_number]
     end
@@ -17,16 +17,23 @@ module CoverageReporter
       coverage_report = CoverageReportLoader.new(coverage_report_path).call
       modified_ranges = ModifiedRangesExtractor.new(pull_request.diff).call
       uncovered_ranges = UncoveredRangesExtractor.new(coverage_report).call
-      intersection = ModifiedUncoveredIntersection.new(uncovered_ranges:, modified_ranges:).call
+      analysis_result = CoverageAnalyzer.new(uncovered_ranges:, modified_ranges:).call
+      intersection = analysis_result[:intersections]
+      coverage_stats = analysis_result[:coverage_stats]
       inline_comments = InlineCommentFactory.new(intersection:, commit_sha:).call
       InlineCommentPoster.new(pull_request:, commit_sha:, inline_comments:).call
-      global_comment = GlobalCommentFactory.new(commit_sha:).call
+      global_comment = GlobalComment.new(
+        commit_sha:,
+        report_url:,
+        coverage_percentage: coverage_stats[:coverage_percentage],
+        intersections:       intersection
+      )
       GlobalCommentPoster.new(pull_request:, global_comment:).call
     end
     # rubocop:enable Metrics/AbcSize
 
     private
 
-    attr_reader :coverage_report_path, :github_token, :build_url, :repo, :pr_number, :commit_sha
+    attr_reader :coverage_report_path, :github_token, :report_url, :repo, :pr_number, :commit_sha
   end
 end

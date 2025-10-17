@@ -12,7 +12,7 @@ RSpec.describe "CoverageReporter Integration" do
       pr_number:            "5",
       commit_sha:           "abc123def456",
       coverage_report_path: "spec/fixtures/coverage.json",
-      build_url:            "https://ci.example.com/build/123"
+      report_url:           "https://ci.example.com/build/123"
     }
   end
 
