@@ -79,7 +79,7 @@ def build_capture_options
     pr_number:            ENV["PR_NUMBER"] || "123",
     commit_sha:           ENV["COMMIT_SHA"] || "abc123def456",
     coverage_report_path: ENV["COVERAGE_REPORT_PATH"] || "coverage/coverage.json",
-    build_url:            ENV["BUILD_URL"] || "https://ci.example.com/build/123"
+    report_url:           ENV["REPORT_URL"] || "https://ci.example.com/build/123"
   }
 end
 
@@ -116,25 +116,46 @@ def create_pull_request_with_capture(options, capture)
   pull_request
 end
 
-def run_coverage_workflow(options, pull_request)
+def load_coverage_data(options, pull_request)
   coverage_report = CoverageReporter::CoverageReportLoader.new(options[:coverage_report_path]).call
   modified_ranges = CoverageReporter::ModifiedRangesExtractor.new(pull_request.diff).call
   uncovered_ranges = CoverageReporter::UncoveredRangesExtractor.new(coverage_report).call
-  intersection = CoverageReporter::ModifiedUncoveredIntersection.new(
+
+  CoverageReporter::ModifiedUncoveredIntersection.new(
     uncovered_ranges: uncovered_ranges,
     modified_ranges:  modified_ranges
   ).call
+end
+
+def post_inline_comments(options, pull_request, intersection)
   inline_comments = CoverageReporter::InlineCommentFactory.new(
     intersection: intersection,
     commit_sha:   options[:commit_sha]
   )
+
   CoverageReporter::InlineCommentPoster.new(
     pull_request:    pull_request,
     commit_sha:      options[:commit_sha],
     inline_comments: inline_comments
   ).call
-  global_comment = CoverageReporter::GlobalCommentFactory.new(commit_sha: options[:commit_sha])
-  CoverageReporter::GlobalCommentPoster.new(pull_request: pull_request).call(global_comment)
+end
+
+def post_global_comment(options, pull_request)
+  global_comment = CoverageReporter::GlobalComment.new(
+    commit_sha: options[:commit_sha],
+    report_url: options[:report_url]
+  )
+
+  CoverageReporter::GlobalCommentPoster.new(
+    pull_request:   pull_request,
+    global_comment: global_comment
+  ).call
+end
+
+def run_coverage_workflow(options, pull_request)
+  intersection = load_coverage_data(options, pull_request)
+  post_inline_comments(options, pull_request, intersection)
+  post_global_comment(options, pull_request)
 end
 
 def save_successful_capture(capture, options)

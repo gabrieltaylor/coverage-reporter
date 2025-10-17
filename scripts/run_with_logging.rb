@@ -41,7 +41,7 @@ puts "  REPO=owner/repo"
 puts "  PR_NUMBER=123"
 puts "  COMMIT_SHA=abc123"
 puts "  COVERAGE_REPORT_PATH=coverage/coverage.json"
-puts "  BUILD_URL=https://ci.example.com/build/123"
+puts "  REPORT_URL=https://ci.example.com/build/123"
 puts ""
 
 # Run the CLI with the provided arguments

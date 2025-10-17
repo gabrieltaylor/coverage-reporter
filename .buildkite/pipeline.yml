@@ -1,6 +1,6 @@
 env:
   # Fail fast if any command in a pipeline fails
-  SHELLOPTS: errexit:pipefail
+  SHELLOPTS: errexit pipefail
 
 steps:
   # ----------------------------------------
@@ -52,12 +52,13 @@ steps:
     command: .buildkite/script/collate
     artifact_paths:
       - "coverage/index.html"
-      - "coverage/assets.tar.gz"
+      - "coverage/assets/**/*"
       - "coverage/coverage.json"
 
   - label: "Report coverage to GitHub"
     depends_on: collate-coverage
     key: report-coverage
+    if: build.pull_request.id != ""
     plugins:
       - artifacts#v1.9.4:
           download: "coverage/coverage.json"
@@ -65,5 +66,23 @@ steps:
           image: "ruby:3.4"
           mount-buildkite-agent: true
           propagate-environment: true
+          environment:
+            - GITHUB_TOKEN
+            - REPO
+            - PR_NUMBER
+            - COMMIT_SHA
+            - BUILDKITE_ORGANIZATION_SLUG
+            - BUILDKITE_PIPELINE_SLUG
+            - BUILDKITE_BUILD_NUMBER
+            - ARTIFACT_API_ACCESS_TOKEN
+            - COVERAGE_REPORTER_LOG_LEVEL
           shell: ["/bin/bash", "-e", "-c"]
+    secrets:
+      - GITHUB_TOKEN
+      - ARTIFACT_API_ACCESS_TOKEN
+    env:
+      REPO: ${BUILDKITE_PULL_REQUEST_REPO}
+      PR_NUMBER: ${BUILDKITE_PULL_REQUEST}
+      COMMIT_SHA: ${BUILDKITE_COMMIT}
+      COVERAGE_REPORTER_LOG_LEVEL: DEBUG
     command: .buildkite/script/report

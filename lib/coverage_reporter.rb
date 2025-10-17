@@ -29,14 +29,13 @@ module CoverageReporter
       level = env_level.upcase
       valid_levels = %w[DEBUG INFO WARN ERROR]
 
-      level.in?(valid_levels) ? level : "INFO"
+      valid_levels.include?(level) ? level : "INFO"
     end
   end
 
+  require_relative "coverage_reporter/coverage_analyzer"
   require_relative "coverage_reporter/coverage_report_loader"
-  require_relative "coverage_reporter/modified_uncovered_intersection"
   require_relative "coverage_reporter/global_comment"
-  require_relative "coverage_reporter/global_comment_factory"
   require_relative "coverage_reporter/global_comment_poster"
   require_relative "coverage_reporter/inline_comment"
   require_relative "coverage_reporter/inline_comment_factory"

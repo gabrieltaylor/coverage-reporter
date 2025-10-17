@@ -80,7 +80,11 @@ module CoverageReporter
 
     def existing_comment_for_path_and_lines(path, start_line, line)
       existing_coverage_comments.values.find do |comment|
-        comment.path == path && comment.start_line == start_line && comment.line == line
+        if line == start_line
+          comment.path == path && comment.line == line
+        else
+          comment.path == path && comment.start_line == start_line && comment.line == line
+        end
       end
     end
   end

@@ -29,4 +29,5 @@ Gem::Specification.new do |spec|
 
   # Runtime dependencies
   spec.add_dependency "octokit"
+  spec.add_dependency "simplecov_json_formatter"
 end

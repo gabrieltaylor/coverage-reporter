@@ -29,7 +29,7 @@ check_env_var "PR_NUMBER"
 # Optional variables with defaults
 COMMIT_SHA=${COMMIT_SHA:-"abc123def456"}
 COVERAGE_REPORT_PATH=${COVERAGE_REPORT_PATH:-"coverage/coverage.json"}
-BUILD_URL=${BUILD_URL:-"https://ci.example.com/build/123"}
+REPORT_URL=${REPORT_URL:-"https://ci.example.com/build/123"}
 
 echo -e "${GREEN}✅ All required environment variables are set${NC}"
 echo ""
@@ -40,7 +40,7 @@ echo "  Repository: $REPO"
 echo "  PR Number: $PR_NUMBER"
 echo "  Commit SHA: $COMMIT_SHA"
 echo "  Coverage Report: $COVERAGE_REPORT_PATH"
-echo "  Build URL: $BUILD_URL"
+echo "  Build URL: $REPORT_URL"
 echo ""
 
 # Check if coverage report exists
@@ -77,7 +77,7 @@ case $choice in
             --pr-number "$PR_NUMBER" \
             --commit-sha "$COMMIT_SHA" \
             --coverage-report-path "$COVERAGE_REPORT_PATH" \
-            --build-url "$BUILD_URL"
+            --build-url "$REPORT_URL"
         ;;
     4)
         echo -e "${GREEN}🚀 Running all capture methods...${NC}"
@@ -98,7 +98,7 @@ case $choice in
             --pr-number "$PR_NUMBER" \
             --commit-sha "$COMMIT_SHA" \
             --coverage-report-path "$COVERAGE_REPORT_PATH" \
-            --build-url "$BUILD_URL"
+            --build-url "$REPORT_URL"
         ;;
     *)
         echo -e "${RED}❌ Invalid choice. Please run the script again.${NC}"

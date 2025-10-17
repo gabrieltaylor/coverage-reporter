@@ -12,8 +12,10 @@ module CoverageReporter
       return coverage_map unless coverage
 
       coverage.each do |filename, data|
+        # Remove leading slash from file paths for consistency
+        normalized_filename = filename.start_with?("/") ? filename[1..] : filename
         uncovered_ranges = extract_uncovered_ranges(data["lines"])
-        coverage_map[filename] = uncovered_ranges
+        coverage_map[normalized_filename] = uncovered_ranges
       end
 
       coverage_map
