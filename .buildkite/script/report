@@ -23,4 +23,4 @@ JOB_ID=$(echo "$ARTIFACT_DATA" | cut -d: -f2)
 
 export REPORT_URL="https://buildkite.com/organizations/${BUILDKITE_ORGANIZATION_SLUG}/pipelines/${BUILDKITE_PIPELINE_SLUG}/builds/${BUILDKITE_BUILD_NUMBER}/jobs/${JOB_ID}/artifacts/${ARTIFACT_ID}"
 
-coverage-reporter
+coverage-reporter report

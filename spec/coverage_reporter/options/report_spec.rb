@@ -1,8 +1,9 @@
 # frozen_string_literal: true
 
 require "spec_helper"
+require "coverage_reporter/options/report"
 
-RSpec.describe CoverageReporter::Options do
+RSpec.describe CoverageReporter::Options::Report do
   describe ".parse" do
     context "when overriding all options via CLI args" do
       it "applies the overrides" do

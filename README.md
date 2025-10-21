@@ -59,7 +59,7 @@ gem install coverage-reporter
 
 3. **Run the coverage reporter**:
    ```bash
-   coverage-reporter
+   coverage-reporter report
    ```
 
 The tool will automatically:
