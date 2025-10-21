@@ -34,6 +34,7 @@ module CoverageReporter
   end
 
   require_relative "coverage_reporter/coverage_analyzer"
+  require_relative "coverage_reporter/coverage_collator"
   require_relative "coverage_reporter/coverage_report_loader"
   require_relative "coverage_reporter/global_comment"
   require_relative "coverage_reporter/global_comment_poster"
@@ -41,7 +42,8 @@ module CoverageReporter
   require_relative "coverage_reporter/inline_comment_factory"
   require_relative "coverage_reporter/inline_comment_poster"
   require_relative "coverage_reporter/modified_ranges_extractor"
-  require_relative "coverage_reporter/options"
+  require_relative "coverage_reporter/options/collate"
+  require_relative "coverage_reporter/options/report"
   require_relative "coverage_reporter/pull_request"
   require_relative "coverage_reporter/runner"
   require_relative "coverage_reporter/uncovered_ranges_extractor"
