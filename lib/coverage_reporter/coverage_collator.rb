@@ -2,8 +2,8 @@
 
 module CoverageReporter
   class CoverageCollator
-    def initialize(coverage_dir: "coverage")
-      @coverage_dir = coverage_dir
+    def initialize(options={})
+      @coverage_dir = options[:coverage_dir]
     end
 
     def call
