@@ -4,7 +4,7 @@ require "optparse"
 
 module CoverageReporter
   module Options
-    class Report
+    class Report < Base
       def self.defaults
         {
           commit_sha:           ENV.fetch("COMMIT_SHA", nil),

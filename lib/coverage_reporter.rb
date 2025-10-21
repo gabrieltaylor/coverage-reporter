@@ -42,6 +42,7 @@ module CoverageReporter
   require_relative "coverage_reporter/inline_comment_factory"
   require_relative "coverage_reporter/inline_comment_poster"
   require_relative "coverage_reporter/modified_ranges_extractor"
+  require_relative "coverage_reporter/options/base"
   require_relative "coverage_reporter/options/collate"
   require_relative "coverage_reporter/options/report"
   require_relative "coverage_reporter/pull_request"

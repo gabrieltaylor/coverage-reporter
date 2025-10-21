@@ -4,7 +4,7 @@ require "optparse"
 
 module CoverageReporter
   module Options
-    class Collate
+    class Collate < Base
       def self.defaults
         {
           coverage_dir: "coverage"
