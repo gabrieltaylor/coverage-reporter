@@ -4,7 +4,7 @@ bundle config set path 'vendor/bundle'
 gem build coverage-reporter.gemspec
 gem install coverage-reporter-*.gem
 
-export REPORT_URL=$(ruby .buildkite/generate_report_url.rb)
+export REPORT_URL=$(ruby .buildkite/build_report_url.rb)
 
 echo "Environment variables:"
 echo "--------------------------------"
