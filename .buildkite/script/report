@@ -6,4 +6,18 @@ gem install coverage-reporter-*.gem
 
 export REPORT_URL=$(ruby .buildkite/generate_report_url.rb)
 
+echo "Environment variables:"
+echo "--------------------------------"
+echo "BUILDKITE_ORGANIZATION_SLUG: $BUILDKITE_ORGANIZATION_SLUG"
+echo "BUILDKITE_PIPELINE_SLUG: $BUILDKITE_PIPELINE_SLUG"
+echo "BUILDKITE_BUILD_NUMBER: $BUILDKITE_BUILD_NUMBER"
+echo "ARTIFACT_API_ACCESS_TOKEN: $ARTIFACT_API_ACCESS_TOKEN"
+echo "COVERAGE_REPORTER_LOG_LEVEL: $COVERAGE_REPORTER_LOG_LEVEL"
+echo "REPO: $REPO"
+echo "PR_NUMBER: $PR_NUMBER"
+echo "COMMIT_SHA: $COMMIT_SHA"
+echo "REPORT_URL: $REPORT_URL"
+echo "BUILDKITE_PULL_REQUEST_REPO: $BUILDKITE_PULL_REQUEST_REPO"
+echo "--------------------------------"
+
 coverage-reporter report
