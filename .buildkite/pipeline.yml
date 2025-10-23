@@ -53,6 +53,7 @@ steps:
     artifact_paths:
       - "coverage/index.html"
       - "coverage/assets/**/*"
+      - "coverage/source/**/*"
       - "coverage/coverage.json"
 
   - label: "Report coverage to GitHub"

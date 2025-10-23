@@ -9,6 +9,7 @@ module CoverageReporter
     def call
       require "simplecov"
       require "simplecov_json_formatter"
+      require "simplecov_hypertext"
       require "coverage_reporter/simple_cov/patches/result_hash_formatter_patch"
 
       # Collate JSON coverage reports and generate both HTML and JSON outputs
@@ -20,7 +21,7 @@ module CoverageReporter
       ::SimpleCov.collate(files) do
         formatter ::SimpleCov::Formatter::MultiFormatter.new(
           [
-            ::SimpleCov::Formatter::HTMLFormatter,
+            ::SimpleCov::Formatter::HypertextFormatter,
             ::SimpleCov::Formatter::JSONFormatter
           ]
         )

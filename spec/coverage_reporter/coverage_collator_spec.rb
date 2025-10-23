@@ -12,6 +12,7 @@ RSpec.describe CoverageReporter::CoverageCollator do
       # Mock the required dependencies
       allow(collator).to receive(:require).with("simplecov")
       allow(collator).to receive(:require).with("simplecov_json_formatter")
+      allow(collator).to receive(:require).with("simplecov_hypertext")
       allow(collator).to receive(:require).with("coverage_reporter/simple_cov/patches/result_hash_formatter_patch")
 
       # Mock Dir.glob to return test files

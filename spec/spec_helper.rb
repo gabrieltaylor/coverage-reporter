@@ -2,6 +2,7 @@
 
 require "simplecov"
 require "simplecov_json_formatter"
+require "simplecov_hypertext"
 require "coverage_reporter/simple_cov/patches/result_hash_formatter_patch"
 
 # Configure SimpleCov for parallel test execution
@@ -16,7 +17,7 @@ else
 
   SimpleCov.formatter = SimpleCov::Formatter::MultiFormatter.new(
     [
-      SimpleCov::Formatter::HTMLFormatter,
+      SimpleCov::Formatter::HypertextFormatter,
       SimpleCov::Formatter::JSONFormatter
     ]
   )

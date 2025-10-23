@@ -4,23 +4,20 @@ bundle config set path 'vendor/bundle'
 gem build coverage-reporter.gemspec
 gem install coverage-reporter-*.gem
 
-# Get the artifact ID for the coverage report
-API_URL="https://api.buildkite.com/v2/organizations/${BUILDKITE_ORGANIZATION_SLUG}/pipelines/${BUILDKITE_PIPELINE_SLUG}/builds/${BUILDKITE_BUILD_NUMBER}/artifacts?per_page=100"
+export REPORT_URL=$(ruby .buildkite/build_report_url.rb)
 
-API_RESPONSE=$(curl -s -H "Authorization: Bearer ${ARTIFACT_API_ACCESS_TOKEN}" "$API_URL")
-
-ARTIFACT_DATA=$(echo "$API_RESPONSE" | ruby -rjson -e '
-  artifact = JSON.parse(STDIN.read).find { |a| a["path"] == "coverage/index.html" }
-  if artifact
-    puts "#{artifact["id"]}:#{artifact["job_id"]}"
-  else
-    puts "::"
-  end
-')
-
-ARTIFACT_ID=$(echo "$ARTIFACT_DATA" | cut -d: -f1)
-JOB_ID=$(echo "$ARTIFACT_DATA" | cut -d: -f2)
-
-export REPORT_URL="https://buildkite.com/organizations/${BUILDKITE_ORGANIZATION_SLUG}/pipelines/${BUILDKITE_PIPELINE_SLUG}/builds/${BUILDKITE_BUILD_NUMBER}/jobs/${JOB_ID}/artifacts/${ARTIFACT_ID}"
+echo "Environment variables:"
+echo "--------------------------------"
+echo "BUILDKITE_ORGANIZATION_SLUG: $BUILDKITE_ORGANIZATION_SLUG"
+echo "BUILDKITE_PIPELINE_SLUG: $BUILDKITE_PIPELINE_SLUG"
+echo "BUILDKITE_BUILD_NUMBER: $BUILDKITE_BUILD_NUMBER"
+echo "ARTIFACT_API_ACCESS_TOKEN: $ARTIFACT_API_ACCESS_TOKEN"
+echo "COVERAGE_REPORTER_LOG_LEVEL: $COVERAGE_REPORTER_LOG_LEVEL"
+echo "REPO: $REPO"
+echo "PR_NUMBER: $PR_NUMBER"
+echo "COMMIT_SHA: $COMMIT_SHA"
+echo "REPORT_URL: $REPORT_URL"
+echo "BUILDKITE_PULL_REQUEST_REPO: $BUILDKITE_PULL_REQUEST_REPO"
+echo "--------------------------------"
 
 coverage-reporter report
