@@ -65,6 +65,11 @@ if __FILE__ == $0
   api_token = ENV['ARTIFACT_API_ACCESS_TOKEN']
 
   if [organization_slug, pipeline_slug, build_number, api_token].any?(&:nil?)
+    puts "At least one of the following environment variables is missing:"
+    puts "organization_slug: #{organization_slug}"
+    puts "pipeline_slug: #{pipeline_slug}"
+    puts "build_number: #{build_number}"
+    puts "api_token.nil?: #{api_token.nil?}"
     exit 1
   end
 
