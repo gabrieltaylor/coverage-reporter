@@ -53,5 +53,82 @@ RSpec.describe CoverageReporter::CoverageCollator do
         end
       end
     end
+
+    context "when filter is provided" do
+      let(:collator) { described_class.new(coverage_dir: coverage_dir, filter: filter) }
+      let(:add_filter_calls) { [] }
+
+      before do
+        # Capture add_filter_calls in a closure variable
+        calls = add_filter_calls
+
+        allow(SimpleCov).to receive(:collate) do |_files, &block|
+          # Capture filter and formats values before executing block
+          filter_value = collator.send(:filter)
+          formats_value = collator.send(:formats)
+
+          # Create a context where add_filter, formatter, filter, and formats are available
+          config_obj = Object.new
+          config_obj.define_singleton_method(:add_filter) do |filter_arg|
+            calls << filter_arg
+          end
+          config_obj.define_singleton_method(:formatter) { |_| }
+          config_obj.define_singleton_method(:filter) { filter_value }
+          config_obj.define_singleton_method(:formats) { formats_value }
+
+          config_obj.instance_eval(&block)
+        end
+      end
+
+      context "when filter is an empty array" do
+        let(:filter) { [] }
+
+        it "calls add_filter with empty array" do
+          collator.call
+          expect(add_filter_calls).to include([])
+        end
+      end
+
+      context "when filter is a list of filenames" do
+        let(:filter) { ["lib/sample.rb", "app/models/user.rb", "spec/helper.rb"] }
+
+        it "calls add_filter with the list of filenames" do
+          collator.call
+          expect(add_filter_calls).to include(filter)
+        end
+
+        it "passes the exact array provided" do
+          collator.call
+          expect(add_filter_calls).to include(
+            ["lib/sample.rb", "app/models/user.rb", "spec/helper.rb"]
+          )
+        end
+      end
+
+      context "when filter is a single filename" do
+        let(:filter) { ["lib/sample.rb"] }
+
+        it "calls add_filter with the single filename array" do
+          collator.call
+          expect(add_filter_calls).to include(["lib/sample.rb"])
+        end
+      end
+
+      context "when filter contains files with various path formats" do
+        let(:filter) do
+          [
+            "lib/coverage_reporter.rb",
+            "app/models/user.rb",
+            "spec/coverage_reporter/cli_spec.rb",
+            "config/database.yml"
+          ]
+        end
+
+        it "calls add_filter with all filenames" do
+          collator.call
+          expect(add_filter_calls).to include(filter)
+        end
+      end
+    end
   end
 end
