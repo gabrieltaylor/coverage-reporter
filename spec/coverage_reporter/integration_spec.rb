@@ -76,7 +76,7 @@ RSpec.describe "CoverageReporter Integration" do
         # Let VCR handle the pull_request method for diff retrieval
 
         # Run the coverage reporter - VCR will automatically provide the diff from the cassette
-        runner = CoverageReporter::Runner.new(options)
+        runner = CoverageReporter::ReportRunner.new(options)
         runner.run
 
         # Assert on the comment requests that were generated
@@ -176,7 +176,7 @@ RSpec.describe "CoverageReporter Integration" do
         # Let VCR handle the pull_request method for diff retrieval
 
         # Run the coverage reporter - VCR will automatically provide the diff from the cassette
-        runner = CoverageReporter::Runner.new(options)
+        runner = CoverageReporter::ReportRunner.new(options)
         runner.run
 
         # Assert on the comment requests that were generated

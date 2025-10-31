@@ -1,9 +1,9 @@
 # frozen_string_literal: true
 
 require "spec_helper"
-require "coverage_reporter/runner"
+require "coverage_reporter/report_runner"
 
-RSpec.describe CoverageReporter::Runner do
+RSpec.describe CoverageReporter::ReportRunner do
   subject(:runner) { described_class.new(options) }
 
   let(:coverage_report_path) { "coverage/coverage.json" }

@@ -9,12 +9,11 @@ module CoverageReporter
       when nil
         show_usage_and_exit
       when "report"
-        # Report command
-        options = Options::Report.parse(argv[1..])
-        Runner.new(options).run
+        report_options = Options::Report.parse(argv[1..])
+        ReportRunner.new(report_options).run
       when "collate"
         collate_options = Options::Collate.parse(argv[1..])
-        CoverageCollator.new(collate_options).call
+        CollateRunner.new(collate_options).run
       else
         show_unknown_command_error(argv.first)
       end

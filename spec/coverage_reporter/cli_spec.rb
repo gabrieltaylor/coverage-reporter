@@ -3,7 +3,8 @@
 require "spec_helper"
 require "coverage_reporter/cli"
 require "coverage_reporter/options/report"
-require "coverage_reporter/runner"
+require "coverage_reporter/report_runner"
+require "coverage_reporter/collate_runner"
 
 RSpec.describe CoverageReporter::CLI do
   describe ".start" do
@@ -40,8 +41,8 @@ RSpec.describe CoverageReporter::CLI do
           .and_return(parsed_options)
 
         # Runner double
-        runner = instance_double(CoverageReporter::Runner)
-        expect(CoverageReporter::Runner)
+        runner = instance_double(CoverageReporter::ReportRunner)
+        expect(CoverageReporter::ReportRunner)
           .to receive(:new)
           .with(parsed_options)
           .and_return(runner)
@@ -68,7 +69,8 @@ RSpec.describe CoverageReporter::CLI do
       let(:argv) { %w[collate --coverage-dir custom/coverage] }
       let(:parsed_options) do
         {
-          coverage_dir: "custom/coverage"
+          coverage_dir: "custom/coverage",
+          filter: [],
         }
       end
 

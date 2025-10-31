@@ -7,7 +7,11 @@ module CoverageReporter
     class Collate < Base
       def self.defaults
         {
-          coverage_dir: "coverage"
+          coverage_dir: "coverage",
+          modified_only: false,
+          github_token: ENV.fetch("GITHUB_TOKEN", nil),
+          repo: ENV.fetch("REPO", nil),
+          pr_number: ENV.fetch("PR_NUMBER", nil)
         }
       end
 
@@ -18,6 +22,18 @@ module CoverageReporter
           o.banner = "Usage: coverage-reporter collate [options]"
           o.on("--coverage-dir DIR", "Directory containing coverage files (default: coverage)") do |v|
             opts[:coverage_dir] = v
+          end
+          o.on("--modified-only", "Filter to only modified files") do
+            opts[:modified_only] = true
+          end
+          o.on("--github-token TOKEN", "GitHub token") do |v|
+            opts[:github_token] = v
+          end
+          o.on("--repo REPO", "Repository") do |v|
+            opts[:repo] = v
+          end
+          o.on("--pr-number PR_NUMBER", "Pull request number") do |v|
+            opts[:pr_number] = v
           end
           o.on_tail("-h", "--help", "Show help") do
             puts o

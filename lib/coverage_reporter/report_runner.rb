@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 module CoverageReporter
-  class Runner
+  class ReportRunner
     def initialize(options)
       @commit_sha           = options[:commit_sha]
       @coverage_report_path = options[:coverage_report_path]

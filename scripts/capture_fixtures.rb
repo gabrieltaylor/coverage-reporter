@@ -45,7 +45,7 @@ end
 
 def run_coverage_reporter(options)
   VCR.use_cassette("real_pr_#{options[:pr_number]}") do
-    runner = CoverageReporter::Runner.new(options)
+    runner = CoverageReporter::ReportRunner.new(options)
     runner.run
     puts "✅ Successfully captured interactions!"
   rescue StandardError => e
