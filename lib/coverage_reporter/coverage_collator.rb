@@ -46,7 +46,7 @@ module CoverageReporter
         puts "src_file: #{src_file.filename}"
         puts "filenames: #{filenames}"
         puts "none?(src_file.filename): #{filenames.none?(src_file.filename)}"
-        filenames.none?(src_file.filename)
+        filenames.none?(normalize_filename(src_file.filename))
       end
     end
 
