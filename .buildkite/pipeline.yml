@@ -48,6 +48,11 @@ steps:
           image: "ruby:3.4"
           mount-buildkite-agent: true
           propagate-environment: true
+          environment:
+            - GITHUB_TOKEN
+            - REPO
+            - PR_NUMBER
+            - COMMIT_SHA
           shell: ["/bin/bash", "-e", "-c"]
     command: .buildkite/script/collate
     artifact_paths:
