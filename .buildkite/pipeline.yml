@@ -55,6 +55,10 @@ steps:
             - COMMIT_SHA
           shell: ["/bin/bash", "-e", "-c"]
     command: .buildkite/script/collate
+    env:
+      REPO: ${BUILDKITE_PULL_REQUEST_REPO}
+      PR_NUMBER: ${BUILDKITE_PULL_REQUEST}
+      COMMIT_SHA: ${BUILDKITE_COMMIT}
     artifact_paths:
       - "coverage/index.html"
       - "coverage/assets/**/*"
