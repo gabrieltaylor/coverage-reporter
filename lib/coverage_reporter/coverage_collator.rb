@@ -43,15 +43,13 @@ module CoverageReporter
 
     def build_filter
       lambda do |src_file|
-        puts "src_file: #{src_file.filename}"
-        puts "filenames: #{filenames}"
-        puts "none?(src_file.filename): #{filenames.none?(src_file.filename)}"
-        filenames.none?(normalize_filename(src_file.filename))
+        normalized_filename = normalize_filename(src_file.filename)
+        filenames.none?(normalized_filename)
       end
     end
 
     def normalize_filename(filename)
-      filename.gsub(working_dir, "")
+      working_dir ? filename.gsub(working_dir, "").gsub(/^\//, "") : filename
     end
   end
 end
