@@ -11,7 +11,8 @@ module CoverageReporter
           modified_only: false,
           github_token:  ENV.fetch("GITHUB_TOKEN", nil),
           repo:          normalize_repo(ENV.fetch("REPO", nil)),
-          pr_number:     ENV.fetch("PR_NUMBER", nil)
+          pr_number:     ENV.fetch("PR_NUMBER", nil),
+          working_dir:   nil
         }
       end
 
@@ -22,7 +23,7 @@ module CoverageReporter
         opts
       end
 
-      # rubocop:disable Metrics/MethodLength
+      # rubocop:disable Metrics/MethodLength, Metrics/AbcSize
       def self.build_parser(opts)
         OptionParser.new do |o|
           o.banner = "Usage: coverage-reporter collate [options]"
@@ -41,13 +42,16 @@ module CoverageReporter
           o.on("--pr-number PR_NUMBER", "Pull request number") do |v|
             opts[:pr_number] = v
           end
+          o.on("--working-dir DIR", "Working directory for coverage files") do |v|
+            opts[:working_dir] = v
+          end
           o.on_tail("-h", "--help", "Show help") do
             puts o
             exit 0
           end
         end
       end
-      # rubocop:enable Metrics/MethodLength
+      # rubocop:enable Metrics/MethodLength, Metrics/AbcSize
 
       def self.normalize_repo(repo)
         return repo if repo.nil? || repo.strip.empty?

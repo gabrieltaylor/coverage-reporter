@@ -70,7 +70,8 @@ RSpec.describe CoverageReporter::CLI do
       let(:parsed_options) do
         {
           coverage_dir: "custom/coverage",
-          filenames:    []
+          filenames:    [],
+          working_dir:  nil
         }
       end
 

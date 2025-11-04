@@ -26,7 +26,8 @@ RSpec.describe CoverageReporter::Options::Collate do
           modified_only: false,
           github_token:  nil,
           repo:          nil,
-          pr_number:     nil
+          pr_number:     nil,
+          working_dir:   nil
         )
       end
     end
@@ -55,7 +56,9 @@ RSpec.describe CoverageReporter::Options::Collate do
           "--repo",
           "owner/repo",
           "--pr-number",
-          "42"
+          "42",
+          "--working-dir",
+          "/tmp/coverage"
         ]
 
         result = described_class.parse(args)
@@ -65,7 +68,8 @@ RSpec.describe CoverageReporter::Options::Collate do
           modified_only: true,
           github_token:  "cli-token",
           repo:          "owner/repo",
-          pr_number:     "42"
+          pr_number:     "42",
+          working_dir:   "/tmp/coverage"
         )
       end
     end
@@ -108,6 +112,26 @@ RSpec.describe CoverageReporter::Options::Collate do
       it "sets modified_only to true" do
         result = described_class.parse(["--modified-only"])
         expect(result[:modified_only]).to be(true)
+      end
+    end
+
+    context "when working-dir is provided" do
+      around do |example|
+        original_github_token = ENV.fetch("GITHUB_TOKEN", nil)
+        original_repo = ENV.fetch("REPO", nil)
+        original_pr_number = ENV.fetch("PR_NUMBER", nil)
+        ENV.delete("GITHUB_TOKEN")
+        ENV.delete("REPO")
+        ENV.delete("PR_NUMBER")
+        example.run
+        ENV["GITHUB_TOKEN"] = original_github_token if original_github_token
+        ENV["REPO"] = original_repo if original_repo
+        ENV["PR_NUMBER"] = original_pr_number if original_pr_number
+      end
+
+      it "sets working_dir to the provided value" do
+        result = described_class.parse(["--working-dir", "/tmp/coverage"])
+        expect(result[:working_dir]).to eq("/tmp/coverage")
       end
     end
 
@@ -224,7 +248,8 @@ RSpec.describe CoverageReporter::Options::Collate do
         modified_only: false,
         github_token:  nil,
         repo:          nil,
-        pr_number:     nil
+        pr_number:     nil,
+        working_dir:   nil
       )
     end
 

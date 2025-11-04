@@ -5,6 +5,7 @@ module CoverageReporter
     def initialize(options={})
       @coverage_dir = options[:coverage_dir]
       @filenames = options[:filenames]
+      @working_dir = options[:working_dir]
     end
 
     def call
@@ -29,7 +30,7 @@ module CoverageReporter
 
     private
 
-    attr_reader :coverage_dir, :filenames
+    attr_reader :coverage_dir, :filenames, :working_dir
 
     def build_formatter
       ::SimpleCov::Formatter::MultiFormatter.new(
@@ -47,6 +48,10 @@ module CoverageReporter
         puts "none?(src_file.filename): #{filenames.none?(src_file.filename)}"
         filenames.none?(src_file.filename)
       end
+    end
+
+    def normalize_filename(filename)
+      filename.gsub(working_dir, "")
     end
   end
 end
