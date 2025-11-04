@@ -13,8 +13,8 @@ module CoverageReporter
 
     def run
       pull_request = PullRequest.new(github_token:, repo:, pr_number:)
-      filter = modified_only ? ModifiedFilesExtractor.new(pull_request.diff).call : []
-      CoverageCollator.new(coverage_dir:, filter:).call
+      filenames = modified_only ? ModifiedFilesExtractor.new(pull_request.diff).call : []
+      CoverageCollator.new(coverage_dir:, filenames:).call
     end
 
     private

@@ -4,7 +4,7 @@ module CoverageReporter
   class CoverageCollator
     def initialize(options={})
       @coverage_dir = options[:coverage_dir]
-      @filter= options[:filter]
+      @filenames= options[:filenames]
     end
 
     def call
@@ -20,8 +20,8 @@ module CoverageReporter
       puts "Collate coverage files: #{coverage_files.join(', ')}"
 
       ::SimpleCov.collate(coverage_files) do
-        add_filter(filter)
-        formatter(::SimpleCov::Formatter::MultiFormatter.new(formats))
+        add_filter(build_filter) if filenames.any?
+        formatter(build_formatter)
       end
 
       puts "✅ Coverage merged and report generated."
@@ -29,13 +29,19 @@ module CoverageReporter
 
     private
 
-    attr_reader :coverage_dir, :filter
+    attr_reader :coverage_dir, :filenames
 
-    def formats
-      [
+    def build_formatter
+      ::SimpleCov::Formatter::MultiFormatter.new([
         ::SimpleCov::Formatter::JSONFormatter,
         ::SimpleCov::Formatter::HypertextFormatter,
-      ]
+      ])
+    end
+
+    def build_filter
+      lambda do |src_file|
+        filenames.none? { |filename| File.basename(src_file.filename) == filename }
+      end
     end
   end
 end
