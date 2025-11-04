@@ -42,6 +42,9 @@ module CoverageReporter
 
     def build_filter
       lambda do |src_file|
+        puts "src_file: #{src_file.filename}"
+        puts "filenames: #{filenames}"
+        puts "none?(src_file.filename): #{filenames.none?(src_file.filename)}"
         filenames.none?(src_file.filename)
       end
     end
