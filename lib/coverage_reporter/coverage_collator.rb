@@ -42,7 +42,7 @@ module CoverageReporter
 
     def build_filter
       lambda do |src_file|
-        filenames.none?(File.basename(src_file.filename))
+        filenames.none?(src_file.filename)
       end
     end
   end
