@@ -10,7 +10,7 @@ module CoverageReporter
           coverage_dir:  "coverage",
           modified_only: false,
           github_token:  ENV.fetch("GITHUB_TOKEN", nil),
-          repo:          ENV.fetch("REPO", nil),
+          repo:          normalize_repo(ENV.fetch("REPO", nil)),
           pr_number:     ENV.fetch("PR_NUMBER", nil)
         }
       end
@@ -48,6 +48,14 @@ module CoverageReporter
         end
       end
       # rubocop:enable Metrics/MethodLength
+
+      def self.normalize_repo(repo)
+        return repo if repo.nil? || repo.strip.empty?
+
+        repo.strip
+          .gsub(%r{^(https://github\.com/|git@github\.com:)}, "")
+          .gsub(/\.git$/, "")
+      end
     end
   end
 end
