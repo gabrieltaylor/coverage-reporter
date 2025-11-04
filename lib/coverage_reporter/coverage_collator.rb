@@ -49,7 +49,7 @@ module CoverageReporter
     end
 
     def normalize_filename(filename)
-      working_dir ? filename.gsub(working_dir, "").gsub(/^\//, "") : filename
+      working_dir ? filename.gsub(working_dir, "").gsub(%r{^/}, "") : filename
     end
   end
 end
