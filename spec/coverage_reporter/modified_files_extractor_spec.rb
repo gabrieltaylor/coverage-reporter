@@ -68,11 +68,13 @@ RSpec.describe CoverageReporter::ModifiedFilesExtractor do
       it "extracts all modified file paths" do
         result = extractor.call
 
-        expect(result).to eq([
-          "README.md",
-          "app/models/user.rb",
-          "lib/sample.rb"
-        ])
+        expect(result).to eq(
+          [
+            "README.md",
+            "app/models/user.rb",
+            "lib/sample.rb"
+          ]
+        )
       end
 
       it "excludes deleted files (dev/null)" do
@@ -182,11 +184,13 @@ RSpec.describe CoverageReporter::ModifiedFilesExtractor do
       it "extracts all file paths correctly" do
         result = extractor.call
 
-        expect(result).to eq([
-          "app/models/user.rb",
-          "config/database.yml",
-          "lib/sample.rb"
-        ])
+        expect(result).to eq(
+          [
+            "app/models/user.rb",
+            "config/database.yml",
+            "lib/sample.rb"
+          ]
+        )
       end
     end
 
@@ -240,10 +244,12 @@ RSpec.describe CoverageReporter::ModifiedFilesExtractor do
       it "handles files with special characters in names" do
         result = extractor.call
 
-        expect(result).to eq([
-          "app/models/user_model.rb",
-          "lib/sample-file.rb"
-        ])
+        expect(result).to eq(
+          [
+            "app/models/user_model.rb",
+            "lib/sample-file.rb"
+          ]
+        )
       end
     end
   end
@@ -288,7 +294,12 @@ RSpec.describe CoverageReporter::ModifiedFilesExtractor do
     it "handles files with complex paths" do
       expect(extractor.send(:parse_file_path, "+++ b/app/models/user_model.rb")).to eq("app/models/user_model.rb")
       expect(extractor.send(:parse_file_path, "+++ b/config/database.yml")).to eq("config/database.yml")
-      expect(extractor.send(:parse_file_path, "+++ b/lib/coverage_reporter/modified_files_extractor.rb")).to eq("lib/coverage_reporter/modified_files_extractor.rb")
+      expect(
+        extractor.send(
+          :parse_file_path,
+          "+++ b/lib/coverage_reporter/modified_files_extractor.rb"
+        )
+      ).to eq("lib/coverage_reporter/modified_files_extractor.rb")
     end
   end
 

@@ -4,7 +4,7 @@ module CoverageReporter
   class CoverageCollator
     def initialize(options={})
       @coverage_dir = options[:coverage_dir]
-      @filenames= options[:filenames]
+      @filenames = options[:filenames]
     end
 
     def call
@@ -32,15 +32,17 @@ module CoverageReporter
     attr_reader :coverage_dir, :filenames
 
     def build_formatter
-      ::SimpleCov::Formatter::MultiFormatter.new([
-        ::SimpleCov::Formatter::JSONFormatter,
-        ::SimpleCov::Formatter::HypertextFormatter,
-      ])
+      ::SimpleCov::Formatter::MultiFormatter.new(
+        [
+          ::SimpleCov::Formatter::JSONFormatter,
+          ::SimpleCov::Formatter::HypertextFormatter
+        ]
+      )
     end
 
     def build_filter
       lambda do |src_file|
-        filenames.none? { |filename| File.basename(src_file.filename) == filename }
+        filenames.none?(File.basename(src_file.filename))
       end
     end
   end

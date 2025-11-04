@@ -7,18 +7,24 @@ module CoverageReporter
     class Collate < Base
       def self.defaults
         {
-          coverage_dir: "coverage",
+          coverage_dir:  "coverage",
           modified_only: false,
-          github_token: ENV.fetch("GITHUB_TOKEN", nil),
-          repo: ENV.fetch("REPO", nil),
-          pr_number: ENV.fetch("PR_NUMBER", nil)
+          github_token:  ENV.fetch("GITHUB_TOKEN", nil),
+          repo:          ENV.fetch("REPO", nil),
+          pr_number:     ENV.fetch("PR_NUMBER", nil)
         }
       end
 
       def self.parse(argv)
         opts = defaults.dup
+        parser = build_parser(opts)
+        parser.parse!(argv)
+        opts
+      end
 
-        parser = OptionParser.new do |o|
+      # rubocop:disable Metrics/MethodLength
+      def self.build_parser(opts)
+        OptionParser.new do |o|
           o.banner = "Usage: coverage-reporter collate [options]"
           o.on("--coverage-dir DIR", "Directory containing coverage files (default: coverage)") do |v|
             opts[:coverage_dir] = v
@@ -40,10 +46,8 @@ module CoverageReporter
             exit 0
           end
         end
-
-        parser.parse!(argv)
-        opts
       end
+      # rubocop:enable Metrics/MethodLength
     end
   end
 end

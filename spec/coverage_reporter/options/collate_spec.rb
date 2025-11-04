@@ -22,11 +22,11 @@ RSpec.describe CoverageReporter::Options::Collate do
       it "returns default options" do
         result = described_class.parse([])
         expect(result).to eq(
-          coverage_dir: "coverage",
+          coverage_dir:  "coverage",
           modified_only: false,
-          github_token: nil,
-          repo: nil,
-          pr_number: nil
+          github_token:  nil,
+          repo:          nil,
+          pr_number:     nil
         )
       end
     end
@@ -61,11 +61,11 @@ RSpec.describe CoverageReporter::Options::Collate do
         result = described_class.parse(args)
 
         expect(result).to include(
-          coverage_dir: "custom/coverage",
+          coverage_dir:  "custom/coverage",
           modified_only: true,
-          github_token: "cli-token",
-          repo: "owner/repo",
-          pr_number: "42"
+          github_token:  "cli-token",
+          repo:          "owner/repo",
+          pr_number:     "42"
         )
       end
     end
@@ -87,7 +87,7 @@ RSpec.describe CoverageReporter::Options::Collate do
       it "applies the override" do
         result = described_class.parse(["--coverage-dir", "custom/coverage"])
         expect(result[:coverage_dir]).to eq("custom/coverage")
-        expect(result[:modified_only]).to eq(false)
+        expect(result[:modified_only]).to be(false)
       end
     end
 
@@ -107,7 +107,7 @@ RSpec.describe CoverageReporter::Options::Collate do
 
       it "sets modified_only to true" do
         result = described_class.parse(["--modified-only"])
-        expect(result[:modified_only]).to eq(true)
+        expect(result[:modified_only]).to be(true)
       end
     end
 
@@ -131,8 +131,8 @@ RSpec.describe CoverageReporter::Options::Collate do
 
         expect(result).to include(
           github_token: "env-token",
-          repo: "env/owner-repo",
-          pr_number: "123"
+          repo:         "env/owner-repo",
+          pr_number:    "123"
         )
       end
 
@@ -141,19 +141,21 @@ RSpec.describe CoverageReporter::Options::Collate do
         ENV["REPO"] = "env/repo"
         ENV["PR_NUMBER"] = "123"
 
-        result = described_class.parse([
-          "--github-token",
-          "cli-token",
-          "--repo",
-          "cli/repo",
-          "--pr-number",
-          "456"
-        ])
+        result = described_class.parse(
+          [
+            "--github-token",
+            "cli-token",
+            "--repo",
+            "cli/repo",
+            "--pr-number",
+            "456"
+          ]
+        )
 
         expect(result).to include(
           github_token: "cli-token",
-          repo: "cli/repo",
-          pr_number: "456"
+          repo:         "cli/repo",
+          pr_number:    "456"
         )
       end
     end
@@ -218,11 +220,11 @@ RSpec.describe CoverageReporter::Options::Collate do
 
     it "returns the default options" do
       expect(described_class.defaults).to eq(
-        coverage_dir: "coverage",
+        coverage_dir:  "coverage",
         modified_only: false,
-        github_token: nil,
-        repo: nil,
-        pr_number: nil
+        github_token:  nil,
+        repo:          nil,
+        pr_number:     nil
       )
     end
 
@@ -240,8 +242,8 @@ RSpec.describe CoverageReporter::Options::Collate do
       it "includes environment variables in defaults" do
         expect(described_class.defaults).to include(
           github_token: "test-token",
-          repo: "test/repo",
-          pr_number: "999"
+          repo:         "test/repo",
+          pr_number:    "999"
         )
       end
     end
