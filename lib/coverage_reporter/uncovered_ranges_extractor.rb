@@ -33,12 +33,47 @@ module CoverageReporter
       return [] unless lines.is_a?(Array)
 
       uncovered_lines = []
-      lines.each_with_index do |count, idx|
-        # Only lines with 0 count are considered uncovered
-        # null values are not relevant for coverage
-        uncovered_lines << (idx + 1) if count == 0
+      i = 0
+
+      while i < lines.length
+        if lines[i] == 0
+          i = process_uncovered_range(lines, uncovered_lines, i)
+        else
+          i += 1
+        end
       end
+
       convert_to_ranges(uncovered_lines)
+    end
+
+    def process_uncovered_range(lines, uncovered_lines, start_index)
+      i = start_index
+      # Found an uncovered line, start a range (always starts with 0)
+      uncovered_lines << (i + 1)
+      i += 1
+
+      # Continue through consecutive 0s and nils
+      # Include nil only if it's immediately followed by an uncovered line (0)
+      continue_uncovered_range(lines, uncovered_lines, i)
+    end
+
+    def continue_uncovered_range(lines, uncovered_lines, start_index)
+      i = start_index
+      while i < lines.length
+        break unless should_continue_range?(lines, i)
+
+        uncovered_lines << (i + 1)
+        i += 1
+      end
+      i
+    end
+
+    def should_continue_range?(lines, index)
+      return true if lines[index] == 0
+      return false unless lines[index].nil?
+
+      # Include nil only if it's immediately followed by an uncovered line (0)
+      index + 1 < lines.length && lines[index + 1] == 0
     end
 
     def convert_to_ranges(lines)
