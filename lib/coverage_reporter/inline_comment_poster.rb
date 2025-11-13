@@ -80,12 +80,59 @@ module CoverageReporter
 
     def existing_comment_for_path_and_lines(path, start_line, line)
       existing_coverage_comments.values.find do |comment|
-        if line == start_line
-          comment.path == path && comment.line == line
-        else
-          comment.path == path && comment.start_line == start_line && comment.line == line
-        end
+        next false unless comment.path == path
+
+        # Check if line numbers match
+        line_numbers_match = if line == start_line
+                               comment.line == line
+                             else
+                               comment.start_line == start_line && comment.line == line
+                             end
+
+        next false unless line_numbers_match
+
+        # Check if the content of the lines has changed
+        content_matches?(comment, path, start_line, line)
       end
+    end
+
+    def content_matches?(existing_comment, path, start_line, line)
+      # Extract commit SHA from existing comment body
+      existing_commit_sha = extract_commit_sha_from_comment(existing_comment.body)
+      return false unless existing_commit_sha
+
+      # If commit SHA matches current commit, content is the same
+      return true if existing_commit_sha == commit_sha
+
+      # Get file content at both commits
+      existing_content = pull_request.file_content(path: path, commit_sha: existing_commit_sha)
+      current_content = pull_request.file_content(path: path, commit_sha: commit_sha)
+
+      return false unless existing_content && current_content
+
+      # Compare the lines at the specified range
+      existing_lines = extract_lines(existing_content, start_line, line)
+      current_lines = extract_lines(current_content, start_line, line)
+
+      existing_lines == current_lines
+    end
+
+    def extract_commit_sha_from_comment(comment_body)
+      return nil unless comment_body
+
+      # Extract commit SHA from format: "_Commit: abc123_"
+      match = comment_body.match(/_Commit:\s*([a-f0-9]+)_/i)
+      match ? match[1] : nil
+    end
+
+    def extract_lines(content, start_line, line)
+      lines = content.lines
+      # Convert to 0-based index
+      start_idx = start_line - 1
+      end_idx = line - 1
+
+      # Return the lines in the range (inclusive)
+      lines[start_idx..end_idx] || []
     end
   end
 end

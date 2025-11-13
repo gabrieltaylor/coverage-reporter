@@ -60,7 +60,7 @@ RSpec.describe CoverageReporter::InlineCommentPoster do
         instance_double(
           Comment,
           id:         123,
-          body:       "<!-- coverage-inline-marker -->\nfoo",
+          body:       "<!-- coverage-inline-marker -->\nfoo\n\n_File: app/models/user.rb, line 5_\n_Commit: abc123_",
           start_line: 5,
           line:       5,
           path:       "app/models/user.rb",
@@ -69,10 +69,11 @@ RSpec.describe CoverageReporter::InlineCommentPoster do
       end
 
       before do
-        allow(pull_request).to receive(:inline_comments).and_return([existing_comment])
         allow(pull_request).to receive(:update_inline_comment)
         allow(pull_request).to receive(:add_comment_on_lines)
         allow(pull_request).to receive(:delete_inline_comment)
+        # Mock file_content to return nil (content matches since commit SHA matches)
+        allow(pull_request).to receive_messages(inline_comments: [existing_comment], file_content: nil)
       end
 
       it "updates existing comments and creates new ones" do
@@ -98,7 +99,7 @@ RSpec.describe CoverageReporter::InlineCommentPoster do
         instance_double(
           Comment,
           id:         123,
-          body:       "<!-- coverage-inline-marker -->\nfoo",
+          body:       "<!-- coverage-inline-marker -->\nfoo\n\n_File: app/models/user.rb, line 5_\n_Commit: abc123_",
           start_line: 5,
           line:       5,
           path:       "app/models/user.rb",
@@ -109,7 +110,7 @@ RSpec.describe CoverageReporter::InlineCommentPoster do
         instance_double(
           Comment,
           id:         456,
-          body:       "<!-- coverage-inline-marker -->\nbar",
+          body:       "<!-- coverage-inline-marker -->\nbar\n\n_File: app/controllers/users_controller.rb, line 10_\n_Commit: abc123_",
           start_line: 10,
           line:       15,
           path:       "app/controllers/users_controller.rb",
@@ -124,9 +125,10 @@ RSpec.describe CoverageReporter::InlineCommentPoster do
       end
 
       before do
-        allow(pull_request).to receive(:inline_comments).and_return([first_existing_comment, second_existing_comment])
         allow(pull_request).to receive(:update_inline_comment)
         allow(pull_request).to receive(:delete_inline_comment)
+        # Mock file_content to return nil (content matches since commit SHA matches)
+        allow(pull_request).to receive_messages(inline_comments: [first_existing_comment, second_existing_comment], file_content: nil)
       end
 
       it "updates all existing comments" do
@@ -246,6 +248,95 @@ RSpec.describe CoverageReporter::InlineCommentPoster do
 
         expect(test_logger).to receive(:debug).with("Recording existing coverage comments")
         expect(test_logger).to receive(:debug).with("No stale coverage comments to clean up")
+
+        poster.call
+      end
+    end
+
+    context "when content of lines has changed" do
+      let(:existing_comment) do
+        instance_double(
+          Comment,
+          id:         123,
+          body:       "<!-- coverage-inline-marker -->\nfoo\n\n_File: app/models/user.rb, line 5_\n_Commit: old123_",
+          start_line: 5,
+          line:       5,
+          path:       "app/models/user.rb",
+          to_hash:    { id: 123, body: "<!-- coverage-inline-marker -->\nfoo", start_line: 5, line: 5, path: "app/models/user.rb" }
+        )
+      end
+      let(:old_content) { "line1\nline2\nline3\nline4\nold_line5\n" }
+      let(:new_content) { "line1\nline2\nline3\nline4\nnew_line5\n" }
+
+      before do
+        allow(pull_request).to receive(:inline_comments).and_return([existing_comment])
+        allow(pull_request).to receive(:update_inline_comment)
+        allow(pull_request).to receive(:add_comment_on_lines)
+        allow(pull_request).to receive(:delete_inline_comment)
+        # Mock file_content to return different content for different commits
+        allow(pull_request).to receive(:file_content) do |path:, commit_sha:|
+          if path == "app/models/user.rb"
+            commit_sha == "old123" ? old_content : new_content
+          end
+        end
+      end
+
+      it "deletes old comment and creates new one when content changes" do
+        expect(pull_request).to receive(:delete_inline_comment).with(123)
+        expect(pull_request).to receive(:add_comment_on_lines).with(
+          commit_id:  commit_sha,
+          path:       "app/models/user.rb",
+          start_line: 5,
+          line:       5,
+          body:       inline_comments[0].body
+        )
+        expect(pull_request).to receive(:add_comment_on_lines).with(
+          commit_id:  commit_sha,
+          path:       "app/controllers/users_controller.rb",
+          start_line: 10,
+          line:       15,
+          body:       inline_comments[1].body
+        )
+
+        poster.call
+      end
+    end
+
+    context "when content of lines has not changed" do
+      let(:existing_comment) do
+        instance_double(
+          Comment,
+          id:         123,
+          body:       "<!-- coverage-inline-marker -->\nfoo\n\n_File: app/models/user.rb, line 5_\n_Commit: abc123_",
+          start_line: 5,
+          line:       5,
+          path:       "app/models/user.rb",
+          to_hash:    { id: 123, body: "<!-- coverage-inline-marker -->\nfoo", start_line: 5, line: 5, path: "app/models/user.rb" }
+        )
+      end
+
+      before do
+        allow(pull_request).to receive(:inline_comments).and_return([existing_comment])
+        allow(pull_request).to receive(:update_inline_comment)
+        allow(pull_request).to receive(:add_comment_on_lines)
+        allow(pull_request).to receive(:delete_inline_comment)
+        # When commit SHA matches, file_content is not called (early return optimization)
+      end
+
+      it "updates existing comment when content has not changed (same commit SHA)" do
+        expect(pull_request).not_to receive(:delete_inline_comment)
+        expect(pull_request).not_to receive(:file_content)
+        expect(pull_request).to receive(:update_inline_comment).with(
+          id:   123,
+          body: inline_comments[0].body
+        )
+        expect(pull_request).to receive(:add_comment_on_lines).with(
+          commit_id:  commit_sha,
+          path:       "app/controllers/users_controller.rb",
+          start_line: 10,
+          line:       15,
+          body:       inline_comments[1].body
+        )
 
         poster.call
       end
