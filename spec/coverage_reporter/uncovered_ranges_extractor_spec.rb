@@ -173,14 +173,15 @@ RSpec.describe CoverageReporter::UncoveredRangesExtractor do
     it "handles mixed null and zero values correctly" do
       coverage_report = {
         "coverage" => {
-          "lib/mixed.rb" => { "lines" => [nil, 0, nil, 0, 0, nil, 1] } # lines 2,4,5 uncovered
+          "lib/mixed.rb" => { "lines" => [nil, 0, nil, 0, 0, nil, 1] } # lines 2,4,5 uncovered, nil at line 3 continues range
         }
       }
 
       parser = described_class.new(coverage_report)
       result = parser.call
 
-      expect(result["lib/mixed.rb"]).to contain_exactly([2, 2], [4, 5])
+      # Range continues through nil at line 3 since it's followed by uncovered line at line 4
+      expect(result["lib/mixed.rb"]).to contain_exactly([2, 5])
     end
 
     it "handles empty coverage array" do
@@ -207,9 +208,9 @@ RSpec.describe CoverageReporter::UncoveredRangesExtractor do
       result = parser.call
 
       expected = {
-        "lib/coverage_reporter.rb"                                  => [[29, 30], [32, 32]],
+        "lib/coverage_reporter.rb"                                  => [[29, 32]],
         "lib/coverage_reporter/cli.rb"                              => [],
-        "lib/coverage_reporter/coverage_analyzer.rb"                => [[72, 72], [74, 74]],
+        "lib/coverage_reporter/coverage_analyzer.rb"                => [[72, 74]],
         "lib/coverage_reporter/coverage_report_loader.rb"           => [[23, 23]],
         "lib/coverage_reporter/global_comment.rb"                   => [],
         "lib/coverage_reporter/global_comment_poster.rb"            => [],
@@ -224,9 +225,7 @@ RSpec.describe CoverageReporter::UncoveredRangesExtractor do
         "spec/coverage_reporter/cli_spec.rb"                        => [],
         "spec/coverage_reporter/coverage_analyzer_spec.rb"          => [],
         "spec/coverage_reporter/coverage_report_loader_spec.rb"     => [
-          [40, 41],
-          [43, 43],
-          [45, 45],
+          [40, 45],
           [52, 52],
           [56, 56],
           [60, 60]
