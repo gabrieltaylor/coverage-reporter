@@ -8,6 +8,7 @@ module CoverageReporter
       @working_dir = options[:working_dir]
     end
 
+    # rubocop:disable Metrics/AbcSize
     def call
       require "simplecov"
       require "simplecov_json_formatter"
@@ -20,13 +21,16 @@ module CoverageReporter
 
       puts "Collate coverage files: #{coverage_files.join(', ')}"
 
+      ::SimpleCov.root(working_dir) if working_dir
+
       ::SimpleCov.collate(coverage_files) do
-        add_filter(build_filter) if filenames.any?
+        add_filter(build_filter) if filenames.any? && working_dir
         formatter(build_formatter)
       end
 
       puts "✅ Coverage merged and report generated."
     end
+    # rubocop:enable Metrics/AbcSize
 
     private
 
@@ -43,13 +47,9 @@ module CoverageReporter
 
     def build_filter
       lambda do |src_file|
-        normalized_filename = normalize_filename(src_file.filename)
+        normalized_filename = src_file.filename.gsub(working_dir, "").gsub(%r{^/}, "")
         filenames.none?(normalized_filename)
       end
-    end
-
-    def normalize_filename(filename)
-      working_dir ? filename.gsub(working_dir, "").gsub(%r{^/}, "") : filename
     end
   end
 end

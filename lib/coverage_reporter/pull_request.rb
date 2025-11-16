@@ -1,5 +1,7 @@
 # frozen_string_literal: true
 
+require "base64"
+
 module CoverageReporter
   class PullRequest
     def initialize(github_token:, repo:, pr_number:)
@@ -57,6 +59,18 @@ module CoverageReporter
 
     def diff
       @diff ||= client.pull_request(repo, pr_number, accept: "application/vnd.github.v3.diff")
+    end
+
+    def file_content(path:, commit_sha:)
+      content = client.contents(repo, path: path, ref: commit_sha)
+      # GitHub API returns file content as base64-encoded string
+      if content.encoding == "base64" && content.content
+        Base64.decode64(content.content)
+      elsif content.content
+        content.content
+      end
+    rescue Octokit::NotFound, Octokit::Error
+      nil
     end
 
     private
