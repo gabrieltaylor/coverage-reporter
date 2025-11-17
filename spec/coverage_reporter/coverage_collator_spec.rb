@@ -19,11 +19,7 @@ RSpec.describe CoverageReporter::CoverageCollator do
       expect(Dir).to receive(:[]).with("#{coverage_dir}/resultset-*.json").and_return(coverage_files)
       expect(SimpleCov).to receive(:collate).with(coverage_files)
 
-      expect do
-        collator.call
-      end.to output(
-        /Collate coverage files: .*resultset-1\.json.*resultset-2\.json.*\n.*✅ Coverage merged and report generated\./
-      ).to_stdout
+      collator.call
     end
 
     context "when no coverage files exist" do

@@ -19,7 +19,9 @@ module CoverageReporter
       coverage_files = Dir["#{coverage_dir}/resultset-*.json"]
       abort "No coverage JSON files found to collate" if coverage_files.empty?
 
-      puts "Collate coverage files: #{coverage_files.join(', ')}"
+      logger.debug("Collate coverage files: #{coverage_files.join(', ')}")
+      logger.debug("Working directory: #{working_dir}")
+      logger.debug("Filenames: #{filenames}")
 
       ::SimpleCov.root(working_dir) if working_dir
 
@@ -28,13 +30,17 @@ module CoverageReporter
         formatter(build_formatter)
       end
 
-      puts "✅ Coverage merged and report generated."
+      logger.info("✅ Coverage merged and report generated.")
     end
     # rubocop:enable Metrics/AbcSize
 
     private
 
     attr_reader :coverage_dir, :filenames, :working_dir
+
+    def logger
+      CoverageReporter.logger
+    end
 
     def build_formatter
       ::SimpleCov::Formatter::MultiFormatter.new(
