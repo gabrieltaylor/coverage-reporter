@@ -47,7 +47,7 @@ module CoverageReporter
 
     def build_filter
       lambda do |src_file|
-        normalized_filename = src_file.filename.gsub(working_dir, "").gsub(%r{^/}, "")
+        normalized_filename = src_file.filename.delete_prefix(working_dir).delete_prefix("/")
         filenames.none?(normalized_filename)
       end
     end

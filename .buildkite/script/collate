@@ -4,4 +4,4 @@ bundle config set path 'vendor/bundle'
 gem build coverage-reporter.gemspec
 gem install coverage-reporter-*.gem
 
-coverage-reporter collate --modified-only --working-dir /workdir/
+coverage-reporter collate --modified-only --working-dir /workdir
