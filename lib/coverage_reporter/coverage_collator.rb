@@ -54,7 +54,13 @@ module CoverageReporter
 
     def build_filter
       lambda do |src_file|
+        require "logger"
+
+        logger = Logger.new(STDOUT)
+
         normalized_filename = src_file.filename.delete_prefix(working_dir).delete_prefix("/")
+        logger.info("Normalized filename: #{normalized_filename}")
+        logger.info("Filenames: #{filenames}")
         filenames.none?(normalized_filename)
       end
     end
