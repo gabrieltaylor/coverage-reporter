@@ -121,7 +121,8 @@ RSpec.describe CoverageReporter::UncoveredRangesExtractor do
       result = parser.call
 
       expect(result["lib/mixed_counts.rb"][:actual_ranges]).to contain_exactly([1, 1], [5, 5])
-      expect(result["lib/mixed_counts.rb"][:display_ranges]).to contain_exactly([1, 1], [5, 5]) # line 2 (nil) doesn't continue since followed by 1, not 0
+      # line 2 (nil) doesn't continue since followed by 1, not 0
+      expect(result["lib/mixed_counts.rb"][:display_ranges]).to contain_exactly([1, 1], [5, 5])
       expect(result["lib/zero_lines.rb"][:actual_ranges]).to contain_exactly([1, 3], [5, 5])
       expect(result["lib/zero_lines.rb"][:display_ranges]).to contain_exactly([1, 3], [5, 5])
     end
