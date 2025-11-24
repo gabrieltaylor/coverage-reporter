@@ -225,25 +225,69 @@ RSpec.describe CoverageReporter::UncoveredRangesExtractor do
       parser = described_class.new(coverage_report)
       result = parser.call
 
-      # Verify structure for all files
-      result.each_value do |file_data|
-        expect(file_data).to be_a(Hash)
-        expect(file_data).to have_key(:actual_ranges)
-        expect(file_data).to have_key(:display_ranges)
-        expect(file_data[:actual_ranges]).to be_an(Array)
-        expect(file_data[:display_ranges]).to be_an(Array)
-
-        # Verify that display_ranges is at least as comprehensive as actual_ranges
-        # (may include continuing nil lines that extend ranges)
-        actual_total_lines = file_data[:actual_ranges].sum { |range| range[1] - range[0] + 1 }
-        display_total_lines = file_data[:display_ranges].sum { |range| range[1] - range[0] + 1 }
-        expect(display_total_lines).to be >= actual_total_lines
-      end
-
-      # Verify specific known files have expected structure
-      expect(result["lib/coverage_reporter.rb"][:actual_ranges]).not_to be_empty
-      expect(result["lib/coverage_reporter/cli.rb"][:actual_ranges]).to be_empty
-      expect(result["lib/coverage_reporter/cli.rb"][:display_ranges]).to be_empty
+      expected_result = {
+        "lib/coverage_reporter.rb"                                  => { actual_ranges: [[29, 30], [32, 32]], display_ranges: [[29, 32]] },
+        "lib/coverage_reporter/cli.rb"                              => { actual_ranges: [], display_ranges: [] },
+        "lib/coverage_reporter/coverage_analyzer.rb"                => { actual_ranges: [[72, 72], [74, 74]], display_ranges: [[72, 74]] },
+        "lib/coverage_reporter/coverage_report_loader.rb"           => { actual_ranges: [[23, 23]], display_ranges: [[23, 23]] },
+        "lib/coverage_reporter/global_comment.rb"                   => { actual_ranges: [], display_ranges: [] },
+        "lib/coverage_reporter/global_comment_poster.rb"            => { actual_ranges: [], display_ranges: [] },
+        "lib/coverage_reporter/inline_comment.rb"                   => { actual_ranges: [], display_ranges: [] },
+        "lib/coverage_reporter/inline_comment_factory.rb"           => { actual_ranges: [], display_ranges: [] },
+        "lib/coverage_reporter/inline_comment_poster.rb"            => { actual_ranges: [], display_ranges: [] },
+        "lib/coverage_reporter/modified_ranges_extractor.rb"        => { actual_ranges: [], display_ranges: [] },
+        "lib/coverage_reporter/options.rb"                          => { actual_ranges: [], display_ranges: [] },
+        "lib/coverage_reporter/pull_request.rb"                     => {
+          actual_ranges:  [[67, 67], [91, 91], [95, 97]],
+          display_ranges: [[67, 67], [91, 91], [95, 97]]
+        },
+        "lib/coverage_reporter/runner.rb"                           => { actual_ranges: [], display_ranges: [] },
+        "lib/coverage_reporter/uncovered_ranges_extractor.rb"       => { actual_ranges: [], display_ranges: [] },
+        "spec/coverage_reporter/cli_spec.rb"                        => { actual_ranges: [], display_ranges: [] },
+        "spec/coverage_reporter/coverage_analyzer_spec.rb"          => { actual_ranges: [], display_ranges: [] },
+        "spec/coverage_reporter/coverage_report_loader_spec.rb"     => {
+          actual_ranges:  [
+            [40, 41],
+            [43, 43],
+            [45, 45],
+            [52, 52],
+            [56, 56],
+            [60, 60]
+          ],
+          display_ranges: [[40, 45], [52, 52], [56, 56], [60, 60]]
+        },
+        "spec/coverage_reporter/coverage_reporter_spec.rb"          => { actual_ranges: [], display_ranges: [] },
+        "spec/coverage_reporter/global_comment_poster_spec.rb"      => { actual_ranges: [], display_ranges: [] },
+        "spec/coverage_reporter/global_comment_spec.rb"             => { actual_ranges: [], display_ranges: [] },
+        "spec/coverage_reporter/inline_comment_poster_spec.rb"      => { actual_ranges: [], display_ranges: [] },
+        "spec/coverage_reporter/inline_comment_spec.rb"             => { actual_ranges: [], display_ranges: [] },
+        "spec/coverage_reporter/integration_spec.rb"                => {
+          actual_ranges:  [[52, 52], [62, 62], [142, 142], [162, 162], [201, 204]],
+          display_ranges: [
+            [52, 52],
+            [62, 62],
+            [142, 142],
+            [162, 162],
+            [201, 204]
+          ]
+        },
+        "spec/coverage_reporter/modified_ranges_extractor_spec.rb"  => { actual_ranges: [], display_ranges: [] },
+        "spec/coverage_reporter/options_spec.rb"                    => { actual_ranges: [], display_ranges: [] },
+        "spec/coverage_reporter/pull_request_spec.rb"               => {
+          actual_ranges:  [[13, 13], [23, 23], [316, 316], [320, 320], [324, 324]],
+          display_ranges: [
+            [13, 13],
+            [23, 23],
+            [316, 316],
+            [320, 320],
+            [324, 324]
+          ]
+        },
+        "spec/coverage_reporter/runner_spec.rb"                     => { actual_ranges: [], display_ranges: [] },
+        "spec/coverage_reporter/uncovered_ranges_extractor_spec.rb" => { actual_ranges: [], display_ranges: [] },
+        "spec/coverage_reporter/version_spec.rb"                    => { actual_ranges: [], display_ranges: [] }
+      }
+      expect(result).to eq(expected_result)
     end
   end
 end
