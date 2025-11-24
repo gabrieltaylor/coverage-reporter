@@ -19,7 +19,7 @@ RSpec.describe CoverageReporter::ReportRunner do
   let(:analysis_result) { { "lib/foo.rb" => [[3, 3]] } }
   let(:coverage_analyzer_instance) { instance_double(CoverageReporter::CoverageAnalyzer, call: analysis_result_with_stats) }
   # Provide default values overridden per example
-  let(:coverage) { { "lib/foo.rb" => [[1, 2]] } }
+  let(:coverage) { { "lib/foo.rb" => { actual_ranges: [[1, 2]], display_ranges: [[1, 2]] } } }
   let(:diff) { { "lib/foo.rb" => [[1, 3]] } }
   let(:modified_ranges_extractor_instance) { instance_double(CoverageReporter::ModifiedRangesExtractor, call: diff) }
   let(:coverage_stats) { { total_modified_lines: 3, uncovered_modified_lines: 1, covered_modified_lines: 2, coverage_percentage: 66.67 } }
@@ -101,8 +101,8 @@ RSpec.describe CoverageReporter::ReportRunner do
 
     context "when there are no uncovered lines" do
       let(:analysis_result) { {} }
-      let(:coverage) { { "lib/bar.rb" => [[5, 6, 7]] } }
-      let(:diff) { { "lib/bar.rb" => [[5, 6, 7]] } }
+      let(:coverage) { { "lib/bar.rb" => { actual_ranges: [[5, 7]], display_ranges: [[5, 7]] } } }
+      let(:diff) { { "lib/bar.rb" => [[5, 7]] } }
 
       it "still publishes both inline (with empty mapping) and global comments" do
         runner.run

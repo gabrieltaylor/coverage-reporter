@@ -19,7 +19,7 @@ module CoverageReporter
         <!-- coverage-comment-marker -->
         **Test Coverage Summary**
 
-        #{coverage_percentage < 100 ? '❌' : '✅'} **#{coverage_percentage}%** of changed lines are covered.
+        #{coverage_percentage < 100 ? '❌' : '✅'} **#{coverage_percentage}%** of relevant modified lines are covered.
 
         [View full report](#{report_url})
 

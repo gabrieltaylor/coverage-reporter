@@ -19,7 +19,8 @@ RSpec.describe CoverageReporter::CoverageAnalyzer do
 
     context "with perfect coverage in a single file" do
       it "returns empty intersections and 100% coverage" do
-        uncovered_ranges = {}
+        # File is in coverage data with empty array (all lines covered)
+        uncovered_ranges = { "lib/foo.rb" => { actual_ranges: [], display_ranges: [] } }
         modified_ranges = { "lib/foo.rb" => [[10, 12]] }
 
         result = described_class.new(uncovered_ranges:, modified_ranges:).call
@@ -34,7 +35,7 @@ RSpec.describe CoverageReporter::CoverageAnalyzer do
 
     context "with partial coverage in a single file" do
       it "returns correct intersections and coverage percentage" do
-        uncovered_ranges = { "lib/foo.rb" => [[10, 10], [12, 13]] }
+        uncovered_ranges = { "lib/foo.rb" => { actual_ranges: [[10, 10], [12, 13]], display_ranges: [[10, 10], [12, 13]] } }
         modified_ranges = { "lib/foo.rb" => [[10, 12]] }
 
         result = described_class.new(uncovered_ranges:, modified_ranges:).call
@@ -49,7 +50,7 @@ RSpec.describe CoverageReporter::CoverageAnalyzer do
 
     context "with no coverage in a single file" do
       it "returns all modified lines as intersections and 0% coverage" do
-        uncovered_ranges = { "lib/foo.rb" => [[10, 12]] }
+        uncovered_ranges = { "lib/foo.rb" => { actual_ranges: [[10, 12]], display_ranges: [[10, 12]] } }
         modified_ranges = { "lib/foo.rb" => [[10, 12]] }
 
         result = described_class.new(uncovered_ranges:, modified_ranges:).call
@@ -64,7 +65,7 @@ RSpec.describe CoverageReporter::CoverageAnalyzer do
 
     context "when coverage contains ranges not in diff" do
       it "ignores uncovered ranges outside modified ranges" do
-        uncovered_ranges = { "lib/bar.rb" => [[1, 4], [20, 25]] }
+        uncovered_ranges = { "lib/bar.rb" => { actual_ranges: [[1, 4], [20, 25]], display_ranges: [[1, 4], [20, 25]] } }
         modified_ranges = { "lib/bar.rb" => [[2, 3]] }
 
         result = described_class.new(uncovered_ranges:, modified_ranges:).call
@@ -78,26 +79,43 @@ RSpec.describe CoverageReporter::CoverageAnalyzer do
     end
 
     context "when the file in diff has no coverage entry" do
-      it "treats all modified lines as covered and returns empty intersections" do
+      it "excludes the file from coverage calculation and returns empty intersections" do
         uncovered_ranges = {}
         modified_ranges = { "lib/missing.rb" => [[5, 7]] }
 
         result = described_class.new(uncovered_ranges:, modified_ranges:).call
 
         expect(result[:intersections]).to be_empty
-        expect(result[:coverage_stats][:total_modified_lines]).to eq(3)
+        expect(result[:coverage_stats][:total_modified_lines]).to eq(0)
         expect(result[:coverage_stats][:uncovered_modified_lines]).to eq(0)
-        expect(result[:coverage_stats][:covered_modified_lines]).to eq(3)
+        expect(result[:coverage_stats][:covered_modified_lines]).to eq(0)
         expect(result[:coverage_stats][:coverage_percentage]).to eq(100.0)
+      end
+    end
+
+    context "when the modified lines are a subset of the uncovered lines" do
+      it "returns the uncovered lines as intersections and correct coverage" do
+        uncovered_ranges = { "lib/foo.rb" => { actual_ranges: [[1, 2], [4, 4], [10, 12]], display_ranges: [[1, 4], [10, 12]] } }
+        modified_ranges = { "lib/foo.rb" => [[10, 12]], "lib/bar.rb" => [[1, 2]] }
+
+        result = described_class.new(uncovered_ranges:, modified_ranges:).call
+
+        expect(result[:intersections]["lib/foo.rb"]).to eq([[10, 12]])
+        # lib/bar.rb is excluded because it has no coverage data
+        # lib/foo.rb: lines 10-12 (3 lines), all uncovered = 3 uncovered, 0 covered
+        expect(result[:coverage_stats][:total_modified_lines]).to eq(3)
+        expect(result[:coverage_stats][:uncovered_modified_lines]).to eq(3)
+        expect(result[:coverage_stats][:covered_modified_lines]).to eq(0)
+        expect(result[:coverage_stats][:coverage_percentage]).to eq(0.0)
       end
     end
 
     context "with multiple files and mixed coverage" do
       it "calculates overall coverage and intersections for each file" do
         uncovered_ranges = {
-          "app/models/user.rb"                  => [[10, 12], [15, 15]],
-          "app/controllers/users_controller.rb" => [[2, 3]],
-          "lib/util.rb"                         => [[100, 100]]
+          "app/models/user.rb"                  => { actual_ranges: [[10, 12], [15, 15]], display_ranges: [[10, 12], [15, 15]] },
+          "app/controllers/users_controller.rb" => { actual_ranges: [[2, 3]], display_ranges: [[2, 3]] },
+          "lib/util.rb"                         => { actual_ranges: [[100, 100]], display_ranges: [[100, 100]] }
         }
         modified_ranges = {
           "app/models/user.rb"                  => [[10, 11], [13, 15]],
@@ -136,7 +154,7 @@ RSpec.describe CoverageReporter::CoverageAnalyzer do
 
     context "with range intersections" do
       it "finds correct overlapping ranges and calculates coverage" do
-        uncovered_ranges = { "lib/round.rb" => [[1, 1], [5, 8]] }
+        uncovered_ranges = { "lib/round.rb" => { actual_ranges: [[1, 1], [5, 8]], display_ranges: [[1, 1], [5, 8]] } }
         modified_ranges = { "lib/round.rb" => [[1, 3], [6, 10]] }
 
         result = described_class.new(uncovered_ranges:, modified_ranges:).call
@@ -154,7 +172,7 @@ RSpec.describe CoverageReporter::CoverageAnalyzer do
 
     context "with empty modified ranges" do
       it "handles empty arrays correctly" do
-        uncovered_ranges = { "lib/empty.rb" => [[1, 5]] }
+        uncovered_ranges = { "lib/empty.rb" => { actual_ranges: [[1, 5]], display_ranges: [[1, 5]] } }
         modified_ranges = { "lib/empty.rb" => [] }
 
         result = described_class.new(uncovered_ranges:, modified_ranges:).call
@@ -169,7 +187,7 @@ RSpec.describe CoverageReporter::CoverageAnalyzer do
 
     context "with nil modified ranges" do
       it "handles nil values correctly" do
-        uncovered_ranges = { "lib/nil.rb" => [[1, 5]] }
+        uncovered_ranges = { "lib/nil.rb" => { actual_ranges: [[1, 5]], display_ranges: [[1, 5]] } }
         modified_ranges = { "lib/nil.rb" => nil }
 
         result = described_class.new(uncovered_ranges:, modified_ranges:).call
@@ -184,7 +202,12 @@ RSpec.describe CoverageReporter::CoverageAnalyzer do
 
     context "with complex overlapping ranges" do
       it "handles complex intersections correctly" do
-        uncovered_ranges = { "lib/complex.rb" => [[1, 10], [15, 20], [25, 30]] }
+        uncovered_ranges = {
+          "lib/complex.rb" => {
+            actual_ranges:  [[1, 10], [15, 20], [25, 30]],
+            display_ranges: [[1, 10], [15, 20], [25, 30]]
+          }
+        }
         modified_ranges = { "lib/complex.rb" => [[5, 18], [22, 35]] }
 
         result = described_class.new(uncovered_ranges:, modified_ranges:).call
@@ -206,8 +229,11 @@ RSpec.describe CoverageReporter::CoverageAnalyzer do
         uncovered_data = File.read(File.join(__dir__, "../fixtures/uncovered.txt")).strip
         modified_data = File.read(File.join(__dir__, "../fixtures/modified.txt")).strip
 
-        # Parse the hash data from the files
-        uncovered_ranges = eval(uncovered_data) # rubocop:disable Security/Eval
+        # Parse the hash data from the files and convert to new structure
+        uncovered_ranges_old = eval(uncovered_data) # rubocop:disable Security/Eval
+        uncovered_ranges = uncovered_ranges_old.transform_values do |ranges|
+          { actual_ranges: ranges, display_ranges: ranges }
+        end
         modified_ranges = eval(modified_data) # rubocop:disable Security/Eval
 
         result = described_class.new(uncovered_ranges:, modified_ranges:).call
@@ -218,10 +244,10 @@ RSpec.describe CoverageReporter::CoverageAnalyzer do
             "spec/coverage_reporter/coverage_report_loader_spec.rb" => [[43, 43], [45, 45], [52, 52]]
           },
           coverage_stats: {
-            total_modified_lines:     678,
+            total_modified_lines:     587,
             uncovered_modified_lines: 5,
-            covered_modified_lines:   673,
-            coverage_percentage:      99.26
+            covered_modified_lines:   582,
+            coverage_percentage:      99.15
           }
         }
 

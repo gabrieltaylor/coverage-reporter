@@ -118,7 +118,7 @@ RSpec.describe "CoverageReporter Integration" do
             Comment,
             id:   54_321,
             body: "<!-- coverage-comment-marker -->\n🧪 **Test Coverage Summary**\n\n" \
-                  "✅ **N/A%** of changed lines are covered.\n\n_Commit: abc123def456_\n"
+                  "✅ **N/A%** of relevant modified lines are covered.\n\n_Commit: abc123def456_\n"
           )
         ]
 

@@ -6,8 +6,8 @@ module CoverageReporter
   #
   # @param uncovered_ranges [Hash] Uncovered data where:
   #   - Keys are filenames (e.g., "app/models/user.rb")
-  #   - Values are arrays of ranges representing uncovered lines
-  #   - Example: { "app/models/user.rb" => [[12,14],[29,30]] }
+  #   - Values are hashes with :actual_ranges and :display_ranges
+  #   - Example: { "app/models/user.rb" => { actual_ranges: [[12,14],[29,30]], display_ranges: [[12,15],[29,30]] } }
   #
   # @param modified_ranges [Hash] Modified data where:
   #   - Keys are filenames (e.g., "app/models/user.rb")
@@ -22,24 +22,23 @@ module CoverageReporter
     def call
       logger.debug("Starting coverage analysis for #{@modified_ranges.size} modified files")
 
-      intersections = {}
-      total_modified_lines = 0
-      total_uncovered_modified_lines = 0
+      accumulator = initialize_accumulator
 
       @modified_ranges.each do |file, modified_ranges|
-        next if modified_ranges.nil? || modified_ranges.empty?
+        next if skip_file?(modified_ranges)
+        next unless file_has_coverage_data?(file)
 
         file_result = process_file(file, modified_ranges)
-        intersections.merge!(file_result[:intersections])
-        total_modified_lines += file_result[:modified_lines]
-        total_uncovered_modified_lines += file_result[:uncovered_lines]
+        merge_file_result(accumulator, file_result)
       end
 
-      coverage_percentage = calculate_percentage(total_modified_lines, total_uncovered_modified_lines)
+      coverage_percentage = calculate_percentage(
+        accumulator[:total_modified_lines],
+        accumulator[:total_uncovered_modified_lines]
+      )
 
-      log_results(intersections, total_modified_lines, total_uncovered_modified_lines, coverage_percentage)
-
-      build_result(intersections, total_modified_lines, total_uncovered_modified_lines, coverage_percentage)
+      log_results(accumulator, coverage_percentage)
+      build_result(accumulator, coverage_percentage)
     end
 
     private
@@ -48,100 +47,155 @@ module CoverageReporter
       CoverageReporter.logger
     end
 
+    def initialize_accumulator
+      {
+        intersections:                  {},
+        total_modified_lines:           0,
+        total_uncovered_modified_lines: 0
+      }
+    end
+
+    def skip_file?(modified_ranges)
+      modified_ranges.nil? || modified_ranges.empty?
+    end
+
+    def file_has_coverage_data?(file)
+      @uncovered_ranges.key?(file)
+    end
+
+    def merge_file_result(accumulator, file_result)
+      accumulator[:intersections].merge!(file_result[:intersections])
+      accumulator[:total_modified_lines] += file_result[:modified_lines]
+      accumulator[:total_uncovered_modified_lines] += file_result[:uncovered_lines]
+    end
+
     def process_file(file, modified_ranges)
-      # Calculate intersection for inline comments
-      uncovered_ranges = @uncovered_ranges[file] || []
-      intersecting_ranges = intersect_ranges(modified_ranges, uncovered_ranges)
-
-      # Calculate coverage statistics
-      file_modified_lines = count_lines_in_ranges(modified_ranges)
-      uncovered_modified_lines = count_intersecting_lines(modified_ranges, uncovered_ranges)
-
-      intersections = {}
-      # Only include files with actual intersections (matching original behavior)
-      intersections[file] = intersecting_ranges unless intersecting_ranges.empty?
+      file_data = @uncovered_ranges[file] || { actual_ranges: [], display_ranges: [] }
+      uncovered_ranges = file_data[:actual_ranges] || []
+      intersecting_ranges = find_intersecting_ranges(modified_ranges, uncovered_ranges)
 
       {
-        intersections:   intersections,
-        modified_lines:  file_modified_lines,
-        uncovered_lines: uncovered_modified_lines
+        intersections:   build_file_intersections(file, intersecting_ranges),
+        modified_lines:  count_lines_in_ranges(modified_ranges),
+        uncovered_lines: count_intersecting_lines(modified_ranges, uncovered_ranges)
       }
     end
 
-    def fibonacci(num)
-      return num if num <= 1
+    def build_file_intersections(file, intersecting_ranges)
+      return {} if intersecting_ranges.empty?
 
-      fibonacci(num - 1) + fibonacci(num - 2)
+      { file => intersecting_ranges }
     end
 
-    def log_results(intersections, total_modified_lines, total_uncovered_modified_lines, coverage_percentage)
-      logger.debug("Identified modified uncovered intersection: #{intersections}")
-      logger.debug(
-        "Coverage calculation: #{total_modified_lines} total lines, " \
-        "#{total_uncovered_modified_lines} uncovered, #{coverage_percentage}% covered"
-      )
+    def find_intersecting_ranges(modified_ranges, uncovered_ranges)
+      return [] if uncovered_ranges.empty?
+
+      result = []
+      modified_index = 0
+      uncovered_index = 0
+
+      while modified_index < modified_ranges.size && uncovered_index < uncovered_ranges.size
+        modified_range = modified_ranges[modified_index]
+        uncovered_range = uncovered_ranges[uncovered_index]
+
+        intersection = calculate_range_intersection(modified_range, uncovered_range)
+        result << intersection if intersection
+
+        modified_index, uncovered_index = advance_indices(
+          modified_range,
+          uncovered_range,
+          modified_index,
+          uncovered_index
+        )
+      end
+
+      result
     end
 
-    def build_result(intersections, total_modified_lines, total_uncovered_modified_lines, coverage_percentage)
-      {
-        intersections:  intersections,
-        coverage_stats: {
-          total_modified_lines:     total_modified_lines,
-          uncovered_modified_lines: total_uncovered_modified_lines,
-          covered_modified_lines:   total_modified_lines - total_uncovered_modified_lines,
-          coverage_percentage:      coverage_percentage
-        }
-      }
+    def calculate_range_intersection(range1, range2)
+      start1, end1 = range1
+      start2, end2 = range2
+
+      intersection_start = [start1, start2].max
+      intersection_end = [end1, end2].min
+
+      return nil if intersection_start > intersection_end
+
+      [intersection_start, intersection_end]
     end
 
-    def count_lines_in_ranges(ranges)
-      ranges.sum { |range| range[1] - range[0] + 1 }
+    def advance_indices(modified_range, uncovered_range, modified_index, uncovered_index)
+      modified_end = modified_range[1]
+      uncovered_end = uncovered_range[1]
+
+      if modified_end < uncovered_end
+        [modified_index + 1, uncovered_index]
+      else
+        [modified_index, uncovered_index + 1]
+      end
     end
 
     def count_intersecting_lines(modified_ranges, uncovered_ranges)
       return 0 if uncovered_ranges.empty?
 
-      intersecting_lines = 0
-      i = j = 0
+      total_lines = 0
+      modified_index = 0
+      uncovered_index = 0
 
-      while i < modified_ranges.size && j < uncovered_ranges.size
-        modified_start, modified_end = modified_ranges[i]
-        uncovered_start, uncovered_end = uncovered_ranges[j]
+      while modified_index < modified_ranges.size && uncovered_index < uncovered_ranges.size
+        modified_range = modified_ranges[modified_index]
+        uncovered_range = uncovered_ranges[uncovered_index]
 
-        # Find intersection
-        intersection_start = [modified_start, uncovered_start].max
-        intersection_end = [modified_end, uncovered_end].min
+        intersection = calculate_range_intersection(modified_range, uncovered_range)
+        total_lines += count_lines_in_range(intersection) if intersection
 
-        intersecting_lines += intersection_end - intersection_start + 1 if intersection_start <= intersection_end
-
-        # Move to next range
-        if modified_end < uncovered_end
-          i += 1
-        else
-          j += 1
-        end
+        modified_index, uncovered_index = advance_indices(
+          modified_range,
+          uncovered_range,
+          modified_index,
+          uncovered_index
+        )
       end
 
-      intersecting_lines
+      total_lines
     end
 
-    # rubocop:disable Metrics/AbcSize
-    def intersect_ranges(changed, uncovered)
-      i = j = 0
-      result = []
-      while i < changed.size && j < uncovered.size
-        s = [changed[i][0], uncovered[j][0]].max
-        e = [changed[i][1], uncovered[j][1]].min
-        result << [s, e] if s <= e
-        if changed[i][1] < uncovered[j][1]
-          i += 1
-        else
-          j += 1
-        end
-      end
-      result
+    def count_lines_in_ranges(ranges)
+      ranges.sum { |range| count_lines_in_range(range) }
     end
-    # rubocop:enable Metrics/AbcSize
+
+    def count_lines_in_range(range)
+      start_line, end_line = range
+      end_line - start_line + 1
+    end
+
+    def log_results(accumulator, coverage_percentage)
+      logger.debug("Identified modified uncovered intersection: #{accumulator[:intersections]}")
+      logger.debug(
+        "Coverage calculation: #{accumulator[:total_modified_lines]} total lines, " \
+        "#{accumulator[:total_uncovered_modified_lines]} uncovered, " \
+        "#{coverage_percentage}% covered"
+      )
+    end
+
+    def build_result(accumulator, coverage_percentage)
+      {
+        intersections:  accumulator[:intersections],
+        coverage_stats: build_coverage_stats(accumulator, coverage_percentage)
+      }
+    end
+
+    def build_coverage_stats(accumulator, coverage_percentage)
+      total_modified_lines = accumulator[:total_modified_lines]
+      uncovered_modified_lines = accumulator[:total_uncovered_modified_lines]
+
+      {
+        total_modified_lines:     total_modified_lines,
+        uncovered_modified_lines: uncovered_modified_lines,
+        covered_modified_lines:   total_modified_lines - uncovered_modified_lines,
+        coverage_percentage:      coverage_percentage
+      }
+    end
 
     def calculate_percentage(total_lines, uncovered_lines)
       return 100.0 if total_lines == 0

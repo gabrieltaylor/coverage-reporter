@@ -23,7 +23,7 @@ RSpec.describe CoverageReporter::GlobalComment do
     it "builds the body content" do
       expect(global_comment.body).to include("<!-- coverage-comment-marker -->")
       expect(global_comment.body).to include("**Test Coverage Summary**")
-      expect(global_comment.body).to include("❌ **#{coverage_percentage}%** of changed lines are covered.")
+      expect(global_comment.body).to include("❌ **#{coverage_percentage}%** of relevant modified lines are covered.")
       expect(global_comment.body).to include("_Commit: #{commit_sha}_")
       expect(global_comment.body).to include("[View full report](https://ci.example.com/build/123#artifacts/coverage/index.html)")
     end
@@ -49,7 +49,7 @@ RSpec.describe CoverageReporter::GlobalComment do
       let(:coverage_percentage) { 100 }
 
       it "shows green checkmark emoji" do
-        expect(global_comment.body).to include("✅ **100%** of changed lines are covered.")
+        expect(global_comment.body).to include("✅ **100%** of relevant modified lines are covered.")
       end
     end
 
@@ -57,7 +57,7 @@ RSpec.describe CoverageReporter::GlobalComment do
       let(:coverage_percentage) { 95 }
 
       it "shows red X emoji" do
-        expect(global_comment.body).to include("❌ **95%** of changed lines are covered.")
+        expect(global_comment.body).to include("❌ **95%** of relevant modified lines are covered.")
       end
     end
   end
@@ -107,7 +107,6 @@ RSpec.describe CoverageReporter::GlobalComment do
 
         expect(body).not_to include("**Coverage Summary**")
         expect(body).not_to include("| File | Uncovered Lines |")
-        expect(body).not_to include("**AI Agent Instructions**")
       end
     end
 
