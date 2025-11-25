@@ -7,15 +7,15 @@ module CoverageReporter
     end
 
     def call
-      coverage_map = Hash.new { |h, k| h[k] = [] }
+      coverage_map = {}
 
       return coverage_map unless coverage
 
       coverage.each do |filename, data|
         # Remove leading slash from file paths for consistency
-        normalized_filename = filename.start_with?("/") ? filename[1..] : filename
-        uncovered_ranges = extract_uncovered_ranges(data["lines"])
-        coverage_map[normalized_filename] = uncovered_ranges
+        normalized_filename = filename.delete_prefix("/")
+        ranges = extract_uncovered_ranges(data["lines"])
+        coverage_map[normalized_filename] = ranges
       end
 
       coverage_map
@@ -30,46 +30,60 @@ module CoverageReporter
     end
 
     def extract_uncovered_ranges(lines)
-      return [] unless lines.is_a?(Array)
+      return { actual_ranges: [], display_ranges: [] } unless lines.is_a?(Array)
 
-      uncovered_lines = []
+      actual_uncovered_lines = []
+      display_uncovered_lines = []
       i = 0
 
       while i < lines.length
         if lines[i] == 0
-          i = process_uncovered_range(lines, uncovered_lines, i)
+          i = process_uncovered_range(lines, actual_uncovered_lines, display_uncovered_lines, i)
         else
           i += 1
         end
       end
 
-      convert_to_ranges(uncovered_lines)
+      {
+        actual_ranges:  convert_to_ranges(actual_uncovered_lines),
+        display_ranges: convert_to_ranges(display_uncovered_lines)
+      }
     end
 
-    def process_uncovered_range(lines, uncovered_lines, start_index)
+    def process_uncovered_range(lines, actual_lines, display_lines, start_index)
       i = start_index
       # Found an uncovered line, start a range (always starts with 0)
-      uncovered_lines << (i + 1)
+      line_number = i + 1
+      actual_lines << line_number
+      display_lines << line_number
       i += 1
 
       # Continue through consecutive 0s and nils
       # Include nil only if it's immediately followed by an uncovered line (0)
-      continue_uncovered_range(lines, uncovered_lines, i)
+      continue_uncovered_range(lines, actual_lines, display_lines, i)
     end
 
-    def continue_uncovered_range(lines, uncovered_lines, start_index)
+    def continue_uncovered_range(lines, actual_lines, display_lines, start_index)
       i = start_index
       while i < lines.length
-        break unless should_continue_range?(lines, i)
-
-        uncovered_lines << (i + 1)
-        i += 1
+        line_number = i + 1
+        if lines[i] == 0
+          # Actual uncovered line - add to both
+          actual_lines << line_number
+          display_lines << line_number
+          i += 1
+        elsif lines[i].nil? && should_continue_range?(lines, i)
+          # Nil line that continues the range - add only to display
+          display_lines << line_number
+          i += 1
+        else
+          break
+        end
       end
       i
     end
 
     def should_continue_range?(lines, index)
-      return true if lines[index] == 0
       return false unless lines[index].nil?
 
       # Include nil only if it's immediately followed by an uncovered line (0)

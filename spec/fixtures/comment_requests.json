@@ -137,6 +137,6 @@
     "type": "global_comment",
     "repo": "gabrieltaylor/coverage-reporter",
     "pr_number": "5",
-    "body": "<!-- coverage-comment-marker -->\n**Test Coverage Summary**\n\n❌ **99.54%** of changed lines are covered.\n\n[View full report](https://ci.example.com/build/123)\n\n_Commit: abc123def456_\n\n\n**Coverage Summary**\n\n| File | Uncovered Lines |\n|------|----------------|\n| `lib/coverage_reporter/modified_ranges_extractor.rb` | 25-26 |\n| `lib/coverage_reporter/pull_request.rb` | 90, 122, 126-128, 140 |\n| `spec/coverage_reporter/integration_spec.rb` | 48, 57 |\n| `spec/coverage_reporter/pull_request_spec.rb` | 11, 19, 391, 395, 399 |\n"
+    "body": "<!-- coverage-comment-marker -->\n**Test Coverage Summary**\n\n❌ **99.42%** of relevant modified lines are covered.\n\n[View full report](https://ci.example.com/build/123)\n\n_Commit: abc123def456_\n\n\n**Coverage Summary**\n\n| File | Uncovered Lines |\n|------|----------------|\n| `lib/coverage_reporter/modified_ranges_extractor.rb` | 25-26 |\n| `lib/coverage_reporter/pull_request.rb` | 90, 122, 126-128, 140 |\n| `spec/coverage_reporter/integration_spec.rb` | 48, 57 |\n| `spec/coverage_reporter/pull_request_spec.rb` | 11, 19, 391, 395, 399 |\n"
   }
 ]

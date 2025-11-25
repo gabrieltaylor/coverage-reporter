@@ -52,15 +52,20 @@ RSpec.describe CoverageReporter::UncoveredRangesExtractor do
       )
 
       # lib/foo.rb: line 3 uncovered
-      expect(result["lib/foo.rb"]).to contain_exactly([3, 3])
+      expect(result["lib/foo.rb"][:actual_ranges]).to contain_exactly([3, 3])
+      expect(result["lib/foo.rb"][:display_ranges]).to contain_exactly([3, 3])
       # lib/bar.rb: lines 2, 4 uncovered
-      expect(result["lib/bar.rb"]).to contain_exactly([2, 2], [4, 4])
+      expect(result["lib/bar.rb"][:actual_ranges]).to contain_exactly([2, 2], [4, 4])
+      expect(result["lib/bar.rb"][:display_ranges]).to contain_exactly([2, 2], [4, 4])
       # lib/baz.rb: line 2 uncovered
-      expect(result["lib/baz.rb"]).to contain_exactly([2, 2])
+      expect(result["lib/baz.rb"][:actual_ranges]).to contain_exactly([2, 2])
+      expect(result["lib/baz.rb"][:display_ranges]).to contain_exactly([2, 2])
       # lib/qux.rb: lines 1, 2 uncovered
-      expect(result["lib/qux.rb"]).to contain_exactly([1, 2])
+      expect(result["lib/qux.rb"][:actual_ranges]).to contain_exactly([1, 2])
+      expect(result["lib/qux.rb"][:display_ranges]).to contain_exactly([1, 2])
       # lib/quux.rb: line 3 uncovered
-      expect(result["lib/quux.rb"]).to contain_exactly([3, 3])
+      expect(result["lib/quux.rb"][:actual_ranges]).to contain_exactly([3, 3])
+      expect(result["lib/quux.rb"][:display_ranges]).to contain_exactly([3, 3])
     end
   end
 
@@ -79,9 +84,12 @@ RSpec.describe CoverageReporter::UncoveredRangesExtractor do
       parser = described_class.new(coverage_report)
       result = parser.call
 
-      expect(result["lib/file1.rb"]).to contain_exactly([3, 3])
-      expect(result["lib/file2.rb"]).to contain_exactly([1, 2], [4, 4])
-      expect(result["lib/file3.rb"]).to contain_exactly([3, 3], [5, 5])
+      expect(result["lib/file1.rb"][:actual_ranges]).to contain_exactly([3, 3])
+      expect(result["lib/file1.rb"][:display_ranges]).to contain_exactly([3, 3])
+      expect(result["lib/file2.rb"][:actual_ranges]).to contain_exactly([1, 2], [4, 4])
+      expect(result["lib/file2.rb"][:display_ranges]).to contain_exactly([1, 2], [4, 4])
+      expect(result["lib/file3.rb"][:actual_ranges]).to contain_exactly([3, 3], [5, 5])
+      expect(result["lib/file3.rb"][:display_ranges]).to contain_exactly([3, 3], [5, 5])
     end
   end
 
@@ -112,8 +120,11 @@ RSpec.describe CoverageReporter::UncoveredRangesExtractor do
       parser = described_class.new(coverage_report)
       result = parser.call
 
-      expect(result["lib/mixed_counts.rb"]).to contain_exactly([1, 1], [5, 5])
-      expect(result["lib/zero_lines.rb"]).to contain_exactly([1, 3], [5, 5])
+      expect(result["lib/mixed_counts.rb"][:actual_ranges]).to contain_exactly([1, 1], [5, 5])
+      # line 2 (nil) doesn't continue since followed by 1, not 0
+      expect(result["lib/mixed_counts.rb"][:display_ranges]).to contain_exactly([1, 1], [5, 5])
+      expect(result["lib/zero_lines.rb"][:actual_ranges]).to contain_exactly([1, 3], [5, 5])
+      expect(result["lib/zero_lines.rb"][:display_ranges]).to contain_exactly([1, 3], [5, 5])
     end
   end
 
@@ -128,7 +139,8 @@ RSpec.describe CoverageReporter::UncoveredRangesExtractor do
       parser = described_class.new(coverage_report)
       result = parser.call
 
-      expect(result["lib/consecutive.rb"]).to contain_exactly([1, 3], [5, 7], [9, 9])
+      expect(result["lib/consecutive.rb"][:actual_ranges]).to contain_exactly([1, 3], [5, 7], [9, 9])
+      expect(result["lib/consecutive.rb"][:display_ranges]).to contain_exactly([1, 3], [5, 7], [9, 9])
     end
 
     it "handles single uncovered lines as single-element ranges" do
@@ -141,7 +153,8 @@ RSpec.describe CoverageReporter::UncoveredRangesExtractor do
       parser = described_class.new(coverage_report)
       result = parser.call
 
-      expect(result["lib/single.rb"]).to contain_exactly([2, 2], [4, 4])
+      expect(result["lib/single.rb"][:actual_ranges]).to contain_exactly([2, 2], [4, 4])
+      expect(result["lib/single.rb"][:display_ranges]).to contain_exactly([2, 2], [4, 4])
     end
 
     it "handles all lines uncovered as one range" do
@@ -154,7 +167,8 @@ RSpec.describe CoverageReporter::UncoveredRangesExtractor do
       parser = described_class.new(coverage_report)
       result = parser.call
 
-      expect(result["lib/all_uncovered.rb"]).to contain_exactly([1, 4])
+      expect(result["lib/all_uncovered.rb"][:actual_ranges]).to contain_exactly([1, 4])
+      expect(result["lib/all_uncovered.rb"][:display_ranges]).to contain_exactly([1, 4])
     end
 
     it "handles no uncovered lines as empty array" do
@@ -167,7 +181,8 @@ RSpec.describe CoverageReporter::UncoveredRangesExtractor do
       parser = described_class.new(coverage_report)
       result = parser.call
 
-      expect(result["lib/all_covered.rb"]).to eq([])
+      expect(result["lib/all_covered.rb"][:actual_ranges]).to eq([])
+      expect(result["lib/all_covered.rb"][:display_ranges]).to eq([])
     end
 
     it "handles mixed null and zero values correctly" do
@@ -180,8 +195,10 @@ RSpec.describe CoverageReporter::UncoveredRangesExtractor do
       parser = described_class.new(coverage_report)
       result = parser.call
 
-      # Range continues through nil at line 3 since it's followed by uncovered line at line 4
-      expect(result["lib/mixed.rb"]).to contain_exactly([2, 5])
+      # Actual ranges: only lines with 0 (lines 2, 4, 5)
+      expect(result["lib/mixed.rb"][:actual_ranges]).to contain_exactly([2, 2], [4, 5])
+      # Display ranges: includes nil at line 3 that continues the range
+      expect(result["lib/mixed.rb"][:display_ranges]).to contain_exactly([2, 5])
     end
 
     it "handles empty coverage array" do
@@ -194,7 +211,8 @@ RSpec.describe CoverageReporter::UncoveredRangesExtractor do
       parser = described_class.new(coverage_report)
       result = parser.call
 
-      expect(result["lib/empty.rb"]).to eq([])
+      expect(result["lib/empty.rb"][:actual_ranges]).to eq([])
+      expect(result["lib/empty.rb"][:display_ranges]).to eq([])
     end
   end
 
@@ -207,44 +225,69 @@ RSpec.describe CoverageReporter::UncoveredRangesExtractor do
       parser = described_class.new(coverage_report)
       result = parser.call
 
-      expected = {
-        "lib/coverage_reporter.rb"                                  => [[29, 32]],
-        "lib/coverage_reporter/cli.rb"                              => [],
-        "lib/coverage_reporter/coverage_analyzer.rb"                => [[72, 74]],
-        "lib/coverage_reporter/coverage_report_loader.rb"           => [[23, 23]],
-        "lib/coverage_reporter/global_comment.rb"                   => [],
-        "lib/coverage_reporter/global_comment_poster.rb"            => [],
-        "lib/coverage_reporter/inline_comment.rb"                   => [],
-        "lib/coverage_reporter/inline_comment_factory.rb"           => [],
-        "lib/coverage_reporter/inline_comment_poster.rb"            => [],
-        "lib/coverage_reporter/modified_ranges_extractor.rb"        => [],
-        "lib/coverage_reporter/options.rb"                          => [],
-        "lib/coverage_reporter/pull_request.rb"                     => [[67, 67], [91, 91], [95, 97]],
-        "lib/coverage_reporter/runner.rb"                           => [],
-        "lib/coverage_reporter/uncovered_ranges_extractor.rb"       => [],
-        "spec/coverage_reporter/cli_spec.rb"                        => [],
-        "spec/coverage_reporter/coverage_analyzer_spec.rb"          => [],
-        "spec/coverage_reporter/coverage_report_loader_spec.rb"     => [
-          [40, 45],
-          [52, 52],
-          [56, 56],
-          [60, 60]
-        ],
-        "spec/coverage_reporter/coverage_reporter_spec.rb"          => [],
-        "spec/coverage_reporter/global_comment_poster_spec.rb"      => [],
-        "spec/coverage_reporter/global_comment_spec.rb"             => [],
-        "spec/coverage_reporter/inline_comment_poster_spec.rb"      => [],
-        "spec/coverage_reporter/inline_comment_spec.rb"             => [],
-        "spec/coverage_reporter/integration_spec.rb"                => [[52, 52], [62, 62], [142, 142], [162, 162], [201, 204]],
-        "spec/coverage_reporter/modified_ranges_extractor_spec.rb"  => [],
-        "spec/coverage_reporter/options_spec.rb"                    => [],
-        "spec/coverage_reporter/pull_request_spec.rb"               => [[13, 13], [23, 23], [316, 316], [320, 320], [324, 324]],
-        "spec/coverage_reporter/runner_spec.rb"                     => [],
-        "spec/coverage_reporter/uncovered_ranges_extractor_spec.rb" => [],
-        "spec/coverage_reporter/version_spec.rb"                    => []
+      expected_result = {
+        "lib/coverage_reporter.rb"                                  => { actual_ranges: [[29, 30], [32, 32]], display_ranges: [[29, 32]] },
+        "lib/coverage_reporter/cli.rb"                              => { actual_ranges: [], display_ranges: [] },
+        "lib/coverage_reporter/coverage_analyzer.rb"                => { actual_ranges: [[72, 72], [74, 74]], display_ranges: [[72, 74]] },
+        "lib/coverage_reporter/coverage_report_loader.rb"           => { actual_ranges: [[23, 23]], display_ranges: [[23, 23]] },
+        "lib/coverage_reporter/global_comment.rb"                   => { actual_ranges: [], display_ranges: [] },
+        "lib/coverage_reporter/global_comment_poster.rb"            => { actual_ranges: [], display_ranges: [] },
+        "lib/coverage_reporter/inline_comment.rb"                   => { actual_ranges: [], display_ranges: [] },
+        "lib/coverage_reporter/inline_comment_factory.rb"           => { actual_ranges: [], display_ranges: [] },
+        "lib/coverage_reporter/inline_comment_poster.rb"            => { actual_ranges: [], display_ranges: [] },
+        "lib/coverage_reporter/modified_ranges_extractor.rb"        => { actual_ranges: [], display_ranges: [] },
+        "lib/coverage_reporter/options.rb"                          => { actual_ranges: [], display_ranges: [] },
+        "lib/coverage_reporter/pull_request.rb"                     => {
+          actual_ranges:  [[67, 67], [91, 91], [95, 97]],
+          display_ranges: [[67, 67], [91, 91], [95, 97]]
+        },
+        "lib/coverage_reporter/runner.rb"                           => { actual_ranges: [], display_ranges: [] },
+        "lib/coverage_reporter/uncovered_ranges_extractor.rb"       => { actual_ranges: [], display_ranges: [] },
+        "spec/coverage_reporter/cli_spec.rb"                        => { actual_ranges: [], display_ranges: [] },
+        "spec/coverage_reporter/coverage_analyzer_spec.rb"          => { actual_ranges: [], display_ranges: [] },
+        "spec/coverage_reporter/coverage_report_loader_spec.rb"     => {
+          actual_ranges:  [
+            [40, 41],
+            [43, 43],
+            [45, 45],
+            [52, 52],
+            [56, 56],
+            [60, 60]
+          ],
+          display_ranges: [[40, 45], [52, 52], [56, 56], [60, 60]]
+        },
+        "spec/coverage_reporter/coverage_reporter_spec.rb"          => { actual_ranges: [], display_ranges: [] },
+        "spec/coverage_reporter/global_comment_poster_spec.rb"      => { actual_ranges: [], display_ranges: [] },
+        "spec/coverage_reporter/global_comment_spec.rb"             => { actual_ranges: [], display_ranges: [] },
+        "spec/coverage_reporter/inline_comment_poster_spec.rb"      => { actual_ranges: [], display_ranges: [] },
+        "spec/coverage_reporter/inline_comment_spec.rb"             => { actual_ranges: [], display_ranges: [] },
+        "spec/coverage_reporter/integration_spec.rb"                => {
+          actual_ranges:  [[52, 52], [62, 62], [142, 142], [162, 162], [201, 204]],
+          display_ranges: [
+            [52, 52],
+            [62, 62],
+            [142, 142],
+            [162, 162],
+            [201, 204]
+          ]
+        },
+        "spec/coverage_reporter/modified_ranges_extractor_spec.rb"  => { actual_ranges: [], display_ranges: [] },
+        "spec/coverage_reporter/options_spec.rb"                    => { actual_ranges: [], display_ranges: [] },
+        "spec/coverage_reporter/pull_request_spec.rb"               => {
+          actual_ranges:  [[13, 13], [23, 23], [316, 316], [320, 320], [324, 324]],
+          display_ranges: [
+            [13, 13],
+            [23, 23],
+            [316, 316],
+            [320, 320],
+            [324, 324]
+          ]
+        },
+        "spec/coverage_reporter/runner_spec.rb"                     => { actual_ranges: [], display_ranges: [] },
+        "spec/coverage_reporter/uncovered_ranges_extractor_spec.rb" => { actual_ranges: [], display_ranges: [] },
+        "spec/coverage_reporter/version_spec.rb"                    => { actual_ranges: [], display_ranges: [] }
       }
-
-      expect(result).to eq(expected)
+      expect(result).to eq(expected_result)
     end
   end
 end

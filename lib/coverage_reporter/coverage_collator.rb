@@ -26,6 +26,7 @@ module CoverageReporter
       ::SimpleCov.root(working_dir) if working_dir
 
       ::SimpleCov.collate(coverage_files) do
+        filters.clear
         add_filter(build_filter) if filenames.any? && working_dir
         formatter(build_formatter)
       end
