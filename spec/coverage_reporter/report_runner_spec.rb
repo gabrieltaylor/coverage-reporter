@@ -52,7 +52,7 @@ RSpec.describe CoverageReporter::ReportRunner do
       .to receive(:new).with(diff_text).and_return(modified_ranges_extractor_instance)
 
     allow(CoverageReporter::CoverageAnalyzer)
-      .to receive(:new).with(uncovered_ranges: coverage, modified_ranges: diff)
+      .to receive(:new).with(coverage_ranges: coverage, modified_ranges: diff)
       .and_return(coverage_analyzer_instance)
 
     allow(CoverageReporter::PullRequest)

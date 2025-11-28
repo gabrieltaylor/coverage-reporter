@@ -119,11 +119,11 @@ end
 def load_coverage_data(options, pull_request)
   coverage_report = CoverageReporter::CoverageReportLoader.new(options[:coverage_report_path]).call
   modified_ranges = CoverageReporter::ModifiedRangesExtractor.new(pull_request.diff).call
-  uncovered_ranges = CoverageReporter::UncoveredRangesExtractor.new(coverage_report).call
+  coverage_ranges = CoverageReporter::UncoveredRangesExtractor.new(coverage_report).call
 
   CoverageReporter::ModifiedUncoveredIntersection.new(
-    uncovered_ranges: uncovered_ranges,
-    modified_ranges:  modified_ranges
+    coverage_ranges: coverage_ranges,
+    modified_ranges: modified_ranges
   ).call
 end
 

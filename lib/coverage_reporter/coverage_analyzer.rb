@@ -4,7 +4,7 @@ module CoverageReporter
   # Analyzes coverage data against diff data to find uncovered lines in changed code
   # and calculates coverage statistics
   #
-  # @param uncovered_ranges [Hash] Uncovered data where:
+  # @param coverage_ranges [Hash] Uncovered data where:
   #   - Keys are filenames (e.g., "app/models/user.rb")
   #   - Values are hashes with :actual_ranges and :display_ranges
   #   - Example: { "app/models/user.rb" => { actual_ranges: [[12,14],[29,30]], display_ranges: [[12,15],[29,30]] } }
@@ -14,8 +14,8 @@ module CoverageReporter
   #   - Values are arrays of arrays representing modified or new line ranges
   #   - Example: { "app/services/foo.rb" => [[100,120]] }
   class CoverageAnalyzer
-    def initialize(uncovered_ranges:, modified_ranges:)
-      @uncovered_ranges = uncovered_ranges
+    def initialize(coverage_ranges:, modified_ranges:)
+      @coverage_ranges = coverage_ranges
       @modified_ranges = modified_ranges
     end
 
@@ -60,7 +60,7 @@ module CoverageReporter
     end
 
     def file_has_coverage_data?(file)
-      @uncovered_ranges.key?(file)
+      @coverage_ranges.key?(file)
     end
 
     def merge_file_result(accumulator, file_result)
@@ -70,14 +70,17 @@ module CoverageReporter
     end
 
     def process_file(file, modified_ranges)
-      file_data = @uncovered_ranges[file] || { actual_ranges: [], display_ranges: [] }
-      uncovered_ranges = file_data[:actual_ranges] || []
-      intersecting_ranges = find_intersecting_ranges(modified_ranges, uncovered_ranges)
+      file_data = @coverage_ranges[file] || { actual_ranges: [], display_ranges: [], relevant_ranges: [] }
+      actual_coverage_ranges = file_data[:actual_ranges] || []
+      display_coverage_ranges = file_data[:display_ranges] || []
+      relevant_ranges = file_data[:relevant_ranges] || []
+      intersecting_ranges = find_intersecting_ranges(modified_ranges, display_coverage_ranges)
+      relevant_intersecting_ranges = find_intersecting_ranges(modified_ranges, relevant_ranges)
 
       {
         intersections:   build_file_intersections(file, intersecting_ranges),
-        modified_lines:  count_lines_in_ranges(modified_ranges),
-        uncovered_lines: count_intersecting_lines(modified_ranges, uncovered_ranges)
+        modified_lines:  count_lines_in_ranges(relevant_intersecting_ranges),
+        uncovered_lines: count_intersecting_lines(modified_ranges, actual_coverage_ranges)
       }
     end
 
@@ -87,25 +90,25 @@ module CoverageReporter
       { file => intersecting_ranges }
     end
 
-    def find_intersecting_ranges(modified_ranges, uncovered_ranges)
-      return [] if uncovered_ranges.empty?
+    def find_intersecting_ranges(modified_ranges, coverage_ranges)
+      return [] if coverage_ranges.empty?
 
       result = []
       modified_index = 0
-      uncovered_index = 0
+      coverage_index = 0
 
-      while modified_index < modified_ranges.size && uncovered_index < uncovered_ranges.size
+      while modified_index < modified_ranges.size && coverage_index < coverage_ranges.size
         modified_range = modified_ranges[modified_index]
-        uncovered_range = uncovered_ranges[uncovered_index]
+        coverage_range = coverage_ranges[coverage_index]
 
-        intersection = calculate_range_intersection(modified_range, uncovered_range)
+        intersection = calculate_range_intersection(modified_range, coverage_range)
         result << intersection if intersection
 
-        modified_index, uncovered_index = advance_indices(
+        modified_index, coverage_index = advance_indices(
           modified_range,
-          uncovered_range,
+          coverage_range,
           modified_index,
-          uncovered_index
+          coverage_index
         )
       end
 
@@ -124,36 +127,36 @@ module CoverageReporter
       [intersection_start, intersection_end]
     end
 
-    def advance_indices(modified_range, uncovered_range, modified_index, uncovered_index)
+    def advance_indices(modified_range, coverage_range, modified_index, coverage_index)
       modified_end = modified_range[1]
-      uncovered_end = uncovered_range[1]
+      coverage_end = coverage_range[1]
 
-      if modified_end < uncovered_end
-        [modified_index + 1, uncovered_index]
+      if modified_end < coverage_end
+        [modified_index + 1, coverage_index]
       else
-        [modified_index, uncovered_index + 1]
+        [modified_index, coverage_index + 1]
       end
     end
 
-    def count_intersecting_lines(modified_ranges, uncovered_ranges)
-      return 0 if uncovered_ranges.empty?
+    def count_intersecting_lines(modified_ranges, coverage_ranges)
+      return 0 if coverage_ranges.empty?
 
       total_lines = 0
       modified_index = 0
-      uncovered_index = 0
+      coverage_index = 0
 
-      while modified_index < modified_ranges.size && uncovered_index < uncovered_ranges.size
+      while modified_index < modified_ranges.size && coverage_index < coverage_ranges.size
         modified_range = modified_ranges[modified_index]
-        uncovered_range = uncovered_ranges[uncovered_index]
+        coverage_range = coverage_ranges[coverage_index]
 
-        intersection = calculate_range_intersection(modified_range, uncovered_range)
+        intersection = calculate_range_intersection(modified_range, coverage_range)
         total_lines += count_lines_in_range(intersection) if intersection
 
-        modified_index, uncovered_index = advance_indices(
+        modified_index, coverage_index = advance_indices(
           modified_range,
-          uncovered_range,
+          coverage_range,
           modified_index,
-          uncovered_index
+          coverage_index
         )
       end
 
