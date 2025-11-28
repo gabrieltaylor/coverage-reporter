@@ -2,7 +2,7 @@
 
 require "spec_helper"
 
-RSpec.describe CoverageReporter::UncoveredRangesExtractor do
+RSpec.describe CoverageReporter::CoverageRangesExtractor do
   context "when the coverage report is nil" do
     it "returns an empty hash" do
       parser = described_class.new(nil)

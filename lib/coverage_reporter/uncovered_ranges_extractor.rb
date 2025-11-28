@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 module CoverageReporter
-  class UncoveredRangesExtractor
+  class CoverageRangesExtractor
     def initialize(coverage_report)
       @coverage_report = coverage_report
     end

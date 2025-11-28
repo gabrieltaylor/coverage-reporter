@@ -9,7 +9,7 @@ RSpec.describe CoverageReporter::ReportRunner do
   let(:coverage_report_path) { "coverage/coverage.json" }
   # We'll stub all collaborator classes so we only test orchestration
   let(:coverage_report_loader_instance) { instance_double(CoverageReporter::CoverageReportLoader, call: coverage_report_data) }
-  let(:uncovered_ranges_extractor_instance) { instance_double(CoverageReporter::UncoveredRangesExtractor, call: coverage) }
+  let(:coverage_ranges_extractor_instance) { instance_double(CoverageReporter::CoverageRangesExtractor, call: coverage) }
   let(:pull_request_instance) { instance_double(CoverageReporter::PullRequest, diff: diff_text) }
   let(:inline_comment_factory_instance) { instance_double(CoverageReporter::InlineCommentFactory) }
   let(:inline_comment_poster_instance) { instance_double(CoverageReporter::InlineCommentPoster) }
@@ -45,8 +45,8 @@ RSpec.describe CoverageReporter::ReportRunner do
     allow(CoverageReporter::CoverageReportLoader)
       .to receive(:new).with(coverage_report_path).and_return(coverage_report_loader_instance)
 
-    allow(CoverageReporter::UncoveredRangesExtractor)
-      .to receive(:new).with(coverage_report_data).and_return(uncovered_ranges_extractor_instance)
+    allow(CoverageReporter::CoverageRangesExtractor)
+      .to receive(:new).with(coverage_report_data).and_return(coverage_ranges_extractor_instance)
 
     allow(CoverageReporter::ModifiedRangesExtractor)
       .to receive(:new).with(diff_text).and_return(modified_ranges_extractor_instance)
@@ -91,7 +91,7 @@ RSpec.describe CoverageReporter::ReportRunner do
       runner.run
 
       expect(coverage_report_loader_instance).to have_received(:call).once
-      expect(uncovered_ranges_extractor_instance).to have_received(:call).once
+      expect(coverage_ranges_extractor_instance).to have_received(:call).once
       expect(modified_ranges_extractor_instance).to have_received(:call).once
       expect(coverage_analyzer_instance).to have_received(:call).once
 
