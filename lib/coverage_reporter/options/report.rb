@@ -19,6 +19,7 @@ module CoverageReporter
 
       # rubocop:disable Metrics/AbcSize
       # rubocop:disable Metrics/MethodLength
+      # rubocop:disable Metrics/BlockLength
       def self.parse(argv)
         opts = defaults.dup
 
@@ -53,6 +54,7 @@ module CoverageReporter
         end
         # rubocop:enable Metrics/AbcSize
         # rubocop:enable Metrics/MethodLength
+        # rubocop:enable Metrics/BlockLength
         parser.parse!(argv)
 
         validate!(opts)

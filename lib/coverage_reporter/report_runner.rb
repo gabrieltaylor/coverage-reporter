@@ -17,13 +17,8 @@ module CoverageReporter
       pull_request = PullRequest.new(github_token:, repo:, pr_number:)
       coverage_report = CoverageReportLoader.new(coverage_report_path).call
       modified_ranges = ModifiedRangesExtractor.new(pull_request.diff).call
-<<<<<<< Updated upstream
-      uncovered_ranges = UncoveredRangesExtractor.new(coverage_report).call
-      analysis_result = CoverageAnalyzer.new(uncovered_ranges:, modified_ranges:).call
-=======
       coverage_ranges = CoverageRangesExtractor.new(coverage_report, source_dir:).call
-      analysis_result = CoverageAnalyzer.new(coverage_ranges:, modified_ranges:).call
->>>>>>> Stashed changes
+      analysis_result = CoverageAnalyzer.new(uncovered_ranges: coverage_ranges, modified_ranges:).call
       intersection = analysis_result[:intersections]
       coverage_stats = analysis_result[:coverage_stats]
       inline_comments = InlineCommentFactory.new(intersection:, commit_sha:).call
