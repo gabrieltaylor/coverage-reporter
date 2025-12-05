@@ -12,7 +12,8 @@ module CoverageReporter
           github_token:         ENV.fetch("GITHUB_TOKEN", nil),
           pr_number:            ENV.fetch("PR_NUMBER", nil),
           repo:                 normalize_repo(ENV.fetch("REPO", nil)),
-          report_url:           ENV.fetch("REPORT_URL", nil)
+          report_url:           ENV.fetch("REPORT_URL", nil),
+          source_dir:           ENV.fetch("SOURCE_DIR", nil)
         }
       end
 
@@ -41,6 +42,9 @@ module CoverageReporter
           end
           o.on("--repo REPO", "GitHub repository (default: $REPO)") do |v|
             opts[:repo] = normalize_repo(v)
+          end
+          o.on("--source-dir DIR", "Source directory for coverage files (default: $SOURCE_DIR)") do |v|
+            opts[:source_dir] = v
           end
           o.on_tail("-h", "--help", "Show help") do
             puts o
