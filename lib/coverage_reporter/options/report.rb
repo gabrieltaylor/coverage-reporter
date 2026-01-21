@@ -12,12 +12,14 @@ module CoverageReporter
           github_token:         ENV.fetch("GITHUB_TOKEN", nil),
           pr_number:            ENV.fetch("PR_NUMBER", nil),
           repo:                 normalize_repo(ENV.fetch("REPO", nil)),
-          report_url:           ENV.fetch("REPORT_URL", nil)
+          report_url:           ENV.fetch("REPORT_URL", nil),
+          source_dir:           ENV.fetch("SOURCE_DIR", nil)
         }
       end
 
       # rubocop:disable Metrics/AbcSize
       # rubocop:disable Metrics/MethodLength
+      # rubocop:disable Metrics/BlockLength
       def self.parse(argv)
         opts = defaults.dup
 
@@ -42,6 +44,9 @@ module CoverageReporter
           o.on("--repo REPO", "GitHub repository (default: $REPO)") do |v|
             opts[:repo] = normalize_repo(v)
           end
+          o.on("--source-dir DIR", "Source directory for coverage files (default: $SOURCE_DIR)") do |v|
+            opts[:source_dir] = v
+          end
           o.on_tail("-h", "--help", "Show help") do
             puts o
             exit 0
@@ -49,6 +54,7 @@ module CoverageReporter
         end
         # rubocop:enable Metrics/AbcSize
         # rubocop:enable Metrics/MethodLength
+        # rubocop:enable Metrics/BlockLength
         parser.parse!(argv)
 
         validate!(opts)

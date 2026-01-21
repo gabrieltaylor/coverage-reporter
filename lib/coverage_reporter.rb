@@ -49,6 +49,6 @@ module CoverageReporter
   require_relative "coverage_reporter/pull_request"
   require_relative "coverage_reporter/report_runner"
   require_relative "coverage_reporter/collate_runner"
-  require_relative "coverage_reporter/uncovered_ranges_extractor"
+  require_relative "coverage_reporter/coverage_ranges_extractor"
   require_relative "coverage_reporter/simple_cov/patches/result_hash_formatter_patch"
 end
