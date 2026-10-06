@@ -62,7 +62,12 @@ gem install coverage-reporter
    coverage-reporter report
    ```
 
-The tool will automatically:
+   Or use the `collate` command to merge multiple coverage files from parallel test runs:
+   ```bash
+   coverage-reporter collate
+   ```
+
+The `report` command will automatically:
 - Load your coverage data from `coverage/coverage.json`
 - Fetch the pull request diff from GitHub
 - Identify uncovered lines in modified code
@@ -81,14 +86,15 @@ The tool will automatically:
 ### Optional Settings
 
 - **Coverage Report Path**: Path to your SimpleCov coverage.json file (default: `coverage/coverage.json`)
-- **Build URL**: CI build URL for linking back to your build (default: `$BUILD_URL`)
+- **Report URL**: CI build URL for linking back to your build (default: `$REPORT_URL`)
+- **Source Directory**: Source directory for coverage files (default: `$SOURCE_DIR`)
 
 ## Usage Examples
 
 ### Basic Usage
 
 ```bash
-coverage-reporter \
+coverage-reporter report \
   --github-token "$GITHUB_TOKEN" \
   --repo "myorg/myrepo" \
   --pr-number "42" \
@@ -98,7 +104,7 @@ coverage-reporter \
 ### Custom Coverage Report Path
 
 ```bash
-coverage-reporter \
+coverage-reporter report \
   --github-token "$GITHUB_TOKEN" \
   --repo "myorg/myrepo" \
   --pr-number "42" \
@@ -106,15 +112,38 @@ coverage-reporter \
   --coverage-report-path "test/coverage/coverage.json"
 ```
 
-### With Build URL
+### With Report URL
 
 ```bash
-coverage-reporter \
+coverage-reporter report \
   --github-token "$GITHUB_TOKEN" \
   --repo "myorg/myrepo" \
   --pr-number "42" \
   --commit-sha "$GITHUB_SHA" \
-  --build-url "https://github.com/myorg/myrepo/actions/runs/123456"
+  --report-url "https://github.com/myorg/myrepo/actions/runs/123456"
+```
+
+### Collate Multiple Coverage Files
+
+The `collate` command merges multiple coverage files (useful for parallel test runs):
+
+```bash
+coverage-reporter collate \
+  --coverage-dir "coverage" \
+  --github-token "$GITHUB_TOKEN" \
+  --repo "myorg/myrepo" \
+  --pr-number "42"
+```
+
+With `--modified-only` to filter to only modified files:
+
+```bash
+coverage-reporter collate \
+  --coverage-dir "coverage" \
+  --modified-only \
+  --github-token "$GITHUB_TOKEN" \
+  --repo "myorg/myrepo" \
+  --pr-number "42"
 ```
 
 ## CI/CD Integration
@@ -143,16 +172,18 @@ jobs:
           COVERAGE: true
 
       - name: Report coverage
-        run: bundle exec coverage-reporter
+        run: bundle exec coverage-reporter report
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           REPO: ${{ github.repository }}
           PR_NUMBER: ${{ github.event.number }}
           COMMIT_SHA: ${{ github.sha }}
-          BUILD_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+          REPORT_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
 ```
 
 ## Command Line Options
+
+### `report` Command
 
 | Option | Description | Default | Environment Variable |
 |--------|-------------|---------|---------------------|
@@ -161,7 +192,20 @@ jobs:
 | `--pr-number NUMBER` | Pull request number | `$PR_NUMBER` | `PR_NUMBER` |
 | `--commit-sha SHA` | Git commit SHA | `$COMMIT_SHA` | `COMMIT_SHA` |
 | `--coverage-report-path PATH` | Path to coverage.json | `coverage/coverage.json` | `COVERAGE_REPORT_PATH` |
-| `--build-url URL` | CI build URL for links | `$BUILD_URL` | `BUILD_URL` |
+| `--report-url URL` | CI build URL for links | `$REPORT_URL` | `REPORT_URL` |
+| `--source-dir DIR` | Source directory for coverage files | `$SOURCE_DIR` | `SOURCE_DIR` |
+| `--help` | Show help message | - | - |
+
+### `collate` Command
+
+| Option | Description | Default | Environment Variable |
+|--------|-------------|---------|---------------------|
+| `--coverage-dir DIR` | Directory containing coverage files | `coverage` | - |
+| `--modified-only` | Filter to only modified files | `false` | - |
+| `--github-token TOKEN` | GitHub token (required for `--modified-only`) | `$GITHUB_TOKEN` | `GITHUB_TOKEN` |
+| `--repo REPO` | Repository (required for `--modified-only`) | `$REPO` | `REPO` |
+| `--pr-number PR_NUMBER` | Pull request number (required for `--modified-only`) | `$PR_NUMBER` | `PR_NUMBER` |
+| `--working-dir DIR` | Working directory for coverage files | - | - |
 | `--help` | Show help message | - | - |
 
 ## Environment Variables
@@ -174,16 +218,28 @@ export REPO="myorg/myrepo"
 export PR_NUMBER="123"
 export COMMIT_SHA="abc123def456"
 export COVERAGE_REPORT_PATH="coverage/coverage.json"
-export BUILD_URL="https://ci.example.com/build/123"
+export REPORT_URL="https://ci.example.com/build/123"
+export SOURCE_DIR="/path/to/source"
 ```
 
 ## How It Works
+
+### `report` Command
 
 1. **Loads Coverage Data**: Reads SimpleCov's `coverage.json` file to understand which lines are covered by tests
 2. **Fetches PR Diff**: Retrieves the pull request diff from GitHub to identify modified lines
 3. **Finds Intersections**: Identifies uncovered lines that were modified in the PR
 4. **Posts Inline Comments**: Adds comments directly on uncovered lines in the diff
 5. **Creates Summary**: Posts a global comment with overall coverage statistics
+
+### `collate` Command
+
+The `collate` command merges multiple coverage files from parallel test runs:
+
+1. **Finds Coverage Files**: Scans the coverage directory for `resultset-*.json` files
+2. **Optionally Filters**: If `--modified-only` is used, filters to only files modified in the PR
+3. **Merges Coverage**: Uses SimpleCov's collate feature to merge all coverage data
+4. **Generates Reports**: Creates both JSON and HTML coverage reports
 
 ### GitHub Token Permissions
 

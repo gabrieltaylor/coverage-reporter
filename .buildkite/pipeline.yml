@@ -48,6 +48,8 @@ steps:
           image: "ruby:3.4"
           mount-buildkite-agent: true
           propagate-environment: true
+          mount-checkout: true
+          workdir: /app
           environment:
             - GITHUB_TOKEN
             - REPO
@@ -76,6 +78,8 @@ steps:
           image: "ruby:3.4"
           mount-buildkite-agent: true
           propagate-environment: true
+          mount-checkout: true
+          workdir: /app
           environment:
             - GITHUB_TOKEN
             - REPO
@@ -86,6 +90,7 @@ steps:
             - BUILDKITE_BUILD_NUMBER
             - ARTIFACT_API_ACCESS_TOKEN
             - COVERAGE_REPORTER_LOG_LEVEL
+            - SOURCE_DIR
           shell: ["/bin/bash", "-e", "-c"]
     secrets:
       - GITHUB_TOKEN
@@ -95,4 +100,5 @@ steps:
       PR_NUMBER: ${BUILDKITE_PULL_REQUEST}
       COMMIT_SHA: ${BUILDKITE_COMMIT}
       COVERAGE_REPORTER_LOG_LEVEL: DEBUG
+      SOURCE_DIR: /app/api
     command: .buildkite/script/report
