@@ -16,7 +16,6 @@ module CoverageReporter
       return coverage_map unless coverage
 
       coverage.each do |filename, data|
-        # Remove leading slash from file paths for consistency
         normalized_filename = filename.delete_prefix("/")
         source_path = find_source_path(normalized_filename)
         ranges = extract_coverage_ranges(data["lines"], source_path)
@@ -112,7 +111,6 @@ module CoverageReporter
       add_uncovered_line(actual_lines, display_lines, relevant_lines, index + 1)
       index += 1
 
-      # Continue through consecutive 0s and nils
       while index < lines.length
         coverage_value = lines[index]
         line_number = index + 1
@@ -140,7 +138,6 @@ module CoverageReporter
     def should_continue_range?(lines, index)
       return false unless lines[index].nil?
 
-      # Include nil only if it's immediately followed by an uncovered line (0)
       index + 1 < lines.length && lines[index + 1] == 0
     end
 
@@ -153,17 +150,14 @@ module CoverageReporter
 
       lines.each_cons(2) do |current, next_line|
         if next_line == current + 1
-          # Consecutive lines, extend the range
           end_line = next_line
         else
-          # Gap found, close current range and start new one
           ranges << [start_line, end_line]
           start_line = next_line
           end_line = next_line
         end
       end
 
-      # Add the last range
       ranges << [start_line, end_line]
       ranges
     end
@@ -172,11 +166,9 @@ module CoverageReporter
       source_code = File.read(source_path)
       boundaries = []
 
-      # Use Ripper.sexp to understand structure and Ripper.lex for line numbers
       sexp = Ripper.sexp(source_code)
       return boundaries unless sexp
 
-      # Extract method boundaries by traversing the AST
       extract_method_boundaries(sexp, source_code, boundaries)
       boundaries.sort_by { |b| b[:start_line] }
     end
@@ -187,14 +179,11 @@ module CoverageReporter
       type = sexp[0]
       case type
       when :def
-        # :def [name, params, body]
         extract_def_method(sexp, source_code, boundaries)
       when :defs
-        # :defs [receiver, :".", name, params, body]
         extract_defs_method(sexp, source_code, boundaries)
       end
 
-      # Recursively process all children
       sexp.each do |item|
         extract_method_boundaries(item, source_code, boundaries) if item.is_a?(Array)
       end
@@ -205,7 +194,6 @@ module CoverageReporter
     end
 
     def extract_defs_method(sexp, source_code, boundaries)
-      # defs structure: [:defs, receiver, :".", name, params, body]
       extract_method_from_node(sexp[3], source_code, boundaries)
     end
 
@@ -228,21 +216,18 @@ module CoverageReporter
       lines = source_code.lines
       return nil if def_line > lines.length
 
-      # Use a stack-based approach to find matching end
       depth = 0
       start_idx = def_line - 1
 
       (start_idx...lines.length).each do |idx|
         line = lines[idx]
-        # Count def/end keywords (simplified - doesn't handle strings/comments perfectly)
-        # But should work for most cases
         depth += line.scan(/\bdef\b/).length
         depth -= line.scan(/\bend\b/).length
 
         return idx + 1 if depth == 0 && idx > start_idx
       end
 
-      lines.length # Fallback to end of file
+      lines.length
     end
 
     def group_by_methods(actual_uncovered_lines, display_uncovered_lines, coverage_lines, method_boundaries)
@@ -336,8 +321,6 @@ module CoverageReporter
       ((start_line - 1)...end_line).each do |line_idx|
         next if line_idx >= coverage_lines.length
 
-        # A line is considered executable if it has coverage data (not nil)
-        # nil typically means the line is not executable (comment, blank, etc.)
         executable_lines << line_idx unless coverage_lines[line_idx].nil?
       end
       executable_lines

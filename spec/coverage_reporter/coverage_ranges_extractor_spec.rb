@@ -30,11 +30,11 @@ RSpec.describe CoverageReporter::CoverageRangesExtractor do
     let(:coverage_report) do
       {
         "coverage" => {
-          "lib/foo.rb"  => { "lines" => [nil, 1, 0, 2] }, # lines 2 & 4 covered, line 3 uncovered
-          "lib/bar.rb"  => { "lines" => [1, 0, 1, 0, 3] }, # lines 1, 3, 5 covered, lines 2, 4 uncovered
-          "lib/baz.rb"  => { "lines" => [nil, 0, 1, 1] }, # lines 3 & 4 covered, line 2 uncovered
-          "lib/qux.rb"  => { "lines" => [0, 0, 5] }, # lines 1, 2 uncovered, line 3 covered
-          "lib/quux.rb" => { "lines" => [1, 2, 0, 3] } # lines 1, 2, 4 covered, line 3 uncovered
+          "lib/foo.rb"  => { "lines" => [nil, 1, 0, 2] },
+          "lib/bar.rb"  => { "lines" => [1, 0, 1, 0, 3] },
+          "lib/baz.rb"  => { "lines" => [nil, 0, 1, 1] },
+          "lib/qux.rb"  => { "lines" => [0, 0, 5] },
+          "lib/quux.rb" => { "lines" => [1, 2, 0, 3] }
         }
       }
     end
@@ -53,53 +53,21 @@ RSpec.describe CoverageReporter::CoverageRangesExtractor do
         ]
       )
 
-      # lib/foo.rb: line 3 uncovered, lines 2,3,4 relevant (nil, 1, 0, 2)
       expect(result["lib/foo.rb"][:actual_ranges]).to contain_exactly([3, 3])
       expect(result["lib/foo.rb"][:display_ranges]).to contain_exactly([3, 3])
       expect(result["lib/foo.rb"][:relevant_ranges]).to contain_exactly([2, 4])
-      # lib/bar.rb: lines 2, 4 uncovered, all lines relevant (1, 0, 1, 0, 3)
       expect(result["lib/bar.rb"][:actual_ranges]).to contain_exactly([2, 2], [4, 4])
       expect(result["lib/bar.rb"][:display_ranges]).to contain_exactly([2, 2], [4, 4])
       expect(result["lib/bar.rb"][:relevant_ranges]).to contain_exactly([1, 5])
-      # lib/baz.rb: line 2 uncovered, lines 2,3,4 relevant (nil, 0, 1, 1)
       expect(result["lib/baz.rb"][:actual_ranges]).to contain_exactly([2, 2])
       expect(result["lib/baz.rb"][:display_ranges]).to contain_exactly([2, 2])
       expect(result["lib/baz.rb"][:relevant_ranges]).to contain_exactly([2, 4])
-      # lib/qux.rb: lines 1, 2 uncovered, all lines relevant (0, 0, 5)
       expect(result["lib/qux.rb"][:actual_ranges]).to contain_exactly([1, 2])
       expect(result["lib/qux.rb"][:display_ranges]).to contain_exactly([1, 2])
       expect(result["lib/qux.rb"][:relevant_ranges]).to contain_exactly([1, 3])
-      # lib/quux.rb: line 3 uncovered, all lines relevant (1, 2, 0, 3)
       expect(result["lib/quux.rb"][:actual_ranges]).to contain_exactly([3, 3])
       expect(result["lib/quux.rb"][:display_ranges]).to contain_exactly([3, 3])
       expect(result["lib/quux.rb"][:relevant_ranges]).to contain_exactly([1, 4])
-    end
-  end
-
-  context "with multiple files having different coverage patterns" do
-    let(:coverage_report) do
-      {
-        "coverage" => {
-          "lib/file1.rb" => { "lines" => [nil, 1, 0, 2] }, # lines 2 & 4 covered, line 3 uncovered
-          "lib/file2.rb" => { "lines" => [0, 0, 1, 0, 1] }, # lines 3 & 5 covered, lines 1, 2, 4 uncovered
-          "lib/file3.rb" => { "lines" => [1, 2, 0, 3, 0] } # lines 1, 2, 4 covered, lines 3, 5 uncovered
-        }
-      }
-    end
-
-    it "extracts uncovered ranges for each file" do
-      parser = described_class.new(coverage_report)
-      result = parser.call
-
-      expect(result["lib/file1.rb"][:actual_ranges]).to contain_exactly([3, 3])
-      expect(result["lib/file1.rb"][:display_ranges]).to contain_exactly([3, 3])
-      expect(result["lib/file1.rb"][:relevant_ranges]).to contain_exactly([2, 4])
-      expect(result["lib/file2.rb"][:actual_ranges]).to contain_exactly([1, 2], [4, 4])
-      expect(result["lib/file2.rb"][:display_ranges]).to contain_exactly([1, 2], [4, 4])
-      expect(result["lib/file2.rb"][:relevant_ranges]).to contain_exactly([1, 5])
-      expect(result["lib/file3.rb"][:actual_ranges]).to contain_exactly([3, 3], [5, 5])
-      expect(result["lib/file3.rb"][:display_ranges]).to contain_exactly([3, 3], [5, 5])
-      expect(result["lib/file3.rb"][:relevant_ranges]).to contain_exactly([1, 5])
     end
   end
 
@@ -120,8 +88,8 @@ RSpec.describe CoverageReporter::CoverageRangesExtractor do
     let(:coverage_report) do
       {
         "coverage" => {
-          "lib/mixed_counts.rb" => { "lines" => [0, nil, 1, 2, 0] }, # lines 3 & 4 covered, lines 1 & 5 uncovered
-          "lib/zero_lines.rb"   => { "lines" => [0, 0, 0, 1, 0] } # lines 1, 2, 3, 5 uncovered, line 4 covered
+          "lib/mixed_counts.rb" => { "lines" => [0, nil, 1, 2, 0] },
+          "lib/zero_lines.rb"   => { "lines" => [0, 0, 0, 1, 0] }
         }
       }
     end
@@ -131,13 +99,10 @@ RSpec.describe CoverageReporter::CoverageRangesExtractor do
       result = parser.call
 
       expect(result["lib/mixed_counts.rb"][:actual_ranges]).to contain_exactly([1, 1], [5, 5])
-      # line 2 (nil) doesn't continue since followed by 1, not 0
       expect(result["lib/mixed_counts.rb"][:display_ranges]).to contain_exactly([1, 1], [5, 5])
-      # relevant lines: 1, 3, 4, 5 (0, nil, 1, 2, 0)
       expect(result["lib/mixed_counts.rb"][:relevant_ranges]).to contain_exactly([1, 1], [3, 5])
       expect(result["lib/zero_lines.rb"][:actual_ranges]).to contain_exactly([1, 3], [5, 5])
       expect(result["lib/zero_lines.rb"][:display_ranges]).to contain_exactly([1, 3], [5, 5])
-      # relevant lines: 1, 2, 3, 4, 5 (0, 0, 0, 1, 0)
       expect(result["lib/zero_lines.rb"][:relevant_ranges]).to contain_exactly([1, 5])
     end
   end
@@ -146,7 +111,7 @@ RSpec.describe CoverageReporter::CoverageRangesExtractor do
     it "converts consecutive uncovered lines into ranges" do
       coverage_report = {
         "coverage" => {
-          "lib/consecutive.rb" => { "lines" => [0, 0, 0, 1, 0, 0, 0, 1, 0] } # lines 1,2,3,5,6,7,9 uncovered
+          "lib/consecutive.rb" => { "lines" => [0, 0, 0, 1, 0, 0, 0, 1, 0] }
         }
       }
 
@@ -155,30 +120,13 @@ RSpec.describe CoverageReporter::CoverageRangesExtractor do
 
       expect(result["lib/consecutive.rb"][:actual_ranges]).to contain_exactly([1, 3], [5, 7], [9, 9])
       expect(result["lib/consecutive.rb"][:display_ranges]).to contain_exactly([1, 3], [5, 7], [9, 9])
-      # relevant lines: all lines (0, 0, 0, 1, 0, 0, 0, 1, 0)
       expect(result["lib/consecutive.rb"][:relevant_ranges]).to contain_exactly([1, 9])
-    end
-
-    it "handles single uncovered lines as single-element ranges" do
-      coverage_report = {
-        "coverage" => {
-          "lib/single.rb" => { "lines" => [1, 0, 1, 0, 1] } # lines 2,4 uncovered
-        }
-      }
-
-      parser = described_class.new(coverage_report)
-      result = parser.call
-
-      expect(result["lib/single.rb"][:actual_ranges]).to contain_exactly([2, 2], [4, 4])
-      expect(result["lib/single.rb"][:display_ranges]).to contain_exactly([2, 2], [4, 4])
-      # relevant lines: all lines (1, 0, 1, 0, 1)
-      expect(result["lib/single.rb"][:relevant_ranges]).to contain_exactly([1, 5])
     end
 
     it "handles all lines uncovered as one range" do
       coverage_report = {
         "coverage" => {
-          "lib/all_uncovered.rb" => { "lines" => [0, 0, 0, 0] } # lines 1,2,3,4 uncovered
+          "lib/all_uncovered.rb" => { "lines" => [0, 0, 0, 0] }
         }
       }
 
@@ -187,14 +135,13 @@ RSpec.describe CoverageReporter::CoverageRangesExtractor do
 
       expect(result["lib/all_uncovered.rb"][:actual_ranges]).to contain_exactly([1, 4])
       expect(result["lib/all_uncovered.rb"][:display_ranges]).to contain_exactly([1, 4])
-      # relevant lines: all lines (0, 0, 0, 0)
       expect(result["lib/all_uncovered.rb"][:relevant_ranges]).to contain_exactly([1, 4])
     end
 
     it "handles no uncovered lines as empty array" do
       coverage_report = {
         "coverage" => {
-          "lib/all_covered.rb" => { "lines" => [1, 2, 3, 4] } # all lines covered
+          "lib/all_covered.rb" => { "lines" => [1, 2, 3, 4] }
         }
       }
 
@@ -203,25 +150,21 @@ RSpec.describe CoverageReporter::CoverageRangesExtractor do
 
       expect(result["lib/all_covered.rb"][:actual_ranges]).to eq([])
       expect(result["lib/all_covered.rb"][:display_ranges]).to eq([])
-      # relevant lines: all lines (1, 2, 3, 4)
       expect(result["lib/all_covered.rb"][:relevant_ranges]).to contain_exactly([1, 4])
     end
 
     it "handles mixed null and zero values correctly" do
       coverage_report = {
         "coverage" => {
-          "lib/mixed.rb" => { "lines" => [nil, 0, nil, 0, 0, nil, 1] } # lines 2,4,5 uncovered, nil at line 3 continues range
+          "lib/mixed.rb" => { "lines" => [nil, 0, nil, 0, 0, nil, 1] }
         }
       }
 
       parser = described_class.new(coverage_report)
       result = parser.call
 
-      # Actual ranges: only lines with 0 (lines 2, 4, 5)
       expect(result["lib/mixed.rb"][:actual_ranges]).to contain_exactly([2, 2], [4, 5])
-      # Display ranges: includes nil at line 3 that continues the range
       expect(result["lib/mixed.rb"][:display_ranges]).to contain_exactly([2, 5])
-      # relevant lines: 2, 4, 5, 7 (nil, 0, nil, 0, 0, nil, 1)
       expect(result["lib/mixed.rb"][:relevant_ranges]).to contain_exactly([2, 2], [4, 5], [7, 7])
     end
 
@@ -983,34 +926,6 @@ RSpec.describe CoverageReporter::CoverageRangesExtractor do
     end
 
     context "when entire method is uncovered" do
-      it "groups all method lines into a single display range" do
-        source_code = <<~RUBY
-          def uncovered_method
-            # This is a comment
-            line1 = 1
-            line2 = 2
-            line3 = 3
-          end
-        RUBY
-
-        File.write(source_file_path, source_code)
-        # Coverage: Line 1: def (nil), Line 2: code (0), Line 3: code (0), Line 4: code (0), Line 5: blank (nil), Line 6: end (nil)
-        # All executable code lines (2, 3, 4) are uncovered
-        coverage_report = {
-          "coverage" => {
-            relative_filename => { "lines" => [nil, 0, 0, 0, nil, nil] }
-          }
-        }
-
-        parser = described_class.new(coverage_report, source_dir: temp_dir)
-        result = parser.call
-
-        # Actual ranges: only the uncovered code lines (2, 3, 4)
-        expect(result[relative_filename][:actual_ranges]).to contain_exactly([2, 4])
-        # Display ranges: entire method (1-6) since all code lines are uncovered
-        expect(result[relative_filename][:display_ranges]).to contain_exactly([1, 6])
-      end
-
       it "includes blank lines and comments in method range" do
         source_code = <<~RUBY
           def method_with_blanks
@@ -1023,7 +938,6 @@ RSpec.describe CoverageReporter::CoverageRangesExtractor do
         RUBY
 
         File.write(source_file_path, source_code)
-        # Coverage: def (nil), blank (nil), comment (nil), code (0), blank (nil), code (0), end (nil)
         coverage_report = {
           "coverage" => {
             relative_filename => { "lines" => [nil, nil, nil, 0, nil, 0, nil] }
@@ -1034,7 +948,6 @@ RSpec.describe CoverageReporter::CoverageRangesExtractor do
         result = parser.call
 
         expect(result[relative_filename][:actual_ranges]).to contain_exactly([4, 4], [6, 6])
-        # Entire method should be one range
         expect(result[relative_filename][:display_ranges]).to contain_exactly([1, 7])
       end
 
@@ -1048,7 +961,6 @@ RSpec.describe CoverageReporter::CoverageRangesExtractor do
         RUBY
 
         File.write(source_file_path, source_code)
-        # All code lines uncovered
         coverage_report = {
           "coverage" => {
             relative_filename => { "lines" => [nil, 0, nil, 0, nil] }
@@ -1074,7 +986,6 @@ RSpec.describe CoverageReporter::CoverageRangesExtractor do
         RUBY
 
         File.write(source_file_path, source_code)
-        # Line 2 covered (1), lines 3-4 uncovered (0)
         coverage_report = {
           "coverage" => {
             relative_filename => { "lines" => [nil, 1, 0, 0, nil] }
@@ -1085,7 +996,6 @@ RSpec.describe CoverageReporter::CoverageRangesExtractor do
         result = parser.call
 
         expect(result[relative_filename][:actual_ranges]).to contain_exactly([3, 4])
-        # Should not group entire method since line 2 is covered
         expect(result[relative_filename][:display_ranges]).to contain_exactly([3, 4])
       end
     end
@@ -1104,7 +1014,6 @@ RSpec.describe CoverageReporter::CoverageRangesExtractor do
         RUBY
 
         File.write(source_file_path, source_code)
-        # Both methods fully uncovered
         coverage_report = {
           "coverage" => {
             relative_filename => { "lines" => [nil, 0, nil, nil, nil, 0, 0, nil] }
@@ -1115,7 +1024,6 @@ RSpec.describe CoverageReporter::CoverageRangesExtractor do
         result = parser.call
 
         expect(result[relative_filename][:actual_ranges]).to contain_exactly([2, 2], [6, 7])
-        # Each method should be its own range
         expect(result[relative_filename][:display_ranges]).to contain_exactly([1, 3], [5, 8])
       end
 
@@ -1131,7 +1039,6 @@ RSpec.describe CoverageReporter::CoverageRangesExtractor do
         RUBY
 
         File.write(source_file_path, source_code)
-        # First method covered, second uncovered
         coverage_report = {
           "coverage" => {
             relative_filename => { "lines" => [nil, 1, nil, nil, nil, 0, nil] }
@@ -1142,7 +1049,6 @@ RSpec.describe CoverageReporter::CoverageRangesExtractor do
         result = parser.call
 
         expect(result[relative_filename][:actual_ranges]).to contain_exactly([6, 6])
-        # Only uncovered method should be grouped
         expect(result[relative_filename][:display_ranges]).to contain_exactly([5, 7])
       end
     end
@@ -1182,22 +1088,6 @@ RSpec.describe CoverageReporter::CoverageRangesExtractor do
         parser = described_class.new(coverage_report, source_dir: "/nonexistent/dir")
         result = parser.call
 
-        # Should use original logic when file doesn't exist
-        expect(result["lib/foo.rb"][:actual_ranges]).to contain_exactly([2, 3])
-        expect(result["lib/foo.rb"][:display_ranges]).to contain_exactly([2, 3])
-      end
-
-      it "works without source_file_path parameter" do
-        coverage_report = {
-          "coverage" => {
-            "lib/foo.rb" => { "lines" => [nil, 0, 0, nil] }
-          }
-        }
-
-        parser = described_class.new(coverage_report)
-        result = parser.call
-
-        # Should use original logic when no source path provided
         expect(result["lib/foo.rb"][:actual_ranges]).to contain_exactly([2, 3])
         expect(result["lib/foo.rb"][:display_ranges]).to contain_exactly([2, 3])
       end
@@ -1215,7 +1105,6 @@ RSpec.describe CoverageReporter::CoverageRangesExtractor do
         RUBY
 
         File.write(source_file_path, source_code)
-        # All lines uncovered
         coverage_report = {
           "coverage" => {
             relative_filename => { "lines" => [nil, nil, 0, nil, nil, 0, nil] }
@@ -1226,7 +1115,6 @@ RSpec.describe CoverageReporter::CoverageRangesExtractor do
         result = parser.call
 
         expect(result[relative_filename][:actual_ranges]).to contain_exactly([3, 3], [6, 6])
-        # Entire outer method should be grouped (lines 1-6)
         expect(result[relative_filename][:display_ranges]).to contain_exactly([1, 6])
       end
     end
